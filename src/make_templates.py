@@ -7,7 +7,7 @@ import src.build_tbls as bt
 import numpy as np
 
 # template_list = assets.DEST_LIST.copy()
-template_list = list(assets.TBL_XWALK.values())
+template_list = list(assets.TBL_XWALK.keys())
 
 def _make_templates(dest:str='assets/templates/templates.pkl', template_list:list=template_list) -> dict:
     """Make empty dataframes with the correct column names and order for each table to be loaded
@@ -80,13 +80,14 @@ def make_xwalks(dest:str='') -> dict:
         xwalk_dict[tbl] = {
             'xwalk': pd.DataFrame(columns=['source', 'destination'])
             ,'source': pd.DataFrame()
-            ,'source_name': ''
+            ,'source_name': assets.TBL_XWALK[tbl]
             ,'destination': dest_dict[tbl]
         }
+        xwalk_dict[tbl]['xwalk']['destination'] = xwalk_dict[tbl]['destination'].columns
 
     # add xwalk to empty structure for each destination table
     xwalk_dict = _detection_event_xwalk(xwalk_dict)
-    # xwalk_dict = _bird_detection_xwalk(xwalk_dict)
+    xwalk_dict = _bird_detection_xwalk(xwalk_dict)
 
     # add source dataframe to structure for each destination table
     for tbl in template_list:
@@ -98,8 +99,11 @@ def make_xwalks(dest:str='') -> dict:
             pass
 
     # xwalk each source dataframe to destination structure, according to xwalk
+
+    # validate
+    # TODO: write logic to check that each column we hard-coded into ['xwalk']['source'] and ['xwalk']['destination'] actually exists in the dataframe so we can't go sideways on column reassignment
     
-    # save output if desired
+    # save output
     if dest !='':
         with open(dest, 'wb') as f:
             pickle.dump(xwalk_dict, f)
@@ -117,8 +121,6 @@ def _detection_event_xwalk(xwalk_dict:dict) -> dict:
         dict: dictionary of column names crosswalked between source and destination tables with data updated for this table
     """
     
-    xwalk_dict['ncrn.DetectionEvent']['source_name'] = 'tbl_Events'
-    xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'] = xwalk_dict['ncrn.DetectionEvent']['destination'].columns
     mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'] == 'ID')
     xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'] =  np.where(mask, 'event_id', xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'])
     mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'] == 'LocationID')
@@ -151,7 +153,7 @@ def _bird_detection_xwalk(xwalk_dict:dict) -> dict:
     Returns:
         dict: dictionary of column names crosswalked between source and destination tables with data updated for this table
     """
-    xwalk_dict['ncrn.DetectionEvent']['source_name'] = 'tbl_Field_Data'
-    xwalk_dict['ncrn.DetectionEvent']['xwalk']
+    # xwalk_dict['ncrn.BirdDetection']['source_name'] = 'tbl_Field_Data'
+    # xwalk_dict['ncrn.DetectionEvent']['xwalk']
 
     return xwalk_dict

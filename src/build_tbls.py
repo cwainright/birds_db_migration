@@ -4,7 +4,7 @@ import numpy as np
 import src.db_connect as dbc
 import assets.assets as assets
 
-tbl_list = list(assets.TBL_XWALK.keys())
+tbl_list = list(assets.TBL_XWALK.values())
 
 def build_detection_event() -> pd.DataFrame:
     # connect to db
