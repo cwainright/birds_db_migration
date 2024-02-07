@@ -35,5 +35,5 @@ SELECT tbl_events.event_id,
        tbl_event_details.event_notes,
        tbl_event_details.notsampledreasonflag
 FROM   tbl_events
-       INNER JOIN tbl_event_details
+       LEFT JOIN tbl_event_details
                ON tbl_events.event_id = tbl_event_details.event_id; 
