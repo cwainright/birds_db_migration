@@ -1,6 +1,3 @@
-import src.build_tbls as bt
+import src.make_templates as mt
 
-myoutput = bt.build_tbl()
-
-for k in myoutput.keys():
-    print(k)
+testdict = mt.make_xwalks()
