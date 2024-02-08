@@ -25,7 +25,7 @@ Information documented in the crosswalk is executed downstream in this pipeline.
 import pandas as pd
 import numpy as np
 
-def _detection_event_xwalk(xwalk_dict:dict) -> dict:
+def _tbl_detection_event(xwalk_dict:dict) -> dict:
     """Make the crosswalk for source.tbl_Events to destination.ncrn.DetectionEvent
 
     Args:
@@ -135,7 +135,7 @@ def _detection_event_xwalk(xwalk_dict:dict) -> dict:
 
     return xwalk_dict
 
-def _bird_detection_xwalk(xwalk_dict:dict) -> dict:
+def _tbl_bird_detection(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
     """Crosswalk source.tbl_Event to destination.ncrn.BirdDetection
 
     Args:
@@ -149,7 +149,7 @@ def _bird_detection_xwalk(xwalk_dict:dict) -> dict:
 
     return xwalk_dict
 
-def _tbl_protocol(xwalk_dict:dict) -> dict:
+def _tbl_protocol(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
     """Crosswalk source.tbl_Protocol to destination.ncrn.Protocol
 
     Args:
@@ -158,8 +158,62 @@ def _tbl_protocol(xwalk_dict:dict) -> dict:
     Returns:
         dict: dictionary of column names crosswalked between source and destination tables with data updated for this table
     """
-    # xwalk_dict['ncrn.BirdDetection']['source_name'] = 'tbl_Field_Data'
-    # xwalk_dict['ncrn.DetectionEvent']['xwalk']
 
     return xwalk_dict
+
+def _tbl_locations(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
+    """Crosswalk source.tbl_Locations to destination.ncrn.Location
+
+    Args:
+        xwalk_dict (dict): dictionary of column names crosswalked between source and destination tables
+
+    Returns:
+        dict: dictionary of column names crosswalked between source and destination tables with data updated for this table
+    """
+
+    # do we really collect data from >4k sites?!
+
+    return xwalk_dict
+
+def _tlu_park_code(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
+    """Crosswalk source.tlu_Park_Code to destination.ncrn.Park
+
+    Args:
+        xwalk_dict (dict): dictionary of column names crosswalked between source and destination tables
+
+    Returns:
+        dict: dictionary of column names crosswalked between source and destination tables with data updated for this table
+    """
+
+    return xwalk_dict
+
+def _tlu_interval(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
+    """Crosswalk source.tlu_interval to destination.lu.TimeInterval
+
+    Args:
+        xwalk_dict (dict): dictionary of column names crosswalked between source and destination tables
+
+    Returns:
+        dict: dictionary of column names crosswalked between source and destination tables with data updated for this table
+    """
+
+    return xwalk_dict
+
+def _tlu_wind_code(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
+    """Crosswalk source.tlu_Wind_Code to destination.lu.WindCode
+
+    Args:
+        xwalk_dict (dict): dictionary of column names crosswalked between source and destination tables
+
+    Returns:
+        dict: dictionary of column names crosswalked between source and destination tables with data updated for this table
+    """
+
+    return xwalk_dict
+
+
+
+
+
+
 
