@@ -1,7 +1,8 @@
 """
-Hard code the crosswalk for each table.
+Hard code the crosswalk for each destination table.
 
-A crosswalks are dataframes that document where `destination` data come from in the `source` data.
+A crosswalk is a dataframe that documents where `destination` data come from in the `source` data.
+Downstream in this pipeline (`src.make_templates._execute_xwalks()`), the program reads the crosswalk and executes the information stored there.
 
 Crosswalks divide `destination` fields into three types and assign values to three columns for each field:
 1. 1:1 fields. The destination field has a matching source field.
@@ -17,8 +18,6 @@ Crosswalks divide `destination` fields into three types and assign values to thr
     a. `source` is np.NaN.
     b. `calculation` is 'blank_field'.
     c. `note` is 'this field was not collected by NCRN and has no NCRN equivalent'.
-
-Information documented in the crosswalk is executed downstream in this pipeline.
 
 """
 
@@ -305,7 +304,7 @@ def _ncrn_BirdSpeciesPark(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##
     Returns:
         dict: dictionary of column names crosswalked between source and destination tables with data updated for this table
     """
-    # ncrn.BirdSpeciesGroups is a park-level grouping variable for species in ncrn.BirdGroups
+    # ncrn.BirdSpeciesPark is a park-level grouping variable for species in ncrn.BirdGroups
     # NCRN doesn't maintain attributes like this so it's probably a blank table
 
     return xwalk_dict
