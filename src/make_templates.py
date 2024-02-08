@@ -34,11 +34,13 @@ def make_birds(dest:str='') -> dict:
     xwalk_dict = {}
     for tbl in template_list:
         xwalk_dict[tbl] = {
-            'xwalk': pd.DataFrame(columns=['destination', 'source', 'calculation', 'note']) # document the crosswalk for each table
-            ,'source_name': assets.TBL_XWALK[tbl] # store the name of the source table
-            ,'source': pd.DataFrame() # placeholder to store the source data
-            ,'destination': dest_dict[tbl] # store the destination data (mostly just for its column names and order)
-            ,'tbl_load': pd.DataFrame() # placeholder for the source data crosswalked to the destination schema
+            'xwalk': pd.DataFrame(columns=['destination', 'source', 'calculation', 'note']) # the crosswalk to translate from `source` to `tbl_load`
+            ,'source_name': assets.TBL_XWALK[tbl] # name of source table
+            ,'source': pd.DataFrame() # source data
+            ,'destination': dest_dict[tbl] # destination data (mostly just for its column names and order)
+            ,'tbl_load': pd.DataFrame() # `source` data crosswalked to the destination schema
+            ,'payload': pd.DataFrame() # `tbl_load` transformed for loading to destination database
+            ,'tsql': '' # the t-sql to load the `payload` to the destination table
         }
         xwalk_dict[tbl]['source'] = source_dict[xwalk_dict[tbl]['source_name']] # route the source data to its placeholder
         xwalk_dict[tbl]['tbl_load'] = pd.DataFrame(columns=xwalk_dict[tbl]['destination'].columns)
@@ -55,6 +57,12 @@ def make_birds(dest:str='') -> dict:
 
     # validate
     xwalk_dict = _validate_tbl_loads(xwalk_dict)
+
+    # generate payload
+    xwalk_dict = _generate_payload(xwalk_dict)
+
+    # generate t-sql
+    xwalk_dict = _generate_tsql(xwalk_dict)
 
     # save output
     if dest !='':
@@ -145,4 +153,16 @@ def _validate_cols(xwalk_dict:dict) -> dict:
     # TODO: check that the column order in `tbl_load` matches that of `destination`
     return xwalk_dict
 
+def _generate_payload(xwalk_dict:dict) -> dict:
+    # TODO: this function should take `tbl_load` and make final changes before loading
+    # e.g., `tbl_load` is allowed to hold NCRN's GUIDs but `payload` should either replace the GUIDs with INTs or leave out that column altogether
+    return xwalk_dict
 
+def _generate_tsql(xwalk_dict:dict) -> dict:
+    # TODO: generate the INSERT INTO sql for each `payload`
+    # e.g.,
+    # INSERT INTO [NCRN_Landbirds].[dbo].[lu.ExperienceLevel] ([ID],[Code],[Label],[Description],[SortOrder]) VALUES (2,'EXP','Expert','An expert',2)
+
+    # review db_loader.load_db.load_option_b() for details
+
+    return xwalk_dict
