@@ -9,7 +9,7 @@ import numpy as np
 # template_list = assets.DEST_LIST.copy()
 template_list = list(assets.TBL_XWALK.keys())
 
-def make_xwalks(dest:str='') -> dict:
+def make_birds(dest:str='') -> dict:
     """Create a dictionary of crosswalks for each table in the source (Access) and destination (SQL Server) databases
 
     Args:
@@ -20,7 +20,7 @@ def make_xwalks(dest:str='') -> dict:
 
     Examples:
         import src.make_templates as mt
-        testdict = mt.make_xwalks('saved_dictionary.pkl')
+        testdict = mt.make_birds('saved_dictionary.pkl')
         with open('saved_dictionary.pkl', 'rb') as f:
             loaded_dict = pickle.load(f) 
     """
@@ -66,13 +66,27 @@ def make_xwalks(dest:str='') -> dict:
 
 def _create_xwalks(xwalk_dict:dict) -> dict:
 
-    xwalk_dict = tx._tbl_detection_event(xwalk_dict)
-    xwalk_dict = tx._tbl_bird_detection(xwalk_dict)
-    xwalk_dict = tx._tbl_protocol(xwalk_dict)
-    xwalk_dict = tx._tbl_locations(xwalk_dict)
-    xwalk_dict = tx._tlu_park_code(xwalk_dict)
-    xwalk_dict = tx._tlu_interval(xwalk_dict)
-    xwalk_dict = tx._tlu_wind_code(xwalk_dict)
+    xwalk_dict = tx._ncrn_DetectionEvent(xwalk_dict)
+    xwalk_dict = tx._ncrn_BirdDetection(xwalk_dict)
+    xwalk_dict = tx._ncrn_Protocol(xwalk_dict)
+    xwalk_dict = tx._ncrn_Location(xwalk_dict)
+    xwalk_dict = tx._ncrn_Park(xwalk_dict)
+    xwalk_dict = tx._lu_TimeInterval(xwalk_dict)
+    xwalk_dict = tx._lu_WindCode(xwalk_dict)
+    xwalk_dict = tx._lu_DataProcessingLevel(xwalk_dict)
+    xwalk_dict = tx._lu_DetectionType(xwalk_dict)
+    xwalk_dict = tx._lu_DistanceClass(xwalk_dict)
+    xwalk_dict = tx._lu_GeodeticDatum(xwalk_dict)
+    xwalk_dict = tx._lu_Sex(xwalk_dict)
+    xwalk_dict = tx._ncrn_Contact(xwalk_dict)
+    xwalk_dict = tx._lu_PrecipitationType(xwalk_dict)
+    xwalk_dict = tx._ncrn_BirdSpeciesPark(xwalk_dict)
+    xwalk_dict = tx._ncrn_BirdGroups(xwalk_dict)
+    xwalk_dict = tx._lu_NoiseLevel(xwalk_dict)
+    xwalk_dict = tx._ncrn_AuditLog(xwalk_dict)
+    xwalk_dict = tx._ncrn_AuditLogDetail(xwalk_dict)
+    xwalk_dict = tx._lu_SamplingMethod(xwalk_dict)
+    xwalk_dict = tx._lu_Habitat(xwalk_dict)
 
     return xwalk_dict
 
@@ -80,14 +94,14 @@ def _execute_xwalks(xwalk_dict:dict) -> dict:
     # TODO: this function should execute the instructions stored in each table's `xwalk` to produce a `tbl_load`
 
     for tbl in template_list:
-        print(tbl)
+        # print(tbl)
         xwalk = xwalk_dict[tbl]['xwalk']
         # if destination has a one-to-one source field, execute assignments
         one_to_ones = list(xwalk[xwalk['calculation']=='map_source_to_destination_1_to_1'].destination.values)
         for dest_col in one_to_ones:
-            print(dest_col)
+            # print(dest_col)
             src_col = xwalk[xwalk['destination']==dest_col].source.values[0]
-            print(src_col)
+            # print(src_col)
             xwalk_dict[tbl]['tbl_load'][dest_col] = xwalk_dict[tbl]['source'][src_col]
 
         # if it's a calculate field, calculate
@@ -113,10 +127,10 @@ def _validate_xwalks(xwalk_dict:dict) -> dict:
     # TODO: this function should check that the `xwalk` attr produced for each `tbl_load` is valid
 
     # find and report missing values
-    missing = xwalk_dict['ncrn.DetectionEvent']['xwalk'][xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'].isna()].destination.unique()
-    if len(missing) >0:
-        for m in missing:
-            print(f'[\'ncrn.DetectionEvent\'][\'xwalk\'] is missing a `source` value where `destination`==\'{m}\'.')
+    # missing = xwalk_dict['ncrn.DetectionEvent']['xwalk'][xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'].isna()].destination.unique()
+    # if len(missing) >0:
+    #     for m in missing:
+    #         print(f'[\'ncrn.DetectionEvent\'][\'xwalk\'] is missing a `source` value where `destination`==\'{m}\'.')
 
     # how else can the xwalk go sideways?
 
