@@ -3,7 +3,7 @@ import assets.assets as assets
 import pandas as pd
 import pickle
 import src.build_tbls as bt
-import src.tbl_xwalks as tw
+import src.tbl_xwalks as tx
 import numpy as np
 
 # template_list = assets.DEST_LIST.copy()
@@ -66,8 +66,13 @@ def make_xwalks(dest:str='') -> dict:
 
 def _create_xwalks(xwalk_dict:dict) -> dict:
 
-    xwalk_dict = tw._detection_event_xwalk(xwalk_dict)
-    xwalk_dict = tw._bird_detection_xwalk(xwalk_dict)
+    xwalk_dict = tx._tbl_detection_event(xwalk_dict)
+    xwalk_dict = tx._tbl_bird_detection(xwalk_dict)
+    xwalk_dict = tx._tbl_protocol(xwalk_dict)
+    xwalk_dict = tx._tbl_locations(xwalk_dict)
+    xwalk_dict = tx._tlu_park_code(xwalk_dict)
+    xwalk_dict = tx._tlu_interval(xwalk_dict)
+    xwalk_dict = tx._tlu_wind_code(xwalk_dict)
 
     return xwalk_dict
 
