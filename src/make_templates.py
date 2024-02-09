@@ -27,7 +27,7 @@ def make_birds(dest:str='') -> dict:
     if dest !='':
         assert dest.endswith('.pkl'), print(f'You entered `{dest}`. If you want to save the output of `make_xwalks()`, `dest` must end in ".pkl"')
 
-    source_dict = bt._get_src_tbls() # query the source data (i.e., the Access table(s) containing fields)
+    source_dict = bt._get_src_tbls() # query the source data (i.e., the Access table(s))
     dest_dict = bt._get_dest_tbls() # query the destination data (i.e., the SQL Server table; usually an empty dataframe with the correct columns)
 
     # main object to hold data
@@ -60,6 +60,9 @@ def make_birds(dest:str='') -> dict:
 
     # generate payload
     xwalk_dict = _generate_payload(xwalk_dict)
+
+    # validate payload
+    xwalk_dict = _validate_payload(xwalk_dict)
 
     # generate t-sql
     xwalk_dict = _generate_tsql(xwalk_dict)
@@ -114,6 +117,7 @@ def _execute_xwalks(xwalk_dict:dict) -> dict:
 
         # if it's a calculate field, calculate
         # calculates = list(xwalk[xwalk['calculation']=='calculate_dest_field_from_source_field'].destination.values)
+        # exec(code_dict.source.values[0])
         # if it's a blank field, leave blank
         # blanks = list(xwalk[xwalk['calculation']=='blank_field'].destination.values)
 
@@ -128,6 +132,7 @@ def _validate_tbl_loads(xwalk_dict:dict) -> dict:
     # check that the column order in `tbl_load` matches that of `destination`
     xwalk_dict = _validate_cols(xwalk_dict)
     # check constraints? may be more work than simply letting sqlserver do the checks
+    xwalk_dict = _validate_referential_integrity(xwalk_dict)
     return xwalk_dict
 
 
@@ -153,9 +158,18 @@ def _validate_cols(xwalk_dict:dict) -> dict:
     # TODO: check that the column order in `tbl_load` matches that of `destination`
     return xwalk_dict
 
+def _validate_referential_integrity(xwalk_dict:dict) -> dict:
+    # TODO: check that the INT id for each GUID lines up among related tables
+    return xwalk_dict
+
 def _generate_payload(xwalk_dict:dict) -> dict:
     # TODO: this function should take `tbl_load` and make final changes before loading
     # e.g., `tbl_load` is allowed to hold NCRN's GUIDs but `payload` should either replace the GUIDs with INTs or leave out that column altogether
+    return xwalk_dict
+
+def _validate_payload(xwalk_dict:dict) -> dict:
+    # TODO: this function should validate `payload`
+    # TODO: All `payload`s should have >0 columns; if there are no columns, payload-generation failed.
     return xwalk_dict
 
 def _generate_tsql(xwalk_dict:dict) -> dict:
