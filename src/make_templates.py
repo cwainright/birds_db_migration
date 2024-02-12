@@ -5,6 +5,7 @@ import pickle
 import src.build_tbls as bt
 import src.tbl_xwalks as tx
 import numpy as np
+import src.db_connect as dbc
 
 # template_list = assets.DEST_LIST.copy()
 template_list = list(assets.TBL_XWALK.keys())
@@ -48,6 +49,9 @@ def make_birds(dest:str='') -> dict:
 
     # create xwalk for each destination table
     xwalk_dict = _create_xwalks(xwalk_dict)
+
+    # execute exception-handling
+    xwalk_dict = _execute_xwalk_exceptions(xwalk_dict)
 
     # validate
     xwalk_dict = _validate_xwalks(xwalk_dict)
@@ -98,6 +102,55 @@ def _create_xwalks(xwalk_dict:dict) -> dict:
     xwalk_dict = tx._ncrn_AuditLogDetail(xwalk_dict)
     xwalk_dict = tx._lu_SamplingMethod(xwalk_dict)
     xwalk_dict = tx._lu_Habitat(xwalk_dict)
+
+    return xwalk_dict
+
+def _execute_xwalk_exceptions(xwalk_dict:dict) -> dict:
+    # TODO: if a destination table requires the creation of another table (e.g., CTE, execution of a second query, or generation of a lookup), it doesn't fit our model, so we need to execute an exception
+    xwalk_dict = _exception_ncrn_DetectionEvent(xwalk_dict)
+
+    return xwalk_dict
+
+def _exception_ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
+    """Exceptions associated with the generation of destination table ncrn.DetectionEvent"""
+
+    con = dbc._db_connect('access')
+    with open(r'src\qry\qry_long_event_contacts.sql', 'r') as query:
+        df = pd.read_sql_query(query.read(),con)
+    con.close()
+
+    mysorts = df.groupby(['Event_ID']).size().reset_index(name='count').sort_values(['count'], ascending=True)
+    double_events = mysorts[mysorts['count']>1].Event_ID.unique()
+    single_events = mysorts[mysorts['count']==1].Event_ID.unique()
+    zero_events = mysorts[mysorts['count']==0].Event_ID.unique()
+    # len(df) == len(singles) + len(doubles) # sanity check
+
+    # edge case: >1 person was associated with the event
+    mask = (df['Event_ID'].isin(double_events)) & (df['Contact_Role']!='Observer')
+    df['Contact_Role'] = np.where(mask, 'Recorder', df['Contact_Role'])
+    mask = (df['Event_ID'].isin(double_events))
+    lookup = df[mask].copy()
+    lookup['observer'] = lookup['Contact_ID']
+    lookup['recorder'] = lookup['Contact_ID']
+    lookup = lookup.drop_duplicates('Event_ID').reset_index()[['Event_ID', 'observer', 'recorder']]
+    df = df.merge(lookup, on='Event_ID', how='left')
+
+    # edge case: 0 people were associated with the event
+    mask = (df['Event_ID'].isin(zero_events))
+    df['observer'] = np.where(mask, np.NaN, df['observer'])
+    df['recorder'] = np.where(mask, np.NaN, df['recorder'])
+
+    # base case: one-and-only-one person was associated with the event
+    mask = (df['Event_ID'].isin(single_events))
+    df['observer'] = np.where(mask, df['Contact_ID'], df['observer'])
+    df['recorder'] = np.where(mask, df['Contact_ID'], df['recorder'])
+
+    # cleanup
+    df = df.drop_duplicates('Event_ID')
+    df = df[['Event_ID', 'observer', 'recorder']]
+    df.rename(columns={'Event_ID':'event_id'}, inplace=True)
+
+    xwalk_dict['ncrn.DetectionEvent']['source'] = xwalk_dict['ncrn.DetectionEvent']['source'].merge(df, on='event_id', how='left')
 
     return xwalk_dict
 
