@@ -33,7 +33,9 @@ SELECT tbl_events.event_id,
        tbl_event_details.humidity,
        tbl_event_details.call_back_survey,
        tbl_event_details.event_notes,
-       tbl_event_details.notsampledreasonflag
+       tbl_event_details.notsampledreasonflag,
+       flags.flaggroup,
+       flags.label
 FROM   tbl_events
-       LEFT JOIN tbl_event_details
+       LEFT JOIN (tbl_event_details LEFT JOIN flags ON tbl_event_details.notsampledreasonflag = flags.id)
                ON tbl_events.event_id = tbl_event_details.event_id; 
