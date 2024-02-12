@@ -46,6 +46,7 @@ def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
         ,'DataProcessingLevelID'
         ,'DataProcessingLevelDate'
         ,'RelativeHumidity'
+        ,'SamplingMethodID'
     ]
     # assign grouping variable `calculation` for the 1:1 fields
     mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'].isin(one_to_one_fields))
@@ -81,6 +82,9 @@ def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
     # RelativeHumidity
     mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'] == 'RelativeHumidity')
     xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'] =  np.where(mask, 'humidity', xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'])
+    # `SamplingMethodID`
+    mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'] == 'SamplingMethodID')
+    xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'] =  np.where(mask, 'protocol_name', xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'])
 
 
     # Calculated fields
@@ -88,7 +92,6 @@ def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
         'AirTemperatureRecorded'
         ,'StartDateTime'
         ,'IsSampled'
-        ,'SamplingMethodID'
         ,'Observer_ContactID'
         ,'Recorder_ContactID'
         ,'Observer_ExperienceLevelID'
@@ -116,7 +119,7 @@ def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
     xwalk_dict['ncrn.DetectionEvent']['xwalk']['note'] =  np.where(mask, "BIT type (bool as 0 or 1) correlates to ncrn.tbl_Events.flaggroup, which is a pick-list that defaults to NA. NA indicates a sample was collected.", xwalk_dict['ncrn.DetectionEvent']['xwalk']['note'])
     # -- lookup-constrained calculations
     # TODO: figure out what to do with these fields
-    # `SamplingMethodID`: [lu.SamplingMethod]([ID]) # does NCRN capture an equivalent to this?
+    
     # `Observer_ContactID`: [ncrn.Contact]([ID]) # does NCRN capture an equivalent to this?
     # `Recorder_ContactID`: [ncrn.Contact]([ID]) # does NCRN capture an equivalent to this?
     # `Observer_ExperienceLevelID`: [lu.ExperienceLevel]([ID])
