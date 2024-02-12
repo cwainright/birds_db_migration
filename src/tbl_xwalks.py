@@ -53,6 +53,7 @@ def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
         ,'ProtocolWindCodeID'
         ,'ProtocolPrecipitationTypeID'
         ,'Observer_ExperienceLevelID'
+        ,'StartDateTime'
     ]
     # assign grouping variable `calculation` for the 1:1 fields
     mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'].isin(one_to_one_fields))
@@ -109,11 +110,14 @@ def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
     # `Observer_ExperienceLevelID`: [lu.ExperienceLevel]([ID])
     mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'] == 'Observer_ExperienceLevelID')
     xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'] =  np.where(mask, 'Position_Title', xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'])
+    # `StartDateTime`
+    mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'] == 'StartDateTime')
+    xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'] =  np.where(mask, 'activity_start_datetime', xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'])
+    xwalk_dict['ncrn.DetectionEvent']['xwalk']['note'] =  np.where(mask, "a concatenation of tbl_Events.Date and tbl_Events.start_time", xwalk_dict['ncrn.DetectionEvent']['xwalk']['note'])
 
     # Calculated fields
     calculated_fields = [
         'AirTemperatureRecorded'
-        ,'StartDateTime'
         ,'IsSampled'
         ,'TemperatureUnitCode'
         ,'ExcludeNote'
@@ -127,9 +131,6 @@ def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
     # `AirTemperatureRecorded` BIT type (bool as 0 or 1); not a NCRN field. Should be 1 when the row has a value in `AirTemperature`
     mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'] == 'AirTemperatureRecorded')
     xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn.DetectionEvent']['tbl_load']['AirTemperatureRecorded']=np.where((xwalk_dict['ncrn.DetectionEvent']['tbl_load'].AirTemperature.isna()), 0, 1)", xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'])
-    # `StartDateTime` need to make datetime from src_tbl.Date and src_tbl.Start_Time
-    # TODO: write logic here
-    # some combination of testdict['ncrn.DetectionEvent']['source'].date + testdict['ncrn.DetectionEvent']['source'].start_time
     # `IsSampled` BIT type (bool as 0 or 1) I think this is the inverse of src_tbl.is_excluded, which is a boolean in Access with one unique value: [0]
     mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'] == 'IsSampled')
     xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'] =  np.where(mask, "xwalk_dict['ncrn.DetectionEvent']['tbl_load']['IsSampled'] = np.where((xwalk_dict['ncrn.DetectionEvent']['source']['flaggroup'].isna()), 1, 0)", xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'])

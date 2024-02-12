@@ -6,6 +6,7 @@ import src.build_tbls as bt
 import src.tbl_xwalks as tx
 import numpy as np
 import src.db_connect as dbc
+import datetime
 
 # template_list = assets.DEST_LIST.copy()
 template_list = list(assets.TBL_XWALK.keys())
@@ -113,8 +114,8 @@ def _execute_xwalk_exceptions(xwalk_dict:dict) -> dict:
 
 def _exception_ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
     """Exceptions associated with the generation of destination table ncrn.DetectionEvent"""
-    # return xwalk_dict
 
+    #  EXCEPTION 1: exceptions from storing observers/recorders in long-format instead of wide-format
     con = dbc._db_connect('access')
     with open(r'src\qry\qry_long_event_contacts.sql', 'r') as query:
         df = pd.read_sql_query(query.read(),con)
@@ -152,6 +153,13 @@ def _exception_ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
     df.rename(columns={'Event_ID':'event_id'}, inplace=True)
 
     xwalk_dict['ncrn.DetectionEvent']['source'] = xwalk_dict['ncrn.DetectionEvent']['source'].merge(df, on='event_id', how='left')
+
+    # EXCEPTION 2: exceptions from storing date and time separately instead of as datetime
+    xwalk_dict['ncrn.DetectionEvent']['source']['Date'] = xwalk_dict['ncrn.DetectionEvent']['source']['Date'].dt.date
+    xwalk_dict['ncrn.DetectionEvent']['source']['start_time'] = xwalk_dict['ncrn.DetectionEvent']['source']['start_time'].dt.time
+    xwalk_dict['ncrn.DetectionEvent']['source']['start_time'] = np.where((xwalk_dict['ncrn.DetectionEvent']['source']['start_time'].isna()), datetime.time(0, 0),xwalk_dict['ncrn.DetectionEvent']['source']['start_time'] )
+    xwalk_dict['ncrn.DetectionEvent']['source']['Date'] = np.where((xwalk_dict['ncrn.DetectionEvent']['source']['Date'].isna()), datetime.date(1900, 1, 1),xwalk_dict['ncrn.DetectionEvent']['source']['Date'] )
+    xwalk_dict['ncrn.DetectionEvent']['source'].loc[:,'activity_start_datetime'] = pd.to_datetime(xwalk_dict['ncrn.DetectionEvent']['source'].Date.astype(str)+' '+xwalk_dict['ncrn.DetectionEvent']['source'].start_time.astype(str))
 
     return xwalk_dict
 
