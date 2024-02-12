@@ -46,7 +46,6 @@ def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
         ,'DataProcessingLevelID'
         ,'DataProcessingLevelDate'
         ,'RelativeHumidity'
-        ,'ExcludeNote'
     ]
     # assign grouping variable `calculation` for the 1:1 fields
     mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'].isin(one_to_one_fields))
@@ -82,9 +81,7 @@ def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
     # RelativeHumidity
     mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'] == 'RelativeHumidity')
     xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'] =  np.where(mask, 'humidity', xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'])
-    # ExcludeNote
-    mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'] == 'ExcludeNote')
-    xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'] =  np.where(mask, 'label', xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'])
+
 
     # Calculated fields
     calculated_fields = [
@@ -99,6 +96,7 @@ def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
         ,'ProtocolWindCodeID'
         ,'ProtocolPrecipitationTypeID'
         ,'TemperatureUnitCode'
+        ,'ExcludeNote'
         ,'ExcludeEvent'
     ]
     mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'].isin(calculated_fields)) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
@@ -126,9 +124,12 @@ def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
     # `ProtocolWindCodeID`: [lu.WindCode]([ID]) # does NCRN capture an equivalent to this?
     # `ProtocolPrecipitationTypeID`: [lu.PrecipitationType]([ID]) # does NCRN capture an equivalent to this?
     # `TemperatureUnitCode`: [lu.TemperatureUnit]([ID]) # does NCRN capture an equivalent to this?
+    # ExcludeNote
+    mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'] == 'ExcludeNote')
+    xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'] =  np.where(mask, "xwalk_dict['ncrn.DetectionEvent']['tbl_load']['ExcludeNote']=xwalk_dict['ncrn.DetectionEvent']['source']['flaggroup']+': '+xwalk_dict['ncrn.DetectionEvent']['source']['label']", xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'])
     # `ExcludeEvent`: this is a 1 or 0 depending on `ExcludeNote`
     mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'] == 'ExcludeEvent')
-    xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'] =  np.where(mask, "xwalk_dict['ncrn.DetectionEvent']['tbl_load']['ExcludeEvent'] = np.where((xwalk_dict['ncrn.DetectionEvent']['tbl_load']['ExcludeNote'].isna()), 0, 1)", xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'])
+    xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'] =  np.where(mask, "xwalk_dict['ncrn.DetectionEvent']['tbl_load']['ExcludeEvent'] = np.where((xwalk_dict['ncrn.DetectionEvent']['source']['label'].isna()), 0, 1)", xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'])
 
     # Blanks
     blank_fields = [
