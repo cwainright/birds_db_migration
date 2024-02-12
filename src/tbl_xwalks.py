@@ -49,6 +49,10 @@ def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
         ,'SamplingMethodID'
         ,'Observer_ContactID'
         ,'Recorder_ContactID'
+        ,'ProtocolNoiseLevelID'
+        ,'ProtocolWindCodeID'
+        ,'ProtocolPrecipitationTypeID'
+        ,'Observer_ExperienceLevelID'
     ]
     # assign grouping variable `calculation` for the 1:1 fields
     mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'].isin(one_to_one_fields))
@@ -93,17 +97,24 @@ def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
     # `Recorder_ContactID`
     mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'] == 'Recorder_ContactID')
     xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'] =  np.where(mask, 'recorder', xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'])
-
+    # `ProtocolNoiseLevelID`: [lu.NoiseLevel]([ID]) # does NCRN capture an equivalent to this?
+    mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'] == 'ProtocolNoiseLevelID')
+    xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'] =  np.where(mask, 'protocol_id', xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'])
+    # `ProtocolWindCodeID`: [lu.WindCode]([ID]) # does NCRN capture an equivalent to this?
+    mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'] == 'ProtocolWindCodeID')
+    xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'] =  np.where(mask, 'protocol_id', xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'])
+    # `ProtocolPrecipitationTypeID`: [lu.PrecipitationType]([ID]) # does NCRN capture an equivalent to this?
+    mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'] == 'ProtocolPrecipitationTypeID')
+    xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'] =  np.where(mask, 'protocol_id', xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'])
+    # `Observer_ExperienceLevelID`: [lu.ExperienceLevel]([ID])
+    mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'] == 'Observer_ExperienceLevelID')
+    xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'] =  np.where(mask, 'Position_Title', xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'])
 
     # Calculated fields
     calculated_fields = [
         'AirTemperatureRecorded'
         ,'StartDateTime'
         ,'IsSampled'
-        ,'Observer_ExperienceLevelID'
-        ,'ProtocolNoiseLevelID'
-        ,'ProtocolWindCodeID'
-        ,'ProtocolPrecipitationTypeID'
         ,'TemperatureUnitCode'
         ,'ExcludeNote'
         ,'ExcludeEvent'
@@ -123,25 +134,10 @@ def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
     mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'] == 'IsSampled')
     xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'] =  np.where(mask, "xwalk_dict['ncrn.DetectionEvent']['tbl_load']['IsSampled'] = np.where((xwalk_dict['ncrn.DetectionEvent']['source']['flaggroup'].isna()), 1, 0)", xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'])
     xwalk_dict['ncrn.DetectionEvent']['xwalk']['note'] =  np.where(mask, "BIT type (bool as 0 or 1) correlates to ncrn.tbl_Events.flaggroup, which is a pick-list that defaults to NA. NA indicates a sample was collected.", xwalk_dict['ncrn.DetectionEvent']['xwalk']['note'])
-    # -- lookup-constrained calculations
-    # TODO: figure out what to do with these fields
-    
-    # `Observer_ExperienceLevelID`: [lu.ExperienceLevel]([ID])
-    # NCRN historically recorded these fields as a 1:many
-    # i.e., each tbl_Events.Event_ID is 1:1 with xref_Event_Contacts.Event_ID which is 1:many with xref_Event_Contacts.Contact_ID
-    # but ncrn.DetectionEvent.Observer_ContactID and ncrn.DetectionEvent.Recorder_ContactID are 1:1 with ncrn.DetectionEvent.ID
-    # to overcome this, we need to query the contacts out of NCRN's database for each event
-    # then we need to groupby and count contacts per event
-    # if there are >2 contacts per event, we have to filter-out contacts 3+
-    # with <=2 contacts per event, we can determine how many of each role were recorded:
-        # we want 1 observer and 1 of anything else
-        # if 2 observers, check entered_by
-    # then we need to cast this long dataframe to wide
-    
-    # `ProtocolNoiseLevelID`: [lu.NoiseLevel]([ID]) # does NCRN capture an equivalent to this?
-    # `ProtocolWindCodeID`: [lu.WindCode]([ID]) # does NCRN capture an equivalent to this?
-    # `ProtocolPrecipitationTypeID`: [lu.PrecipitationType]([ID]) # does NCRN capture an equivalent to this?
     # `TemperatureUnitCode`: [lu.TemperatureUnit]([ID]) # does NCRN capture an equivalent to this?
+    mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'] == 'TemperatureUnitCode')
+    xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'] =  np.where(mask, "xwalk_dict['ncrn.DetectionEvent']['tbl_load']['TemperatureUnitCode'] = 1", xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'])
+    xwalk_dict['ncrn.DetectionEvent']['xwalk']['note'] =  np.where(mask, "temperature collected in celsius", xwalk_dict['ncrn.DetectionEvent']['xwalk']['note'])
     # ExcludeNote
     mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'] == 'ExcludeNote')
     xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'] =  np.where(mask, "xwalk_dict['ncrn.DetectionEvent']['tbl_load']['ExcludeNote']=xwalk_dict['ncrn.DetectionEvent']['source']['flaggroup']+': '+xwalk_dict['ncrn.DetectionEvent']['source']['label']", xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'])
@@ -309,6 +305,9 @@ def _ncrn_Contact(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TO
     Returns:
         dict: dictionary of column names crosswalked between source and destination tables with data updated for this table
     """
+
+    # use tlu_Contacts.Position_Title as experience level
+    # if tlu_Contacts.Position_Title as experience level
 
     return xwalk_dict
 
