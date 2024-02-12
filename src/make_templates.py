@@ -114,24 +114,27 @@ def _execute_xwalks(xwalk_dict:dict) -> dict:
             xwalk_dict[tbl]['tbl_load'][dest_col] = xwalk_dict[tbl]['source'][src_col]
 
         # if destination column requires calculations, calculate
-        calculates = list(xwalk[xwalk['calculation']=='calculate_dest_field_from_source_field'].destination.values)
+        mask = (xwalk['calculation']=='calculate_dest_field_from_source_field') & (xwalk['source']!='placeholder') # TODO: DELETE THIS LINE, FOR TESTING ONLY
+        # mask = (xwalk['calculation']=='calculate_dest_field_from_source_field') # TODO: KEEP: for production
+        calculates = list(xwalk[mask].destination.values)
         for dest_col in calculates:
             src_col = xwalk[xwalk['destination']==dest_col].source.values[0]
+            # code_lines = xwalk[xwalk['destination']==dest_col].source.values[0].astype(str).split('$splithere$')
             code_lines = xwalk[xwalk['destination']==dest_col].source.values[0]
             code_lines = code_lines.split('$splithere$')
             for line in code_lines:
-                if line != 'placeholder': # TODO: DELETE THIS LINE, FOR TESTING ONLY
-                    try: # TODO: KEEP
-                        exec(line) # TODO: KEEP
-                    except: # TODO: KEEP
-                        print(f'WARNING! Code line {line} for tbl {tbl}, {dest_col} failed. Debug its xwalk in src.tbl_xwalks()') # TODO: KEEP
+                if line != 'placeholder':
+                    # line = line.replace('xwalk_dict', 'testdict')
+                    try:
+                        exec(line)
+                    except:
+                        print(f'WARNING! Code line {line} for tbl {tbl}, {dest_col} failed. Debug its xwalk in src.tbl_xwalks()')
         
         # if destination column is blank field, assign blank
         blanks = list(xwalk[xwalk['calculation']=='blank_field'].destination.values)
         for dest_col in blanks:
             src_col = xwalk[xwalk['destination']==dest_col].source.values[0]
             xwalk_dict[tbl]['tbl_load'][dest_col] = np.NaN
-
 
     return xwalk_dict
 

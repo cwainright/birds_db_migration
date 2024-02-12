@@ -46,6 +46,7 @@ def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
         ,'DataProcessingLevelID'
         ,'DataProcessingLevelDate'
         ,'RelativeHumidity'
+        ,'ExcludeNote'
     ]
     # assign grouping variable `calculation` for the 1:1 fields
     mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'].isin(one_to_one_fields))
@@ -81,6 +82,9 @@ def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
     # RelativeHumidity
     mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'] == 'RelativeHumidity')
     xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'] =  np.where(mask, 'humidity', xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'])
+    # ExcludeNote
+    mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'] == 'ExcludeNote')
+    xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'] =  np.where(mask, 'label', xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'])
 
     # Calculated fields
     calculated_fields = [
@@ -95,21 +99,23 @@ def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
         ,'ProtocolWindCodeID'
         ,'ProtocolPrecipitationTypeID'
         ,'TemperatureUnitCode'
+        ,'ExcludeEvent'
     ]
-    mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'].isin(calculated_fields))
-    xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'])
+    mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'].isin(calculated_fields)) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn.DetectionEvent']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'].isin(calculated_fields))
     xwalk_dict['ncrn.DetectionEvent']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn.DetectionEvent']['xwalk']['calculation'])
     # `AirTemperatureRecorded` BIT type (bool as 0 or 1); not a NCRN field. Should be 1 when the row has a value in `AirTemperature`
     mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'] == 'AirTemperatureRecorded')
-    xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'] = np.where(mask, r"mask=(xwalk_dict['ncrn.DetectionEvent']['tbl_load'].AirTemperature.isna())$splithere$xwalk_dict['ncrn.DetectionEvent']['tbl_load']['AirTemperatureRecorded']=np.where(mask, 0, 1)", xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'])
+    xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn.DetectionEvent']['tbl_load']['AirTemperatureRecorded']=np.where((xwalk_dict['ncrn.DetectionEvent']['tbl_load'].AirTemperature.isna()), 0, 1)", xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'])
     # `StartDateTime` need to make datetime from src_tbl.Date and src_tbl.Start_Time
     # TODO: write logic here
+    # some combination of testdict['ncrn.DetectionEvent']['source'].date + testdict['ncrn.DetectionEvent']['source'].start_time
     # `IsSampled` BIT type (bool as 0 or 1) I think this is the inverse of src_tbl.is_excluded, which is a boolean in Access with one unique value: [0]
     mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'] == 'IsSampled')
-    xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'] =  np.where(mask, "xwalk_dict['ncrn.DetectionEvent']['tbl_load']['IsSampled'] = 1", xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'])
-    xwalk_dict['ncrn.DetectionEvent']['xwalk']['note'] =  np.where(mask, "BIT type (bool as 0 or 1) seems to be the inverse of ncrn.tbl_Events.is_excluded, which is a boolean in Access with one unique value: [0]", xwalk_dict['ncrn.DetectionEvent']['xwalk']['note'])
+    xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'] =  np.where(mask, "xwalk_dict['ncrn.DetectionEvent']['tbl_load']['IsSampled'] = np.where((xwalk_dict['ncrn.DetectionEvent']['source']['flaggroup'].isna()), 1, 0)", xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'])
+    xwalk_dict['ncrn.DetectionEvent']['xwalk']['note'] =  np.where(mask, "BIT type (bool as 0 or 1) correlates to ncrn.tbl_Events.flaggroup, which is a pick-list that defaults to NA. NA indicates a sample was collected.", xwalk_dict['ncrn.DetectionEvent']['xwalk']['note'])
     # -- lookup-constrained calculations
     # TODO: figure out what to do with these fields
     # `SamplingMethodID`: [lu.SamplingMethod]([ID]) # does NCRN capture an equivalent to this?
@@ -120,6 +126,9 @@ def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
     # `ProtocolWindCodeID`: [lu.WindCode]([ID]) # does NCRN capture an equivalent to this?
     # `ProtocolPrecipitationTypeID`: [lu.PrecipitationType]([ID]) # does NCRN capture an equivalent to this?
     # `TemperatureUnitCode`: [lu.TemperatureUnit]([ID]) # does NCRN capture an equivalent to this?
+    # `ExcludeEvent`: this is a 1 or 0 depending on `ExcludeNote`
+    mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'] == 'ExcludeEvent')
+    xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'] =  np.where(mask, "xwalk_dict['ncrn.DetectionEvent']['tbl_load']['ExcludeEvent'] = np.where((xwalk_dict['ncrn.DetectionEvent']['tbl_load']['ExcludeNote'].isna()), 0, 1)", xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'])
 
     # Blanks
     blank_fields = [
