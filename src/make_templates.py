@@ -105,21 +105,33 @@ def _execute_xwalks(xwalk_dict:dict) -> dict:
     # TODO: this function should execute the instructions stored in each table's `xwalk` to produce a `tbl_load`
 
     for tbl in template_list:
-        # print(tbl)
         xwalk = xwalk_dict[tbl]['xwalk']
-        # if destination has a one-to-one source field, execute assignments
+        
+        # if destination column has a one-to-one source field, execute assignments
         one_to_ones = list(xwalk[xwalk['calculation']=='map_source_to_destination_1_to_1'].destination.values)
         for dest_col in one_to_ones:
-            # print(dest_col)
             src_col = xwalk[xwalk['destination']==dest_col].source.values[0]
-            # print(src_col)
             xwalk_dict[tbl]['tbl_load'][dest_col] = xwalk_dict[tbl]['source'][src_col]
 
-        # if it's a calculate field, calculate
-        # calculates = list(xwalk[xwalk['calculation']=='calculate_dest_field_from_source_field'].destination.values)
-        # exec(code_dict.source.values[0])
-        # if it's a blank field, leave blank
-        # blanks = list(xwalk[xwalk['calculation']=='blank_field'].destination.values)
+        # if destination column requires calculations, calculate
+        calculates = list(xwalk[xwalk['calculation']=='calculate_dest_field_from_source_field'].destination.values)
+        for dest_col in calculates:
+            src_col = xwalk[xwalk['destination']==dest_col].source.values[0]
+            code_lines = xwalk[xwalk['destination']==dest_col].source.values[0]
+            code_lines = code_lines.split('$splithere$')
+            for line in code_lines:
+                if line != 'placeholder': # TODO: DELETE THIS LINE, FOR TESTING ONLY
+                    try: # TODO: KEEP
+                        exec(line) # TODO: KEEP
+                    except: # TODO: KEEP
+                        print(f'WARNING! Code line {line} for tbl {tbl}, {dest_col} failed. Debug its xwalk in src.tbl_xwalks()') # TODO: KEEP
+        
+        # if destination column is blank field, assign blank
+        blanks = list(xwalk[xwalk['calculation']=='blank_field'].destination.values)
+        for dest_col in blanks:
+            src_col = xwalk[xwalk['destination']==dest_col].source.values[0]
+            xwalk_dict[tbl]['tbl_load'][dest_col] = np.NaN
+
 
     return xwalk_dict
 

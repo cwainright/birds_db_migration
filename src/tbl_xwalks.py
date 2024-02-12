@@ -96,13 +96,14 @@ def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
         ,'ProtocolPrecipitationTypeID'
         ,'TemperatureUnitCode'
     ]
+    mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'].isin(calculated_fields))
+    xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'])
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'].isin(calculated_fields))
     xwalk_dict['ncrn.DetectionEvent']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn.DetectionEvent']['xwalk']['calculation'])
     # `AirTemperatureRecorded` BIT type (bool as 0 or 1); not a NCRN field. Should be 1 when the row has a value in `AirTemperature`
     mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'] == 'AirTemperatureRecorded')
-    xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'] = np.where(mask, r"mask=xwalk_dict['ncrn.DetectionEvent']['source'][xwalk_dict['ncrn.DetectionEvent']['source'].temperature.isna()]\xwalk_dict['ncrn.DetectionEvent']['destination']=np.where(mask, 0, xwalk_dict['ncrn.DetectionEvent']['destination'])\xwalk_dict['ncrn.DetectionEvent']['destination']=np.where(~mask, 1, xwalk_dict['ncrn.DetectionEvent']['destination'])", xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'])
-    xwalk_dict['ncrn.DetectionEvent']['xwalk']['note'] =  np.where(mask, "BIT type (bool as 0 or 1); not a NCRN field. Should be 1 when the row has a value in `AirTemperature`", xwalk_dict['ncrn.DetectionEvent']['xwalk']['note'])
+    xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'] = np.where(mask, r"mask=(xwalk_dict['ncrn.DetectionEvent']['tbl_load'].AirTemperature.isna())$splithere$xwalk_dict['ncrn.DetectionEvent']['tbl_load']['AirTemperatureRecorded']=np.where(mask, 0, 1)", xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'])
     # `StartDateTime` need to make datetime from src_tbl.Date and src_tbl.Start_Time
     # TODO: write logic here
     # `IsSampled` BIT type (bool as 0 or 1) I think this is the inverse of src_tbl.is_excluded, which is a boolean in Access with one unique value: [0]
