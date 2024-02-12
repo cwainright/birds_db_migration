@@ -113,6 +113,7 @@ def _execute_xwalk_exceptions(xwalk_dict:dict) -> dict:
 
 def _exception_ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
     """Exceptions associated with the generation of destination table ncrn.DetectionEvent"""
+    # return xwalk_dict
 
     con = dbc._db_connect('access')
     with open(r'src\qry\qry_long_event_contacts.sql', 'r') as query:
@@ -147,7 +148,7 @@ def _exception_ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
 
     # cleanup
     df = df.drop_duplicates('Event_ID')
-    df = df[['Event_ID', 'observer', 'recorder']]
+    df = df[['Event_ID', 'observer', 'recorder', 'Position_Title']]
     df.rename(columns={'Event_ID':'event_id'}, inplace=True)
 
     xwalk_dict['ncrn.DetectionEvent']['source'] = xwalk_dict['ncrn.DetectionEvent']['source'].merge(df, on='event_id', how='left')
