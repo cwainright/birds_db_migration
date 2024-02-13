@@ -436,13 +436,27 @@ def _lu_TimeInterval(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO#
 
     # 1:1 fields
     one_to_one_fields = [
+        'ID'
+        ,'Code'
+        ,'Code'
+        ,'Label'
+        ,'Summary'
     ]
     # assign grouping variable `calculation` for the 1:1 fields
     mask = (xwalk_dict['lu.TimeInterval']['xwalk']['destination'].isin(one_to_one_fields))
     xwalk_dict['lu.TimeInterval']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['lu.TimeInterval']['xwalk']['calculation'])
     # ID
     mask = (xwalk_dict['lu.TimeInterval']['xwalk']['destination'] == 'ID')
-    xwalk_dict['lu.TimeInterval']['xwalk']['source'] =  np.where(mask, 'ID_Code', xwalk_dict['lu.TimeInterval']['xwalk']['source'])
+    xwalk_dict['lu.TimeInterval']['xwalk']['source'] =  np.where(mask, 'Interval', xwalk_dict['lu.TimeInterval']['xwalk']['source'])
+    # Code
+    mask = (xwalk_dict['lu.TimeInterval']['xwalk']['destination'] == 'Code')
+    xwalk_dict['lu.TimeInterval']['xwalk']['source'] =  np.where(mask, 'Interval', xwalk_dict['lu.TimeInterval']['xwalk']['source'])
+    # Label
+    mask = (xwalk_dict['lu.TimeInterval']['xwalk']['destination'] == 'Label')
+    xwalk_dict['lu.TimeInterval']['xwalk']['source'] =  np.where(mask, 'Interval_Length', xwalk_dict['lu.TimeInterval']['xwalk']['source'])
+    # Summary
+    mask = (xwalk_dict['lu.TimeInterval']['xwalk']['destination'] == 'Summary')
+    xwalk_dict['lu.TimeInterval']['xwalk']['source'] =  np.where(mask, 'Interval_Length', xwalk_dict['lu.TimeInterval']['xwalk']['source'])
 
     # Calculated fields
     calculated_fields = [
@@ -454,6 +468,7 @@ def _lu_TimeInterval(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO#
 
     # Blanks
     blank_fields = [
+        'SortOrder'
     ]
     # assign grouping variable `calculation` for the blank fields
     mask = (xwalk_dict['lu.TimeInterval']['xwalk']['destination'].isin(blank_fields))
