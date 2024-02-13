@@ -5,10 +5,7 @@ import pickle
 import src.build_tbls as bt
 import src.tbl_xwalks as tx
 import numpy as np
-import src.db_connect as dbc
-import datetime
 
-# template_list = assets.DEST_LIST.copy()
 template_list = list(assets.TBL_XWALK.keys())
 
 def make_birds(dest:str='') -> dict:
@@ -41,12 +38,15 @@ def make_birds(dest:str='') -> dict:
             ,'source': pd.DataFrame() # source data
             ,'destination': dest_dict[tbl] # destination data (mostly just for its column names and order)
             ,'tbl_load': pd.DataFrame() # `source` data crosswalked to the destination schema
+            ,'payload_cols': [] # the columns to extract from `tbl_load` and load into `payload`
             ,'payload': pd.DataFrame() # `tbl_load` transformed for loading to destination database
             ,'tsql': '' # the t-sql to load the `payload` to the destination table
         }
         xwalk_dict[tbl]['source'] = source_dict[xwalk_dict[tbl]['source_name']] # route the source data to its placeholder
         xwalk_dict[tbl]['tbl_load'] = pd.DataFrame(columns=xwalk_dict[tbl]['destination'].columns)
         xwalk_dict[tbl]['xwalk']['destination'] = xwalk_dict[tbl]['destination'].columns # route the destination columns to their placeholder in the crosswalk
+        exclude_cols = ['ID', 'Rowversion', 'UserCode'] # list of columns that SQL Server should calculate upon data loading; these cols should not be part of the payload
+        xwalk_dict[tbl]['payload_cols'] = [x for x in xwalk_dict[tbl]['destination'].columns if x not in exclude_cols] # the columns to extract from `tbl_load` and load into `payload`
 
     # create xwalk for each destination table
     xwalk_dict = _create_xwalks(xwalk_dict)
@@ -107,59 +107,8 @@ def _create_xwalks(xwalk_dict:dict) -> dict:
     return xwalk_dict
 
 def _execute_xwalk_exceptions(xwalk_dict:dict) -> dict:
-    # TODO: if a destination table requires the creation of another table (e.g., CTE, execution of a second query, or generation of a lookup), it doesn't fit our model, so we need to execute an exception
-    xwalk_dict = _exception_ncrn_DetectionEvent(xwalk_dict)
-
-    return xwalk_dict
-
-def _exception_ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
-    """Exceptions associated with the generation of destination table ncrn.DetectionEvent"""
-
-    #  EXCEPTION 1: exceptions from storing observers/recorders in long-format instead of wide-format
-    con = dbc._db_connect('access')
-    with open(r'src\qry\qry_long_event_contacts.sql', 'r') as query:
-        df = pd.read_sql_query(query.read(),con)
-    con.close()
-
-    mysorts = df.groupby(['Event_ID']).size().reset_index(name='count').sort_values(['count'], ascending=True)
-    double_events = mysorts[mysorts['count']>1].Event_ID.unique()
-    single_events = mysorts[mysorts['count']==1].Event_ID.unique()
-    zero_events = mysorts[mysorts['count']==0].Event_ID.unique()
-    # len(df) == len(singles) + len(doubles) # sanity check
-
-    # edge case: >1 person was associated with the event
-    mask = (df['Event_ID'].isin(double_events)) & (df['Contact_Role']!='Observer')
-    df['Contact_Role'] = np.where(mask, 'Recorder', df['Contact_Role'])
-    mask = (df['Event_ID'].isin(double_events))
-    lookup = df[mask].copy()
-    lookup['observer'] = lookup['Contact_ID']
-    lookup['recorder'] = lookup['Contact_ID']
-    lookup = lookup.drop_duplicates('Event_ID').reset_index()[['Event_ID', 'observer', 'recorder']]
-    df = df.merge(lookup, on='Event_ID', how='left')
-
-    # edge case: 0 people were associated with the event
-    mask = (df['Event_ID'].isin(zero_events))
-    df['observer'] = np.where(mask, np.NaN, df['observer'])
-    df['recorder'] = np.where(mask, np.NaN, df['recorder'])
-
-    # base case: one-and-only-one person was associated with the event
-    mask = (df['Event_ID'].isin(single_events))
-    df['observer'] = np.where(mask, df['Contact_ID'], df['observer'])
-    df['recorder'] = np.where(mask, df['Contact_ID'], df['recorder'])
-
-    # cleanup
-    df = df.drop_duplicates('Event_ID')
-    df = df[['Event_ID', 'observer', 'recorder', 'Position_Title']]
-    df.rename(columns={'Event_ID':'event_id'}, inplace=True)
-
-    xwalk_dict['ncrn.DetectionEvent']['source'] = xwalk_dict['ncrn.DetectionEvent']['source'].merge(df, on='event_id', how='left')
-
-    # EXCEPTION 2: exceptions from storing date and time separately instead of as datetime
-    xwalk_dict['ncrn.DetectionEvent']['source']['Date'] = xwalk_dict['ncrn.DetectionEvent']['source']['Date'].dt.date
-    xwalk_dict['ncrn.DetectionEvent']['source']['start_time'] = xwalk_dict['ncrn.DetectionEvent']['source']['start_time'].dt.time
-    xwalk_dict['ncrn.DetectionEvent']['source']['start_time'] = np.where((xwalk_dict['ncrn.DetectionEvent']['source']['start_time'].isna()), datetime.time(0, 0),xwalk_dict['ncrn.DetectionEvent']['source']['start_time'] )
-    xwalk_dict['ncrn.DetectionEvent']['source']['Date'] = np.where((xwalk_dict['ncrn.DetectionEvent']['source']['Date'].isna()), datetime.date(1900, 1, 1),xwalk_dict['ncrn.DetectionEvent']['source']['Date'] )
-    xwalk_dict['ncrn.DetectionEvent']['source'].loc[:,'activity_start_datetime'] = pd.to_datetime(xwalk_dict['ncrn.DetectionEvent']['source'].Date.astype(str)+' '+xwalk_dict['ncrn.DetectionEvent']['source'].start_time.astype(str))
+    # TODO: if a destination table requires the creation of temp table (e.g., CTE, execution of a second query, or generation of a lookup), it doesn't fit our model, so we need to execute an exception
+    xwalk_dict = tx._exception_ncrn_DetectionEvent(xwalk_dict)
 
     return xwalk_dict
 
@@ -173,7 +122,10 @@ def _execute_xwalks(xwalk_dict:dict) -> dict:
         one_to_ones = list(xwalk[xwalk['calculation']=='map_source_to_destination_1_to_1'].destination.values)
         for dest_col in one_to_ones:
             src_col = xwalk[xwalk['destination']==dest_col].source.values[0]
-            xwalk_dict[tbl]['tbl_load'][dest_col] = xwalk_dict[tbl]['source'][src_col]
+            try:
+                xwalk_dict[tbl]['tbl_load'][dest_col] = xwalk_dict[tbl]['source'][src_col]
+            except:
+                print(f"WARNING! 1:1 destination column `{tbl}.{dest_col}` failed because its source column `['{tbl}']['source'][{src_col}]` did not resolve correctly. Debug its xwalk in src.tbl_xwalks")
 
         # if destination column requires calculations, calculate
         mask = (xwalk['calculation']=='calculate_dest_field_from_source_field') & (xwalk['source']!='placeholder') # TODO: DELETE THIS LINE, FOR TESTING ONLY
@@ -186,11 +138,11 @@ def _execute_xwalks(xwalk_dict:dict) -> dict:
             code_lines = code_lines.split('$splithere$')
             for line in code_lines:
                 if line != 'placeholder':
-                    # line = line.replace('xwalk_dict', 'testdict')
+                    # line = line.replace('xwalk_dict', 'testdict') # for debugging
                     try:
                         exec(line)
                     except:
-                        print(f'WARNING! Code line {line} for tbl {tbl}, {dest_col} failed. Debug its xwalk in src.tbl_xwalks()')
+                        print(f'WARNING! Calculated column `{tbl}.{dest_col}`, code line {line} failed. Debug its xwalk in src.tbl_xwalks')
         
         # if destination column is blank field, assign blank
         blanks = list(xwalk[xwalk['calculation']=='blank_field'].destination.values)
