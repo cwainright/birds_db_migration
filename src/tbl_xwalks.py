@@ -125,8 +125,6 @@ def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
         ,'ExcludeNote'
         ,'ExcludeEvent'
     ]
-    # mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'].isin(calculated_fields)) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
-    # xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn.DetectionEvent']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'].isin(calculated_fields))
     xwalk_dict['ncrn.DetectionEvent']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn.DetectionEvent']['xwalk']['calculation'])
@@ -162,7 +160,7 @@ def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
 
     return xwalk_dict
 
-def _ncrn_BirdDetection(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
+def _ncrn_BirdDetection(xwalk_dict:dict) -> dict:
     """Crosswalk source.tbl_Event to destination.ncrn.BirdDetection
 
     Args:
@@ -218,10 +216,9 @@ def _ncrn_BirdDetection(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TO
         ,'DetectionNotes'
         ,'ImportNotes'
     ]
-    mask = (xwalk_dict['ncrn.BirdDetection']['xwalk']['destination'].isin(calculated_fields)) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
-    xwalk_dict['ncrn.BirdDetection']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn.BirdDetection']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['ncrn.BirdDetection']['xwalk']['destination'].isin(calculated_fields))
+    xwalk_dict['ncrn.BirdDetection']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn.BirdDetection']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
     xwalk_dict['ncrn.BirdDetection']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn.BirdDetection']['xwalk']['calculation'])
     # ExcludeDetection  BIT type (bool as 0 or 1); should be 0 when `DataFlag` == False
     mask = (xwalk_dict['ncrn.BirdDetection']['xwalk']['destination'] == 'ExcludeDetection')
@@ -264,6 +261,67 @@ def _ncrn_Protocol(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##T
         dict: dictionary of column names crosswalked between source and destination tables with data updated for this table
     """
 
+    # 1:1 fields
+    one_to_one_fields = [
+        'ID'
+        ,'Title'
+        ,'Version'
+        ,'EffectiveBeginDate'
+        ,'Comments'
+    ]
+    # assign grouping variable `calculation` for the 1:1 fields
+    mask = (xwalk_dict['ncrn.Protocol']['xwalk']['destination'].isin(one_to_one_fields))
+    xwalk_dict['ncrn.Protocol']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['ncrn.Protocol']['xwalk']['calculation'])
+    # ID
+    mask = (xwalk_dict['ncrn.Protocol']['xwalk']['destination'] == 'ID')
+    xwalk_dict['ncrn.Protocol']['xwalk']['source'] =  np.where(mask, 'Protocol_ID', xwalk_dict['ncrn.Protocol']['xwalk']['source'])
+    # Title
+    mask = (xwalk_dict['ncrn.Protocol']['xwalk']['destination'] == 'Title')
+    xwalk_dict['ncrn.Protocol']['xwalk']['source'] =  np.where(mask, 'Protocol_Name', xwalk_dict['ncrn.Protocol']['xwalk']['source'])
+    # Version
+    mask = (xwalk_dict['ncrn.Protocol']['xwalk']['destination'] == 'Version')
+    xwalk_dict['ncrn.Protocol']['xwalk']['source'] =  np.where(mask, 'Protocol_Version', xwalk_dict['ncrn.Protocol']['xwalk']['source'])
+    # EffectiveBeginDate
+    mask = (xwalk_dict['ncrn.Protocol']['xwalk']['destination'] == 'EffectiveBeginDate')
+    xwalk_dict['ncrn.Protocol']['xwalk']['source'] =  np.where(mask, 'Version_Date', xwalk_dict['ncrn.Protocol']['xwalk']['source'])
+    # Comments
+    mask = (xwalk_dict['ncrn.Protocol']['xwalk']['destination'] == 'Comments')
+    xwalk_dict['ncrn.Protocol']['xwalk']['source'] =  np.where(mask, 'Protocol_Desc', xwalk_dict['ncrn.Protocol']['xwalk']['source'])
+
+    # Calculated fields
+    calculated_fields = [
+        'IsActive'
+        ,'IsDefault'
+        ,'ObserverExperienceRequired'
+    ]
+    # assign grouping variable `calculation` for the calculated fields
+    mask = (xwalk_dict['ncrn.Protocol']['xwalk']['destination'].isin(calculated_fields))
+    xwalk_dict['ncrn.Protocol']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn.Protocol']['xwalk']['calculation'])
+    # IsActive  BIT type (bool as 0 or 1); NCRN only stored active protocols in the db
+    mask = (xwalk_dict['ncrn.Protocol']['xwalk']['destination'] == 'IsActive')
+    xwalk_dict['ncrn.Protocol']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn.Protocol']['tbl_load']['IsActive']=1", xwalk_dict['ncrn.Protocol']['xwalk']['source'])
+    xwalk_dict['ncrn.Protocol']['xwalk']['note'] = np.where(mask, "BIT type (bool as 0 or 1); NCRN only stored active protocols in the db", xwalk_dict['ncrn.Protocol']['xwalk']['note'])
+    # IsDefault  BIT type (bool as 0 or 1); NCRN only stored default protocols in the db
+    mask = (xwalk_dict['ncrn.Protocol']['xwalk']['destination'] == 'IsDefault')
+    xwalk_dict['ncrn.Protocol']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn.Protocol']['tbl_load']['IsDefault']=1", xwalk_dict['ncrn.Protocol']['xwalk']['source'])
+    xwalk_dict['ncrn.Protocol']['xwalk']['note'] = np.where(mask, "BIT type (bool as 0 or 1); NCRN only stored default protocols in the db", xwalk_dict['ncrn.Protocol']['xwalk']['note'])
+    # ObserverExperienceRequired  BIT type (bool as 0 or 1); NCRN did not require observer experience
+    mask = (xwalk_dict['ncrn.Protocol']['xwalk']['destination'] == 'ObserverExperienceRequired')
+    xwalk_dict['ncrn.Protocol']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn.Protocol']['tbl_load']['ObserverExperienceRequired']=0", xwalk_dict['ncrn.Protocol']['xwalk']['source'])
+    xwalk_dict['ncrn.Protocol']['xwalk']['note'] = np.where(mask, "BIT type (bool as 0 or 1); NCRN did not require observer experience", xwalk_dict['ncrn.Protocol']['xwalk']['note'])
+
+    # Blanks
+    blank_fields = [
+        'EffectiveEndDate'
+        ,'Rowversion'
+        ,'Duration'
+    ]
+    # assign grouping variable `calculation` for the blank fields
+    mask = (xwalk_dict['ncrn.Protocol']['xwalk']['destination'].isin(blank_fields))
+    xwalk_dict['ncrn.Protocol']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn.Protocol']['xwalk']['calculation'])
+    xwalk_dict['ncrn.Protocol']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn.Protocol']['xwalk']['source'])
+    xwalk_dict['ncrn.Protocol']['xwalk']['note'] =  np.where(mask, 'this field was not collected by NCRN and has no NCRN equivalent', xwalk_dict['ncrn.Protocol']['xwalk']['note'])
+
     return xwalk_dict
 
 def _ncrn_Location(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
@@ -278,6 +336,33 @@ def _ncrn_Location(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##T
 
     # do we really collect data from >4k sites?!
 
+    # 1:1 fields
+    one_to_one_fields = [
+    ]
+    # assign grouping variable `calculation` for the 1:1 fields
+    mask = (xwalk_dict['ncrn.Location']['xwalk']['destination'].isin(one_to_one_fields))
+    xwalk_dict['ncrn.Location']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['ncrn.Location']['xwalk']['calculation'])
+    # ID
+    mask = (xwalk_dict['ncrn.Location']['xwalk']['destination'] == 'ID')
+    xwalk_dict['ncrn.Location']['xwalk']['source'] =  np.where(mask, 'ID_Code', xwalk_dict['ncrn.Location']['xwalk']['source'])
+
+    # Calculated fields
+    calculated_fields = [
+    ]
+    # assign grouping variable `calculation` for the calculated fields
+    mask = (xwalk_dict['ncrn.Location']['xwalk']['destination'].isin(calculated_fields))
+    xwalk_dict['ncrn.Location']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn.Location']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['ncrn.Location']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn.Location']['xwalk']['calculation'])
+
+    # Blanks
+    blank_fields = [
+    ]
+    # assign grouping variable `calculation` for the blank fields
+    mask = (xwalk_dict['ncrn.Location']['xwalk']['destination'].isin(blank_fields))
+    xwalk_dict['ncrn.Location']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn.Location']['xwalk']['calculation'])
+    xwalk_dict['ncrn.Location']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn.Location']['xwalk']['source'])
+    xwalk_dict['ncrn.Location']['xwalk']['note'] =  np.where(mask, 'this field was not collected by NCRN and has no NCRN equivalent', xwalk_dict['ncrn.Location']['xwalk']['note'])
+
     return xwalk_dict
 
 def _ncrn_Park(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
@@ -289,6 +374,53 @@ def _ncrn_Park(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO#
     Returns:
         dict: dictionary of column names crosswalked between source and destination tables with data updated for this table
     """
+    
+    # 1:1 fields
+    one_to_one_fields = [
+        'ID'
+        ,'ParkCode'
+        ,'Label'
+    ]
+    # assign grouping variable `calculation` for the 1:1 fields
+    mask = (xwalk_dict['ncrn.Park']['xwalk']['destination'].isin(one_to_one_fields))
+    xwalk_dict['ncrn.Park']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['ncrn.Park']['xwalk']['calculation'])
+    # ID
+    mask = (xwalk_dict['ncrn.Park']['xwalk']['destination'] == 'ID')
+    xwalk_dict['ncrn.Park']['xwalk']['source'] =  np.where(mask, 'PARKCODE', xwalk_dict['ncrn.Park']['xwalk']['source'])
+    # ParkCode
+    mask = (xwalk_dict['ncrn.Park']['xwalk']['destination'] == 'ParkCode')
+    xwalk_dict['ncrn.Park']['xwalk']['source'] =  np.where(mask, 'PARKCODE', xwalk_dict['ncrn.Park']['xwalk']['source'])
+    # Label
+    mask = (xwalk_dict['ncrn.Park']['xwalk']['destination'] == 'Label')
+    xwalk_dict['ncrn.Park']['xwalk']['source'] =  np.where(mask, 'PARKNAME', xwalk_dict['ncrn.Park']['xwalk']['source'])
+
+    # Calculated fields
+    calculated_fields = [
+        'NetworkCode'
+        ,'IsActive'
+    ]
+    # assign grouping variable `calculation` for the calculated fields
+    mask = (xwalk_dict['ncrn.Park']['xwalk']['destination'].isin(calculated_fields))
+    xwalk_dict['ncrn.Park']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn.Park']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['ncrn.Park']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn.Park']['xwalk']['calculation'])
+    # NetworkCode  varchar(4); 4-character network ID
+    mask = (xwalk_dict['ncrn.Park']['xwalk']['destination'] == 'NetworkCode')
+    xwalk_dict['ncrn.Park']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn.Park']['tbl_load']['NetworkCode']='NCRN'", xwalk_dict['ncrn.Park']['xwalk']['source'])
+    xwalk_dict['ncrn.Park']['xwalk']['note'] = np.where(mask, "varchar(4); 4-character network ID; 'NCRN'", xwalk_dict['ncrn.Park']['xwalk']['note'])
+    # IsActive  BIT not null; NCRN only stored active parks
+    mask = (xwalk_dict['ncrn.Park']['xwalk']['destination'] == 'IsActive')
+    xwalk_dict['ncrn.Park']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn.Park']['tbl_load']['IsActive']=1", xwalk_dict['ncrn.Park']['xwalk']['source'])
+    xwalk_dict['ncrn.Park']['xwalk']['note'] = np.where(mask, "BIT not null; NCRN only stored active parks", xwalk_dict['ncrn.Park']['xwalk']['note'])
+
+    # Blanks
+    blank_fields = [
+        'Rowversion'
+    ]
+    # assign grouping variable `calculation` for the blank fields
+    mask = (xwalk_dict['ncrn.Park']['xwalk']['destination'].isin(blank_fields))
+    xwalk_dict['ncrn.Park']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn.Park']['xwalk']['calculation'])
+    xwalk_dict['ncrn.Park']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn.Park']['xwalk']['source'])
+    xwalk_dict['ncrn.Park']['xwalk']['note'] =  np.where(mask, 'this field was not collected by NCRN and has no NCRN equivalent', xwalk_dict['ncrn.Park']['xwalk']['note'])
 
     return xwalk_dict
 
@@ -302,6 +434,33 @@ def _lu_TimeInterval(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO#
         dict: dictionary of column names crosswalked between source and destination tables with data updated for this table
     """
 
+    # 1:1 fields
+    one_to_one_fields = [
+    ]
+    # assign grouping variable `calculation` for the 1:1 fields
+    mask = (xwalk_dict['lu.TimeInterval']['xwalk']['destination'].isin(one_to_one_fields))
+    xwalk_dict['lu.TimeInterval']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['lu.TimeInterval']['xwalk']['calculation'])
+    # ID
+    mask = (xwalk_dict['lu.TimeInterval']['xwalk']['destination'] == 'ID')
+    xwalk_dict['lu.TimeInterval']['xwalk']['source'] =  np.where(mask, 'ID_Code', xwalk_dict['lu.TimeInterval']['xwalk']['source'])
+
+    # Calculated fields
+    calculated_fields = [
+    ]
+    # assign grouping variable `calculation` for the calculated fields
+    mask = (xwalk_dict['lu.TimeInterval']['xwalk']['destination'].isin(calculated_fields))
+    xwalk_dict['lu.TimeInterval']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu.TimeInterval']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['lu.TimeInterval']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['lu.TimeInterval']['xwalk']['calculation'])
+
+    # Blanks
+    blank_fields = [
+    ]
+    # assign grouping variable `calculation` for the blank fields
+    mask = (xwalk_dict['lu.TimeInterval']['xwalk']['destination'].isin(blank_fields))
+    xwalk_dict['lu.TimeInterval']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['lu.TimeInterval']['xwalk']['calculation'])
+    xwalk_dict['lu.TimeInterval']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['lu.TimeInterval']['xwalk']['source'])
+    xwalk_dict['lu.TimeInterval']['xwalk']['note'] =  np.where(mask, 'this field was not collected by NCRN and has no NCRN equivalent', xwalk_dict['lu.TimeInterval']['xwalk']['note'])
+
     return xwalk_dict
 
 def _lu_WindCode(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
@@ -313,6 +472,33 @@ def _lu_WindCode(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TOD
     Returns:
         dict: dictionary of column names crosswalked between source and destination tables with data updated for this table
     """
+
+    # 1:1 fields
+    one_to_one_fields = [
+    ]
+    # assign grouping variable `calculation` for the 1:1 fields
+    mask = (xwalk_dict['lu.WindCode']['xwalk']['destination'].isin(one_to_one_fields))
+    xwalk_dict['lu.WindCode']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['lu.WindCode']['xwalk']['calculation'])
+    # ID
+    mask = (xwalk_dict['lu.WindCode']['xwalk']['destination'] == 'ID')
+    xwalk_dict['lu.WindCode']['xwalk']['source'] =  np.where(mask, 'ID_Code', xwalk_dict['lu.WindCode']['xwalk']['source'])
+
+    # Calculated fields
+    calculated_fields = [
+    ]
+    # assign grouping variable `calculation` for the calculated fields
+    mask = (xwalk_dict['lu.WindCode']['xwalk']['destination'].isin(calculated_fields))
+    xwalk_dict['lu.WindCode']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu.WindCode']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['lu.WindCode']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['lu.WindCode']['xwalk']['calculation'])
+
+    # Blanks
+    blank_fields = [
+    ]
+    # assign grouping variable `calculation` for the blank fields
+    mask = (xwalk_dict['lu.WindCode']['xwalk']['destination'].isin(blank_fields))
+    xwalk_dict['lu.WindCode']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['lu.WindCode']['xwalk']['calculation'])
+    xwalk_dict['lu.WindCode']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['lu.WindCode']['xwalk']['source'])
+    xwalk_dict['lu.WindCode']['xwalk']['note'] =  np.where(mask, 'this field was not collected by NCRN and has no NCRN equivalent', xwalk_dict['lu.WindCode']['xwalk']['note'])
 
     return xwalk_dict
 
@@ -327,9 +513,36 @@ def _lu_DataProcessingLevel(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO
         dict: dictionary of column names crosswalked between source and destination tables with data updated for this table
     """
 
+    # 1:1 fields
+    one_to_one_fields = [
+    ]
+    # assign grouping variable `calculation` for the 1:1 fields
+    mask = (xwalk_dict['lu.DataProcessingLevel']['xwalk']['destination'].isin(one_to_one_fields))
+    xwalk_dict['lu.DataProcessingLevel']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['lu.DataProcessingLevel']['xwalk']['calculation'])
+    # ID
+    mask = (xwalk_dict['lu.DataProcessingLevel']['xwalk']['destination'] == 'ID')
+    xwalk_dict['lu.DataProcessingLevel']['xwalk']['source'] =  np.where(mask, 'ID_Code', xwalk_dict['lu.DataProcessingLevel']['xwalk']['source'])
+
+    # Calculated fields
+    calculated_fields = [
+    ]
+    # assign grouping variable `calculation` for the calculated fields
+    mask = (xwalk_dict['lu.DataProcessingLevel']['xwalk']['destination'].isin(calculated_fields))
+    xwalk_dict['lu.DataProcessingLevel']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu.DataProcessingLevel']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['lu.DataProcessingLevel']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['lu.DataProcessingLevel']['xwalk']['calculation'])
+
+    # Blanks
+    blank_fields = [
+    ]
+    # assign grouping variable `calculation` for the blank fields
+    mask = (xwalk_dict['lu.DataProcessingLevel']['xwalk']['destination'].isin(blank_fields))
+    xwalk_dict['lu.DataProcessingLevel']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['lu.DataProcessingLevel']['xwalk']['calculation'])
+    xwalk_dict['lu.DataProcessingLevel']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['lu.DataProcessingLevel']['xwalk']['source'])
+    xwalk_dict['lu.DataProcessingLevel']['xwalk']['note'] =  np.where(mask, 'this field was not collected by NCRN and has no NCRN equivalent', xwalk_dict['lu.DataProcessingLevel']['xwalk']['note'])
+
     return xwalk_dict
 
-def _lu_DetectionType(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
+def _lu_DetectionType(xwalk_dict:dict) -> dict:
     """Crosswalk source.tlu_Bird_ID_Method to destination.lu.DetectionType
 
     Args:
@@ -366,8 +579,9 @@ def _lu_DetectionType(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO
     calculated_fields = [
     ]
     # assign grouping variable `calculation` for the calculated fields
-    mask = (xwalk_dict['lu.DetectionType']['xwalk']['destination'].isin(calculated_fields)) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    mask = (xwalk_dict['lu.DetectionType']['xwalk']['destination'].isin(calculated_fields))
     xwalk_dict['lu.DetectionType']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu.DetectionType']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['lu.DetectionType']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['lu.DetectionType']['xwalk']['calculation'])
 
     # Blanks
     blank_fields = [
@@ -391,6 +605,32 @@ def _lu_DistanceClass(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO
     Returns:
         dict: dictionary of column names crosswalked between source and destination tables with data updated for this table
     """
+    # 1:1 fields
+    one_to_one_fields = [
+    ]
+    # assign grouping variable `calculation` for the 1:1 fields
+    mask = (xwalk_dict['lu.DistanceClass']['xwalk']['destination'].isin(one_to_one_fields))
+    xwalk_dict['lu.DistanceClass']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['lu.DistanceClass']['xwalk']['calculation'])
+    # ID
+    mask = (xwalk_dict['lu.DistanceClass']['xwalk']['destination'] == 'ID')
+    xwalk_dict['lu.DistanceClass']['xwalk']['source'] =  np.where(mask, 'ID_Code', xwalk_dict['lu.DistanceClass']['xwalk']['source'])
+
+    # Calculated fields
+    calculated_fields = [
+    ]
+    # assign grouping variable `calculation` for the calculated fields
+    mask = (xwalk_dict['lu.DistanceClass']['xwalk']['destination'].isin(calculated_fields))
+    xwalk_dict['lu.DistanceClass']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu.DistanceClass']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['lu.DistanceClass']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['lu.DistanceClass']['xwalk']['calculation'])
+
+    # Blanks
+    blank_fields = [
+    ]
+    # assign grouping variable `calculation` for the blank fields
+    mask = (xwalk_dict['lu.DistanceClass']['xwalk']['destination'].isin(blank_fields))
+    xwalk_dict['lu.DistanceClass']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['lu.DistanceClass']['xwalk']['calculation'])
+    xwalk_dict['lu.DistanceClass']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['lu.DistanceClass']['xwalk']['source'])
+    xwalk_dict['lu.DistanceClass']['xwalk']['note'] =  np.where(mask, 'this field was not collected by NCRN and has no NCRN equivalent', xwalk_dict['lu.DistanceClass']['xwalk']['note'])
 
     return xwalk_dict
 
@@ -403,6 +643,34 @@ def _lu_GeodeticDatum(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO
     Returns:
         dict: dictionary of column names crosswalked between source and destination tables with data updated for this table
     """
+    # 1:1 fields
+    one_to_one_fields = [
+    ]
+    # assign grouping variable `calculation` for the 1:1 fields
+    mask = (xwalk_dict['lu.DetectionType']['xwalk']['destination'].isin(one_to_one_fields))
+    xwalk_dict['lu.DetectionType']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['lu.DetectionType']['xwalk']['calculation'])
+    # ID
+    mask = (xwalk_dict['lu.DetectionType']['xwalk']['destination'] == 'ID')
+    xwalk_dict['lu.DetectionType']['xwalk']['source'] =  np.where(mask, 'ID_Code', xwalk_dict['lu.DetectionType']['xwalk']['source'])
+
+    # Calculated fields
+    calculated_fields = [
+    ]
+    # assign grouping variable `calculation` for the calculated fields
+    mask = (xwalk_dict['lu.GeodeticDatum']['xwalk']['destination'].isin(calculated_fields))
+    xwalk_dict['lu.GeodeticDatum']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu.GeodeticDatum']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['lu.GeodeticDatum']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['lu.GeodeticDatum']['xwalk']['calculation'])
+
+    # Blanks
+    blank_fields = [
+        'SortOrder'
+        ,'Rowversion'
+    ]
+    # assign grouping variable `calculation` for the blank fields
+    mask = (xwalk_dict['lu.DetectionType']['xwalk']['destination'].isin(blank_fields))
+    xwalk_dict['lu.DetectionType']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['lu.DetectionType']['xwalk']['calculation'])
+    xwalk_dict['lu.DetectionType']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['lu.DetectionType']['xwalk']['source'])
+    xwalk_dict['lu.DetectionType']['xwalk']['note'] =  np.where(mask, 'this field was not collected by NCRN and has no NCRN equivalent', xwalk_dict['lu.DetectionType']['xwalk']['note'])
 
     return xwalk_dict
 
@@ -415,6 +683,32 @@ def _lu_Sex(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####
     Returns:
         dict: dictionary of column names crosswalked between source and destination tables with data updated for this table
     """
+    # 1:1 fields
+    one_to_one_fields = [
+    ]
+    # assign grouping variable `calculation` for the 1:1 fields
+    mask = (xwalk_dict['lu.Sex']['xwalk']['destination'].isin(one_to_one_fields))
+    xwalk_dict['lu.Sex']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['lu.Sex']['xwalk']['calculation'])
+    # ID
+    mask = (xwalk_dict['lu.Sex']['xwalk']['destination'] == 'ID')
+    xwalk_dict['lu.Sex']['xwalk']['source'] =  np.where(mask, 'ID_Code', xwalk_dict['lu.Sex']['xwalk']['source'])
+
+    # Calculated fields
+    calculated_fields = [
+    ]
+    # assign grouping variable `calculation` for the calculated fields
+    mask = (xwalk_dict['lu.Sex']['xwalk']['destination'].isin(calculated_fields))
+    xwalk_dict['lu.Sex']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu.Sex']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['lu.Sex']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['lu.Sex']['xwalk']['calculation'])
+
+    # Blanks
+    blank_fields = [
+    ]
+    # assign grouping variable `calculation` for the blank fields
+    mask = (xwalk_dict['lu.Sex']['xwalk']['destination'].isin(blank_fields))
+    xwalk_dict['lu.Sex']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['lu.Sex']['xwalk']['calculation'])
+    xwalk_dict['lu.Sex']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['lu.Sex']['xwalk']['source'])
+    xwalk_dict['lu.Sex']['xwalk']['note'] =  np.where(mask, 'this field was not collected by NCRN and has no NCRN equivalent', xwalk_dict['lu.Sex']['xwalk']['note'])
 
     return xwalk_dict
 
@@ -431,6 +725,33 @@ def _ncrn_Contact(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TO
     # use tlu_Contacts.Position_Title as experience level
     # if tlu_Contacts.Position_Title as experience level
 
+    # 1:1 fields
+    one_to_one_fields = [
+    ]
+    # assign grouping variable `calculation` for the 1:1 fields
+    mask = (xwalk_dict['ncrn.Contact']['xwalk']['destination'].isin(one_to_one_fields))
+    xwalk_dict['ncrn.Contact']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['ncrn.Contact']['xwalk']['calculation'])
+    # ID
+    mask = (xwalk_dict['ncrn.Contact']['xwalk']['destination'] == 'ID')
+    xwalk_dict['ncrn.Contact']['xwalk']['source'] =  np.where(mask, 'ID_Code', xwalk_dict['ncrn.Contact']['xwalk']['source'])
+
+    # Calculated fields
+    calculated_fields = [
+    ]
+    # assign grouping variable `calculation` for the calculated fields
+    mask = (xwalk_dict['ncrn.Contact']['xwalk']['destination'].isin(calculated_fields))
+    xwalk_dict['ncrn.Contact']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn.Contact']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['ncrn.Contact']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn.Contact']['xwalk']['calculation'])
+
+    # Blanks
+    blank_fields = [
+    ]
+    # assign grouping variable `calculation` for the blank fields
+    mask = (xwalk_dict['ncrn.Contact']['xwalk']['destination'].isin(blank_fields))
+    xwalk_dict['ncrn.Contact']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn.Contact']['xwalk']['calculation'])
+    xwalk_dict['ncrn.Contact']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn.Contact']['xwalk']['source'])
+    xwalk_dict['ncrn.Contact']['xwalk']['note'] =  np.where(mask, 'this field was not collected by NCRN and has no NCRN equivalent', xwalk_dict['ncrn.Contact']['xwalk']['note'])
+
     return xwalk_dict
 
 def _lu_PrecipitationType(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
@@ -442,6 +763,33 @@ def _lu_PrecipitationType(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##
     Returns:
         dict: dictionary of column names crosswalked between source and destination tables with data updated for this table
     """
+
+    # 1:1 fields
+    one_to_one_fields = [
+    ]
+    # assign grouping variable `calculation` for the 1:1 fields
+    mask = (xwalk_dict['lu.PrecipitationType']['xwalk']['destination'].isin(one_to_one_fields))
+    xwalk_dict['lu.PrecipitationType']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['lu.PrecipitationType']['xwalk']['calculation'])
+    # ID
+    mask = (xwalk_dict['lu.PrecipitationType']['xwalk']['destination'] == 'ID')
+    xwalk_dict['lu.PrecipitationType']['xwalk']['source'] =  np.where(mask, 'ID_Code', xwalk_dict['lu.PrecipitationType']['xwalk']['source'])
+
+    # Calculated fields
+    calculated_fields = [
+    ]
+    # assign grouping variable `calculation` for the calculated fields
+    mask = (xwalk_dict['lu.PrecipitationType']['xwalk']['destination'].isin(calculated_fields))
+    xwalk_dict['lu.PrecipitationType']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu.PrecipitationType']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['lu.PrecipitationType']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['lu.PrecipitationType']['xwalk']['calculation'])
+
+    # Blanks
+    blank_fields = [
+    ]
+    # assign grouping variable `calculation` for the blank fields
+    mask = (xwalk_dict['lu.PrecipitationType']['xwalk']['destination'].isin(blank_fields))
+    xwalk_dict['lu.PrecipitationType']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['lu.PrecipitationType']['xwalk']['calculation'])
+    xwalk_dict['lu.PrecipitationType']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['lu.PrecipitationType']['xwalk']['source'])
+    xwalk_dict['lu.PrecipitationType']['xwalk']['note'] =  np.where(mask, 'this field was not collected by NCRN and has no NCRN equivalent', xwalk_dict['lu.PrecipitationType']['xwalk']['note'])
 
     return xwalk_dict
 
@@ -496,6 +844,33 @@ def _ncrn_BirdGroups(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO#
     # dbo_tlu_GuildAssignment.Active == dbo.ncrn.BirdGroups.IsActive
     # dbo_tbl_Guilds.Integrity_Element + dbo_tbl_Guilds.Guild_Name == dbo.ncrn.BirdGroups.Comment
 
+    # 1:1 fields
+    one_to_one_fields = [
+    ]
+    # assign grouping variable `calculation` for the 1:1 fields
+    mask = (xwalk_dict['ncrn.BirdGroups']['xwalk']['destination'].isin(one_to_one_fields))
+    xwalk_dict['ncrn.BirdGroups']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['ncrn.BirdGroups']['xwalk']['calculation'])
+    # ID
+    mask = (xwalk_dict['ncrn.BirdGroups']['xwalk']['destination'] == 'ID')
+    xwalk_dict['ncrn.BirdGroups']['xwalk']['source'] =  np.where(mask, 'ID_Code', xwalk_dict['ncrn.BirdGroups']['xwalk']['source'])
+
+    # Calculated fields
+    calculated_fields = [
+    ]
+    # assign grouping variable `calculation` for the calculated fields
+    mask = (xwalk_dict['ncrn.BirdGroups']['xwalk']['destination'].isin(calculated_fields))
+    xwalk_dict['ncrn.BirdGroups']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn.BirdGroups']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['ncrn.BirdGroups']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn.BirdGroups']['xwalk']['calculation'])
+
+    # Blanks
+    blank_fields = [
+    ]
+    # assign grouping variable `calculation` for the blank fields
+    mask = (xwalk_dict['ncrn.BirdGroups']['xwalk']['destination'].isin(blank_fields))
+    xwalk_dict['ncrn.BirdGroups']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn.BirdGroups']['xwalk']['calculation'])
+    xwalk_dict['ncrn.BirdGroups']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn.BirdGroups']['xwalk']['source'])
+    xwalk_dict['ncrn.BirdGroups']['xwalk']['note'] =  np.where(mask, 'this field was not collected by NCRN and has no NCRN equivalent', xwalk_dict['ncrn.BirdGroups']['xwalk']['note'])
+
     return xwalk_dict
 
 def _lu_NoiseLevel(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
@@ -507,6 +882,32 @@ def _lu_NoiseLevel(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##T
     Returns:
         dict: dictionary of column names crosswalked between source and destination tables with data updated for this table
     """
+    # 1:1 fields
+    one_to_one_fields = [
+    ]
+    # assign grouping variable `calculation` for the 1:1 fields
+    mask = (xwalk_dict['lu.NoiseLevel']['xwalk']['destination'].isin(one_to_one_fields))
+    xwalk_dict['lu.NoiseLevel']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['lu.NoiseLevel']['xwalk']['calculation'])
+    # ID
+    mask = (xwalk_dict['lu.NoiseLevel']['xwalk']['destination'] == 'ID')
+    xwalk_dict['lu.NoiseLevel']['xwalk']['source'] =  np.where(mask, 'ID_Code', xwalk_dict['lu.NoiseLevel']['xwalk']['source'])
+
+    # Calculated fields
+    calculated_fields = [
+    ]
+    # assign grouping variable `calculation` for the calculated fields
+    mask = (xwalk_dict['lu.NoiseLevel']['xwalk']['destination'].isin(calculated_fields))
+    xwalk_dict['lu.NoiseLevel']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu.NoiseLevel']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['lu.NoiseLevel']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['lu.NoiseLevel']['xwalk']['calculation'])
+
+    # Blanks
+    blank_fields = [
+    ]
+    # assign grouping variable `calculation` for the blank fields
+    mask = (xwalk_dict['lu.NoiseLevel']['xwalk']['destination'].isin(blank_fields))
+    xwalk_dict['lu.NoiseLevel']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['lu.NoiseLevel']['xwalk']['calculation'])
+    xwalk_dict['lu.NoiseLevel']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['lu.NoiseLevel']['xwalk']['source'])
+    xwalk_dict['lu.NoiseLevel']['xwalk']['note'] =  np.where(mask, 'this field was not collected by NCRN and has no NCRN equivalent', xwalk_dict['lu.NoiseLevel']['xwalk']['note'])
 
     return xwalk_dict
 
@@ -521,6 +922,33 @@ def _ncrn_AuditLog(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##T
         dict: dictionary of column names crosswalked between source and destination tables with data updated for this table
     """
 
+    # 1:1 fields
+    one_to_one_fields = [
+    ]
+    # assign grouping variable `calculation` for the 1:1 fields
+    mask = (xwalk_dict['ncrn.AuditLog']['xwalk']['destination'].isin(one_to_one_fields))
+    xwalk_dict['ncrn.AuditLog']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['ncrn.AuditLog']['xwalk']['calculation'])
+    # ID
+    mask = (xwalk_dict['ncrn.AuditLog']['xwalk']['destination'] == 'ID')
+    xwalk_dict['ncrn.AuditLog']['xwalk']['source'] =  np.where(mask, 'ID_Code', xwalk_dict['ncrn.AuditLog']['xwalk']['source'])
+
+    # Calculated fields
+    calculated_fields = [
+    ]
+    # assign grouping variable `calculation` for the calculated fields
+    mask = (xwalk_dict['ncrn.AuditLog']['xwalk']['destination'].isin(calculated_fields))
+    xwalk_dict['ncrn.AuditLog']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn.AuditLog']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['ncrn.AuditLog']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn.AuditLog']['xwalk']['calculation'])
+
+    # Blanks
+    blank_fields = [
+    ]
+    # assign grouping variable `calculation` for the blank fields
+    mask = (xwalk_dict['ncrn.AuditLog']['xwalk']['destination'].isin(blank_fields))
+    xwalk_dict['ncrn.AuditLog']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn.AuditLog']['xwalk']['calculation'])
+    xwalk_dict['ncrn.AuditLog']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn.AuditLog']['xwalk']['source'])
+    xwalk_dict['ncrn.AuditLog']['xwalk']['note'] =  np.where(mask, 'this field was not collected by NCRN and has no NCRN equivalent', xwalk_dict['ncrn.AuditLog']['xwalk']['note'])
+
     return xwalk_dict
 
 def _ncrn_AuditLogDetail(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
@@ -533,6 +961,33 @@ def _ncrn_AuditLogDetail(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##T
         dict: dictionary of column names crosswalked between source and destination tables with data updated for this table
     """
 
+    # 1:1 fields
+    one_to_one_fields = [
+    ]
+    # assign grouping variable `calculation` for the 1:1 fields
+    mask = (xwalk_dict['ncrn.AuditLogDetail']['xwalk']['destination'].isin(one_to_one_fields))
+    xwalk_dict['ncrn.AuditLogDetail']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['ncrn.AuditLogDetail']['xwalk']['calculation'])
+    # ID
+    mask = (xwalk_dict['ncrn.AuditLogDetail']['xwalk']['destination'] == 'ID')
+    xwalk_dict['ncrn.AuditLogDetail']['xwalk']['source'] =  np.where(mask, 'ID_Code', xwalk_dict['ncrn.AuditLogDetail']['xwalk']['source'])
+
+    # Calculated fields
+    calculated_fields = [
+    ]
+    # assign grouping variable `calculation` for the calculated fields
+    mask = (xwalk_dict['ncrn.AuditLogDetail']['xwalk']['destination'].isin(calculated_fields))
+    xwalk_dict['ncrn.AuditLogDetail']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn.AuditLogDetail']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['ncrn.AuditLogDetail']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn.AuditLogDetail']['xwalk']['calculation'])
+
+    # Blanks
+    blank_fields = [
+    ]
+    # assign grouping variable `calculation` for the blank fields
+    mask = (xwalk_dict['ncrn.AuditLogDetail']['xwalk']['destination'].isin(blank_fields))
+    xwalk_dict['ncrn.AuditLogDetail']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn.AuditLogDetail']['xwalk']['calculation'])
+    xwalk_dict['ncrn.AuditLogDetail']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn.AuditLogDetail']['xwalk']['source'])
+    xwalk_dict['ncrn.AuditLogDetail']['xwalk']['note'] =  np.where(mask, 'this field was not collected by NCRN and has no NCRN equivalent', xwalk_dict['ncrn.AuditLogDetail']['xwalk']['note'])
+
     return xwalk_dict
 
 def _lu_SamplingMethod(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
@@ -544,6 +999,33 @@ def _lu_SamplingMethod(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TOD
     Returns:
         dict: dictionary of column names crosswalked between source and destination tables with data updated for this table
     """
+    
+    # 1:1 fields
+    one_to_one_fields = [
+    ]
+    # assign grouping variable `calculation` for the 1:1 fields
+    mask = (xwalk_dict['lu.SamplingMethod']['xwalk']['destination'].isin(one_to_one_fields))
+    xwalk_dict['lu.SamplingMethod']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['lu.SamplingMethod']['xwalk']['calculation'])
+    # ID
+    mask = (xwalk_dict['lu.SamplingMethod']['xwalk']['destination'] == 'ID')
+    xwalk_dict['lu.SamplingMethod']['xwalk']['source'] =  np.where(mask, 'ID_Code', xwalk_dict['lu.SamplingMethod']['xwalk']['source'])
+
+    # Calculated fields
+    calculated_fields = [
+    ]
+    # assign grouping variable `calculation` for the calculated fields
+    mask = (xwalk_dict['lu.SamplingMethod']['xwalk']['destination'].isin(calculated_fields))
+    xwalk_dict['lu.SamplingMethod']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu.SamplingMethod']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['lu.SamplingMethod']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['lu.SamplingMethod']['xwalk']['calculation'])
+
+    # Blanks
+    blank_fields = [
+    ]
+    # assign grouping variable `calculation` for the blank fields
+    mask = (xwalk_dict['lu.SamplingMethod']['xwalk']['destination'].isin(blank_fields))
+    xwalk_dict['lu.SamplingMethod']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['lu.SamplingMethod']['xwalk']['calculation'])
+    xwalk_dict['lu.SamplingMethod']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['lu.SamplingMethod']['xwalk']['source'])
+    xwalk_dict['lu.SamplingMethod']['xwalk']['note'] =  np.where(mask, 'this field was not collected by NCRN and has no NCRN equivalent', xwalk_dict['lu.SamplingMethod']['xwalk']['note'])
 
     return xwalk_dict
 
@@ -559,6 +1041,33 @@ def _lu_Habitat(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO
     """
     # in the app, "habitat" seems to be a 1:many attribute of a sampling location
     # NCRN hasn't historically subdivided beyond "Forest" and "Grassland" so we just use tbl_Protocol 
+
+    # 1:1 fields
+    one_to_one_fields = [
+    ]
+    # assign grouping variable `calculation` for the 1:1 fields
+    mask = (xwalk_dict['lu.Habitat']['xwalk']['destination'].isin(one_to_one_fields))
+    xwalk_dict['lu.Habitat']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['lu.Habitat']['xwalk']['calculation'])
+    # ID
+    mask = (xwalk_dict['lu.Habitat']['xwalk']['destination'] == 'ID')
+    xwalk_dict['lu.Habitat']['xwalk']['source'] =  np.where(mask, 'ID_Code', xwalk_dict['lu.Habitat']['xwalk']['source'])
+
+    # Calculated fields
+    calculated_fields = [
+    ]
+    # assign grouping variable `calculation` for the calculated fields
+    mask = (xwalk_dict['lu.Habitat']['xwalk']['destination'].isin(calculated_fields))
+    xwalk_dict['lu.Habitat']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu.Habitat']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['lu.Habitat']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['lu.Habitat']['xwalk']['calculation'])
+
+    # Blanks
+    blank_fields = [
+    ]
+    # assign grouping variable `calculation` for the blank fields
+    mask = (xwalk_dict['lu.Habitat']['xwalk']['destination'].isin(blank_fields))
+    xwalk_dict['lu.Habitat']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['lu.Habitat']['xwalk']['calculation'])
+    xwalk_dict['lu.Habitat']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['lu.Habitat']['xwalk']['source'])
+    xwalk_dict['lu.Habitat']['xwalk']['note'] =  np.where(mask, 'this field was not collected by NCRN and has no NCRN equivalent', xwalk_dict['lu.Habitat']['xwalk']['note'])
 
     return xwalk_dict
 
