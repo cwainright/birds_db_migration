@@ -23,6 +23,8 @@ Crosswalks divide `destination` fields into three types and assign values to thr
 
 import pandas as pd
 import numpy as np
+import src.db_connect as dbc
+import datetime
 
 def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
     """Make the crosswalk for source.tbl_Events to destination.ncrn.DetectionEvent
@@ -123,8 +125,8 @@ def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
         ,'ExcludeNote'
         ,'ExcludeEvent'
     ]
-    mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'].isin(calculated_fields)) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
-    xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn.DetectionEvent']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    # mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'].isin(calculated_fields)) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    # xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn.DetectionEvent']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['ncrn.DetectionEvent']['xwalk']['destination'].isin(calculated_fields))
     xwalk_dict['ncrn.DetectionEvent']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn.DetectionEvent']['xwalk']['calculation'])
@@ -171,6 +173,85 @@ def _ncrn_BirdDetection(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TO
     """
     # xwalk_dict['ncrn.BirdDetection']['source_name'] = 'tbl_Field_Data'
     # xwalk_dict['ncrn.DetectionEvent']['xwalk']
+
+        # 1:1 fields
+    one_to_one_fields = [
+        'ID'
+        ,'DetectionEventID'
+        ,'SexID'
+        ,'ProtocolDistanceClassID'
+        ,'ProtocolTimeIntervalID'
+        ,'BirdSpeciesParkID'
+        ,'ProtocolDetectionTypeID'
+        ,'ExcludeReason'
+    ]
+    # assign grouping variable `calculation` for the 1:1 fields
+    mask = (xwalk_dict['ncrn.BirdDetection']['xwalk']['destination'].isin(one_to_one_fields))
+    xwalk_dict['ncrn.BirdDetection']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['ncrn.BirdDetection']['xwalk']['calculation'])
+    # ID
+    mask = (xwalk_dict['ncrn.BirdDetection']['xwalk']['destination'] == 'ID')
+    xwalk_dict['ncrn.BirdDetection']['xwalk']['source'] =  np.where(mask, 'Data_ID', xwalk_dict['ncrn.BirdDetection']['xwalk']['source'])
+    # DetectionEventID
+    mask = (xwalk_dict['ncrn.BirdDetection']['xwalk']['destination'] == 'DetectionEventID')
+    xwalk_dict['ncrn.BirdDetection']['xwalk']['source'] =  np.where(mask, 'Event_ID', xwalk_dict['ncrn.BirdDetection']['xwalk']['source'])
+    # SexID
+    mask = (xwalk_dict['ncrn.BirdDetection']['xwalk']['destination'] == 'SexID')
+    xwalk_dict['ncrn.BirdDetection']['xwalk']['source'] =  np.where(mask, 'Sex_ID', xwalk_dict['ncrn.BirdDetection']['xwalk']['source'])
+    # ProtocolDistanceClassID
+    mask = (xwalk_dict['ncrn.BirdDetection']['xwalk']['destination'] == 'ProtocolDistanceClassID')
+    xwalk_dict['ncrn.BirdDetection']['xwalk']['source'] =  np.where(mask, 'Distance_id', xwalk_dict['ncrn.BirdDetection']['xwalk']['source'])
+    # ProtocolTimeIntervalID
+    mask = (xwalk_dict['ncrn.BirdDetection']['xwalk']['destination'] == 'ProtocolTimeIntervalID')
+    xwalk_dict['ncrn.BirdDetection']['xwalk']['source'] =  np.where(mask, 'Interval', xwalk_dict['ncrn.BirdDetection']['xwalk']['source'])
+    # BirdSpeciesParkID
+    mask = (xwalk_dict['ncrn.BirdDetection']['xwalk']['destination'] == 'BirdSpeciesParkID')
+    xwalk_dict['ncrn.BirdDetection']['xwalk']['source'] =  np.where(mask, 'AOU_Code', xwalk_dict['ncrn.BirdDetection']['xwalk']['source'])
+    # ProtocolDetectionTypeID
+    mask = (xwalk_dict['ncrn.BirdDetection']['xwalk']['destination'] == 'ProtocolDetectionTypeID')
+    xwalk_dict['ncrn.BirdDetection']['xwalk']['source'] =  np.where(mask, 'ID_Method_Code', xwalk_dict['ncrn.BirdDetection']['xwalk']['source'])
+    # ExcludeReason
+    mask = (xwalk_dict['ncrn.BirdDetection']['xwalk']['destination'] == 'ExcludeReason')
+    xwalk_dict['ncrn.BirdDetection']['xwalk']['source'] =  np.where(mask, 'FlagDescription', xwalk_dict['ncrn.BirdDetection']['xwalk']['source'])
+
+    calculated_fields = [
+        'ExcludeDetection'
+        ,'NumberIndividuals'
+        ,'DetectionNotes'
+        ,'ImportNotes'
+    ]
+    mask = (xwalk_dict['ncrn.BirdDetection']['xwalk']['destination'].isin(calculated_fields)) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['ncrn.BirdDetection']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn.BirdDetection']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    # assign grouping variable `calculation` for the calculated fields
+    mask = (xwalk_dict['ncrn.BirdDetection']['xwalk']['destination'].isin(calculated_fields))
+    xwalk_dict['ncrn.BirdDetection']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn.BirdDetection']['xwalk']['calculation'])
+    # ExcludeDetection  BIT type (bool as 0 or 1); should be 0 when `DataFlag` == False
+    mask = (xwalk_dict['ncrn.BirdDetection']['xwalk']['destination'] == 'ExcludeDetection')
+    xwalk_dict['ncrn.BirdDetection']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn.BirdDetection']['tbl_load']['ExcludeDetection']=np.where((xwalk_dict['ncrn.BirdDetection']['source']['DataFlag']==False), 0, 1)", xwalk_dict['ncrn.BirdDetection']['xwalk']['source'])
+    xwalk_dict['ncrn.BirdDetection']['xwalk']['note'] = np.where(mask, "BIT type (bool as 0 or 1); should be 0 when `DataFlag` == False", xwalk_dict['ncrn.BirdDetection']['xwalk']['note'])
+    # NumberIndividuals  NCRN recorded bird detections as one-row-per-individual in tbl_Field_Data
+    mask = (xwalk_dict['ncrn.BirdDetection']['xwalk']['destination'] == 'NumberIndividuals')
+    xwalk_dict['ncrn.BirdDetection']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn.BirdDetection']['tbl_load']['NumberIndividuals']=1", xwalk_dict['ncrn.BirdDetection']['xwalk']['source'])
+    xwalk_dict['ncrn.BirdDetection']['xwalk']['note'] = np.where(mask, "NCRN recorded bird detections as one-row-per-individual in tbl_Field_Data", xwalk_dict['ncrn.BirdDetection']['xwalk']['note'])
+    # DetectionNotes  NCRN recorded bird detections as one-row-per-individual in tbl_Field_Data
+    mask = (xwalk_dict['ncrn.BirdDetection']['xwalk']['destination'] == 'DetectionNotes')
+    xwalk_dict['ncrn.BirdDetection']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn.BirdDetection']['tbl_load']['DetectionNotes']='Previously_Obs: ' + xwalk_dict['ncrn.BirdDetection']['source']['Previously_Obs'].astype(str)", xwalk_dict['ncrn.BirdDetection']['xwalk']['source'])
+    xwalk_dict['ncrn.BirdDetection']['xwalk']['note'] = np.where(mask, "NCRN's access db has a field `tbl_Field_Data.Previously_Obs` which has no equivalent in sql server. Recording this field as a note to preserve data short-term. Long-term solution is feature-request to add field ncrn.BirdDetection.Previously_Obs", xwalk_dict['ncrn.BirdDetection']['xwalk']['note'])
+    # ImportNotes  NCRN recorded bird detections as one-row-per-individual in tbl_Field_Data
+    mask = (xwalk_dict['ncrn.BirdDetection']['xwalk']['destination'] == 'ImportNotes')
+    xwalk_dict['ncrn.BirdDetection']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn.BirdDetection']['tbl_load']['ImportNotes']='Initial_Three_Min_Cnt: ' + xwalk_dict['ncrn.BirdDetection']['source']['Initial_Three_Min_Cnt'].astype(str)", xwalk_dict['ncrn.BirdDetection']['xwalk']['source'])
+    xwalk_dict['ncrn.BirdDetection']['xwalk']['note'] = np.where(mask, "NCRN's access db has a field `tbl_Field_Data.Initial_Three_Min_Cnt` which has no equivalent in sql server. Recording this field as a note to preserve data short-term. Long-term solution is feature-request to add field ncrn.BirdDetection.Initial_Three_Min_Cnt", xwalk_dict['ncrn.BirdDetection']['xwalk']['note'])
+
+    # Blanks
+    blank_fields = [
+        'DataProcessingLevelNote'
+        ,'Rowversion'
+        ,'UserCode'
+    ]
+    # assign grouping variable `calculation` for the blank fields
+    mask = (xwalk_dict['ncrn.BirdDetection']['xwalk']['destination'].isin(blank_fields))
+    xwalk_dict['ncrn.BirdDetection']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn.BirdDetection']['xwalk']['calculation'])
+    xwalk_dict['ncrn.BirdDetection']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn.BirdDetection']['xwalk']['source'])
+    xwalk_dict['ncrn.BirdDetection']['xwalk']['note'] =  np.where(mask, 'this field was not collected by NCRN and has no NCRN equivalent', xwalk_dict['ncrn.BirdDetection']['xwalk']['note'])
 
     return xwalk_dict
 
@@ -442,7 +523,56 @@ def _lu_Habitat(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO
     return xwalk_dict
 
 
+def _exception_ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
+    """Exceptions associated with the generation of destination table ncrn.DetectionEvent"""
 
+    #  EXCEPTION 1: exceptions from storing observers/recorders in long-format instead of wide-format
+    con = dbc._db_connect('access')
+    with open(r'src\qry\qry_long_event_contacts.sql', 'r') as query:
+        df = pd.read_sql_query(query.read(),con)
+    con.close()
+
+    mysorts = df.groupby(['Event_ID']).size().reset_index(name='count').sort_values(['count'], ascending=True)
+    double_events = mysorts[mysorts['count']>1].Event_ID.unique()
+    single_events = mysorts[mysorts['count']==1].Event_ID.unique()
+    zero_events = mysorts[mysorts['count']==0].Event_ID.unique()
+    # len(df) == len(singles) + len(doubles) # sanity check
+
+    # edge case: >1 person was associated with the event
+    mask = (df['Event_ID'].isin(double_events)) & (df['Contact_Role']!='Observer')
+    df['Contact_Role'] = np.where(mask, 'Recorder', df['Contact_Role'])
+    mask = (df['Event_ID'].isin(double_events))
+    lookup = df[mask].copy()
+    lookup['observer'] = lookup['Contact_ID']
+    lookup['recorder'] = lookup['Contact_ID']
+    lookup = lookup.drop_duplicates('Event_ID').reset_index()[['Event_ID', 'observer', 'recorder']]
+    df = df.merge(lookup, on='Event_ID', how='left')
+
+    # edge case: 0 people were associated with the event
+    mask = (df['Event_ID'].isin(zero_events))
+    df['observer'] = np.where(mask, np.NaN, df['observer'])
+    df['recorder'] = np.where(mask, np.NaN, df['recorder'])
+
+    # base case: one-and-only-one person was associated with the event
+    mask = (df['Event_ID'].isin(single_events))
+    df['observer'] = np.where(mask, df['Contact_ID'], df['observer'])
+    df['recorder'] = np.where(mask, df['Contact_ID'], df['recorder'])
+
+    # cleanup
+    df = df.drop_duplicates('Event_ID')
+    df = df[['Event_ID', 'observer', 'recorder', 'Position_Title']]
+    df.rename(columns={'Event_ID':'event_id'}, inplace=True)
+
+    xwalk_dict['ncrn.DetectionEvent']['source'] = xwalk_dict['ncrn.DetectionEvent']['source'].merge(df, on='event_id', how='left')
+
+    # EXCEPTION 2: exceptions from storing date and time separately instead of as datetime
+    xwalk_dict['ncrn.DetectionEvent']['source']['Date'] = xwalk_dict['ncrn.DetectionEvent']['source']['Date'].dt.date
+    xwalk_dict['ncrn.DetectionEvent']['source']['start_time'] = xwalk_dict['ncrn.DetectionEvent']['source']['start_time'].dt.time
+    xwalk_dict['ncrn.DetectionEvent']['source']['start_time'] = np.where((xwalk_dict['ncrn.DetectionEvent']['source']['start_time'].isna()), datetime.time(0, 0),xwalk_dict['ncrn.DetectionEvent']['source']['start_time'] )
+    xwalk_dict['ncrn.DetectionEvent']['source']['Date'] = np.where((xwalk_dict['ncrn.DetectionEvent']['source']['Date'].isna()), datetime.date(1900, 1, 1),xwalk_dict['ncrn.DetectionEvent']['source']['Date'] )
+    xwalk_dict['ncrn.DetectionEvent']['source'].loc[:,'activity_start_datetime'] = pd.to_datetime(xwalk_dict['ncrn.DetectionEvent']['source'].Date.astype(str)+' '+xwalk_dict['ncrn.DetectionEvent']['source'].start_time.astype(str))
+
+    return xwalk_dict
 
 
 
