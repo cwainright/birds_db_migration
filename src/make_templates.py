@@ -150,6 +150,9 @@ def _execute_xwalks(xwalk_dict:dict) -> dict:
             src_col = xwalk[xwalk['destination']==dest_col].source.values[0]
             xwalk_dict[tbl]['tbl_load'][dest_col] = np.NaN
 
+
+    xwalk_dict = tx._add_row_id(xwalk_dict)
+    
     return xwalk_dict
 
 def _validate_tbl_loads(xwalk_dict:dict) -> dict:
