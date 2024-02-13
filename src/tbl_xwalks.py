@@ -645,24 +645,40 @@ def _lu_DistanceClass(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO
     """
     # 1:1 fields
     one_to_one_fields = [
+        'ID'
+        ,'Code'
+        ,'Label'
     ]
     # assign grouping variable `calculation` for the 1:1 fields
     mask = (xwalk_dict['lu.DistanceClass']['xwalk']['destination'].isin(one_to_one_fields))
     xwalk_dict['lu.DistanceClass']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['lu.DistanceClass']['xwalk']['calculation'])
     # ID
     mask = (xwalk_dict['lu.DistanceClass']['xwalk']['destination'] == 'ID')
-    xwalk_dict['lu.DistanceClass']['xwalk']['source'] =  np.where(mask, 'ID_Code', xwalk_dict['lu.DistanceClass']['xwalk']['source'])
+    xwalk_dict['lu.DistanceClass']['xwalk']['source'] =  np.where(mask, 'Distance_id', xwalk_dict['lu.DistanceClass']['xwalk']['source'])
+    # Code
+    mask = (xwalk_dict['lu.DistanceClass']['xwalk']['destination'] == 'Code')
+    xwalk_dict['lu.DistanceClass']['xwalk']['source'] =  np.where(mask, 'Distance_id', xwalk_dict['lu.DistanceClass']['xwalk']['source'])
+    # Label
+    mask = (xwalk_dict['lu.DistanceClass']['xwalk']['destination'] == 'Label')
+    xwalk_dict['lu.DistanceClass']['xwalk']['source'] =  np.where(mask, 'Distance_Text', xwalk_dict['lu.DistanceClass']['xwalk']['source'])
 
     # Calculated fields
     calculated_fields = [
+        'Description'
     ]
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['lu.DistanceClass']['xwalk']['destination'].isin(calculated_fields))
     xwalk_dict['lu.DistanceClass']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu.DistanceClass']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
     xwalk_dict['lu.DistanceClass']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['lu.DistanceClass']['xwalk']['calculation'])
+    # Description varchar(100) concat dbo_tlu_Distance_Estimate.ActiveDate and dbo_tlu_Distance_Estimate.RetireDate
+    mask = (xwalk_dict['lu.DistanceClass']['xwalk']['destination'] == 'Description')
+    xwalk_dict['lu.DistanceClass']['xwalk']['source'] = np.where(mask, "xwalk_dict['lu.DistanceClass']['tbl_load']['Description'] = 'ActiveDate:' + xwalk_dict['lu.DistanceClass']['source'].ActiveDate.astype(str) + ';' + 'RetireDate:' + xwalk_dict['lu.DistanceClass']['source'].RetireDate.astype(str)", xwalk_dict['lu.DistanceClass']['xwalk']['source'])
+    xwalk_dict['lu.DistanceClass']['xwalk']['note'] = np.where(mask, "varchar(100) concat dbo_tlu_Distance_Estimate.ActiveDate and dbo_tlu_Distance_Estimate.RetireDate", xwalk_dict['lu.DistanceClass']['xwalk']['note'])
 
     # Blanks
     blank_fields = [
+        'SortOrder'
+        ,'Rowversion'
     ]
     # assign grouping variable `calculation` for the blank fields
     mask = (xwalk_dict['lu.DistanceClass']['xwalk']['destination'].isin(blank_fields))
