@@ -171,10 +171,8 @@ def _ncrn_BirdDetection(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TO
     Returns:
         dict: dictionary of column names crosswalked between source and destination tables with data updated for this table
     """
-    # xwalk_dict['ncrn.BirdDetection']['source_name'] = 'tbl_Field_Data'
-    # xwalk_dict['ncrn.DetectionEvent']['xwalk']
 
-        # 1:1 fields
+    # 1:1 fields
     one_to_one_fields = [
         'ID'
         ,'DetectionEventID'
@@ -213,6 +211,7 @@ def _ncrn_BirdDetection(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TO
     mask = (xwalk_dict['ncrn.BirdDetection']['xwalk']['destination'] == 'ExcludeReason')
     xwalk_dict['ncrn.BirdDetection']['xwalk']['source'] =  np.where(mask, 'FlagDescription', xwalk_dict['ncrn.BirdDetection']['xwalk']['source'])
 
+    # Calculated fields
     calculated_fields = [
         'ExcludeDetection'
         ,'NumberIndividuals'
@@ -339,6 +338,47 @@ def _lu_DetectionType(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO
     Returns:
         dict: dictionary of column names crosswalked between source and destination tables with data updated for this table
     """
+
+    # 1:1 fields
+    one_to_one_fields = [
+        'ID'
+        ,'Code'
+        ,'Label'
+        ,'Description'
+    ]
+    # assign grouping variable `calculation` for the 1:1 fields
+    mask = (xwalk_dict['lu.DetectionType']['xwalk']['destination'].isin(one_to_one_fields))
+    xwalk_dict['lu.DetectionType']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['lu.DetectionType']['xwalk']['calculation'])
+    # ID
+    mask = (xwalk_dict['lu.DetectionType']['xwalk']['destination'] == 'ID')
+    xwalk_dict['lu.DetectionType']['xwalk']['source'] =  np.where(mask, 'ID_Code', xwalk_dict['lu.DetectionType']['xwalk']['source'])
+    # Code
+    mask = (xwalk_dict['lu.DetectionType']['xwalk']['destination'] == 'Code')
+    xwalk_dict['lu.DetectionType']['xwalk']['source'] =  np.where(mask, 'ID_Code', xwalk_dict['lu.DetectionType']['xwalk']['source'])
+    # Label
+    mask = (xwalk_dict['lu.DetectionType']['xwalk']['destination'] == 'Label')
+    xwalk_dict['lu.DetectionType']['xwalk']['source'] =  np.where(mask, 'ID_Text', xwalk_dict['lu.DetectionType']['xwalk']['source'])
+    # Description
+    mask = (xwalk_dict['lu.DetectionType']['xwalk']['destination'] == 'Description')
+    xwalk_dict['lu.DetectionType']['xwalk']['source'] =  np.where(mask, 'ID_Text', xwalk_dict['lu.DetectionType']['xwalk']['source'])
+
+    # Calculated fields
+    calculated_fields = [
+    ]
+    # assign grouping variable `calculation` for the calculated fields
+    mask = (xwalk_dict['lu.DetectionType']['xwalk']['destination'].isin(calculated_fields)) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['lu.DetectionType']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu.DetectionType']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+
+    # Blanks
+    blank_fields = [
+        'SortOrder'
+        ,'Rowversion'
+    ]
+    # assign grouping variable `calculation` for the blank fields
+    mask = (xwalk_dict['lu.DetectionType']['xwalk']['destination'].isin(blank_fields))
+    xwalk_dict['lu.DetectionType']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['lu.DetectionType']['xwalk']['calculation'])
+    xwalk_dict['lu.DetectionType']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['lu.DetectionType']['xwalk']['source'])
+    xwalk_dict['lu.DetectionType']['xwalk']['note'] =  np.where(mask, 'this field was not collected by NCRN and has no NCRN equivalent', xwalk_dict['lu.DetectionType']['xwalk']['note'])
 
     return xwalk_dict
 
@@ -574,6 +614,11 @@ def _exception_ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
 
     return xwalk_dict
 
+def _add_row_id(xwalk_dict:dict) -> dict:
+    # 1-index row-id for all tables
 
+    for tbl in xwalk_dict.keys():
+        if len(xwalk_dict[tbl]['tbl_load'])>0:
+            xwalk_dict[tbl]['tbl_load']['rowid'] = xwalk_dict[tbl]['tbl_load'].index+1
 
-
+    return xwalk_dict
