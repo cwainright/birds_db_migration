@@ -683,13 +683,22 @@ def _lu_GeodeticDatum(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO
     """
     # 1:1 fields
     one_to_one_fields = [
+        'ID'
+        ,'Code'
+        ,'Label'
     ]
     # assign grouping variable `calculation` for the 1:1 fields
-    mask = (xwalk_dict['lu.DetectionType']['xwalk']['destination'].isin(one_to_one_fields))
-    xwalk_dict['lu.DetectionType']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['lu.DetectionType']['xwalk']['calculation'])
+    mask = (xwalk_dict['lu.GeodeticDatum']['xwalk']['destination'].isin(one_to_one_fields))
+    xwalk_dict['lu.GeodeticDatum']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['lu.GeodeticDatum']['xwalk']['calculation'])
     # ID
-    mask = (xwalk_dict['lu.DetectionType']['xwalk']['destination'] == 'ID')
-    xwalk_dict['lu.DetectionType']['xwalk']['source'] =  np.where(mask, 'ID_Code', xwalk_dict['lu.DetectionType']['xwalk']['source'])
+    mask = (xwalk_dict['lu.GeodeticDatum']['xwalk']['destination'] == 'ID')
+    xwalk_dict['lu.GeodeticDatum']['xwalk']['source'] =  np.where(mask, 'Datum_ID', xwalk_dict['lu.GeodeticDatum']['xwalk']['source'])
+    # Code
+    mask = (xwalk_dict['lu.GeodeticDatum']['xwalk']['destination'] == 'Code')
+    xwalk_dict['lu.GeodeticDatum']['xwalk']['source'] =  np.where(mask, 'Datum_ID', xwalk_dict['lu.GeodeticDatum']['xwalk']['source'])
+    # Label
+    mask = (xwalk_dict['lu.GeodeticDatum']['xwalk']['destination'] == 'Label')
+    xwalk_dict['lu.GeodeticDatum']['xwalk']['source'] =  np.where(mask, 'Datum', xwalk_dict['lu.GeodeticDatum']['xwalk']['source'])
 
     # Calculated fields
     calculated_fields = [
@@ -701,14 +710,13 @@ def _lu_GeodeticDatum(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO
 
     # Blanks
     blank_fields = [
-        'SortOrder'
-        ,'Rowversion'
+        'Summary'
     ]
     # assign grouping variable `calculation` for the blank fields
-    mask = (xwalk_dict['lu.DetectionType']['xwalk']['destination'].isin(blank_fields))
-    xwalk_dict['lu.DetectionType']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['lu.DetectionType']['xwalk']['calculation'])
-    xwalk_dict['lu.DetectionType']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['lu.DetectionType']['xwalk']['source'])
-    xwalk_dict['lu.DetectionType']['xwalk']['note'] =  np.where(mask, 'this field was not collected by NCRN and has no NCRN equivalent', xwalk_dict['lu.DetectionType']['xwalk']['note'])
+    mask = (xwalk_dict['lu.GeodeticDatum']['xwalk']['destination'].isin(blank_fields))
+    xwalk_dict['lu.GeodeticDatum']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['lu.GeodeticDatum']['xwalk']['calculation'])
+    xwalk_dict['lu.GeodeticDatum']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['lu.GeodeticDatum']['xwalk']['source'])
+    xwalk_dict['lu.GeodeticDatum']['xwalk']['note'] =  np.where(mask, 'this field was not collected by NCRN and has no NCRN equivalent', xwalk_dict['lu.GeodeticDatum']['xwalk']['note'])
 
     return xwalk_dict
 
