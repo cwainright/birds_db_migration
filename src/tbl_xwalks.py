@@ -723,13 +723,26 @@ def _lu_Sex(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####
     """
     # 1:1 fields
     one_to_one_fields = [
+        'ID'
+        ,'Code'
+        ,'Label'
+        ,'Description'
     ]
     # assign grouping variable `calculation` for the 1:1 fields
     mask = (xwalk_dict['lu.Sex']['xwalk']['destination'].isin(one_to_one_fields))
     xwalk_dict['lu.Sex']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['lu.Sex']['xwalk']['calculation'])
     # ID
     mask = (xwalk_dict['lu.Sex']['xwalk']['destination'] == 'ID')
-    xwalk_dict['lu.Sex']['xwalk']['source'] =  np.where(mask, 'ID_Code', xwalk_dict['lu.Sex']['xwalk']['source'])
+    xwalk_dict['lu.Sex']['xwalk']['source'] =  np.where(mask, 'Sex_Code_Value', xwalk_dict['lu.Sex']['xwalk']['source'])
+    # Code
+    mask = (xwalk_dict['lu.Sex']['xwalk']['destination'] == 'Code')
+    xwalk_dict['lu.Sex']['xwalk']['source'] =  np.where(mask, 'Sex_Code', xwalk_dict['lu.Sex']['xwalk']['source'])
+    # Label
+    mask = (xwalk_dict['lu.Sex']['xwalk']['destination'] == 'Label')
+    xwalk_dict['lu.Sex']['xwalk']['source'] =  np.where(mask, 'Sex_Code_Description', xwalk_dict['lu.Sex']['xwalk']['source'])
+    # Description
+    mask = (xwalk_dict['lu.Sex']['xwalk']['destination'] == 'Description')
+    xwalk_dict['lu.Sex']['xwalk']['source'] =  np.where(mask, 'Sex_Code_Description', xwalk_dict['lu.Sex']['xwalk']['source'])
 
     # Calculated fields
     calculated_fields = [
@@ -741,6 +754,7 @@ def _lu_Sex(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####
 
     # Blanks
     blank_fields = [
+        'Rowversion'
     ]
     # assign grouping variable `calculation` for the blank fields
     mask = (xwalk_dict['lu.Sex']['xwalk']['destination'].isin(blank_fields))
