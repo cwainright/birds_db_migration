@@ -951,13 +951,26 @@ def _lu_NoiseLevel(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##T
     """
     # 1:1 fields
     one_to_one_fields = [
+        'ID'
+        ,'Code'
+        ,'Label'
+        ,'Description'
     ]
     # assign grouping variable `calculation` for the 1:1 fields
     mask = (xwalk_dict['lu.NoiseLevel']['xwalk']['destination'].isin(one_to_one_fields))
     xwalk_dict['lu.NoiseLevel']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['lu.NoiseLevel']['xwalk']['calculation'])
     # ID
     mask = (xwalk_dict['lu.NoiseLevel']['xwalk']['destination'] == 'ID')
-    xwalk_dict['lu.NoiseLevel']['xwalk']['source'] =  np.where(mask, 'ID_Code', xwalk_dict['lu.NoiseLevel']['xwalk']['source'])
+    xwalk_dict['lu.NoiseLevel']['xwalk']['source'] =  np.where(mask, 'Disturbance_Code', xwalk_dict['lu.NoiseLevel']['xwalk']['source'])
+    # Code
+    mask = (xwalk_dict['lu.NoiseLevel']['xwalk']['destination'] == 'Code')
+    xwalk_dict['lu.NoiseLevel']['xwalk']['source'] =  np.where(mask, 'Disturbance_Code', xwalk_dict['lu.NoiseLevel']['xwalk']['source'])
+    # Label
+    mask = (xwalk_dict['lu.NoiseLevel']['xwalk']['destination'] == 'Label')
+    xwalk_dict['lu.NoiseLevel']['xwalk']['source'] =  np.where(mask, 'Disturbance_Description', xwalk_dict['lu.NoiseLevel']['xwalk']['source'])
+    # Description
+    mask = (xwalk_dict['lu.NoiseLevel']['xwalk']['destination'] == 'Description')
+    xwalk_dict['lu.NoiseLevel']['xwalk']['source'] =  np.where(mask, 'Disturbance_Description', xwalk_dict['lu.NoiseLevel']['xwalk']['source'])
 
     # Calculated fields
     calculated_fields = [
@@ -969,6 +982,8 @@ def _lu_NoiseLevel(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##T
 
     # Blanks
     blank_fields = [
+        'SortOrder'
+        ,'Rowversion'
     ]
     # assign grouping variable `calculation` for the blank fields
     mask = (xwalk_dict['lu.NoiseLevel']['xwalk']['destination'].isin(blank_fields))
