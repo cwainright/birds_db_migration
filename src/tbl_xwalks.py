@@ -1054,13 +1054,26 @@ def _lu_SamplingMethod(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TOD
     
     # 1:1 fields
     one_to_one_fields = [
+        'ID'
+        ,'Code'
+        ,'Label'
+        ,'Summary'
     ]
     # assign grouping variable `calculation` for the 1:1 fields
     mask = (xwalk_dict['lu.SamplingMethod']['xwalk']['destination'].isin(one_to_one_fields))
     xwalk_dict['lu.SamplingMethod']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['lu.SamplingMethod']['xwalk']['calculation'])
     # ID
     mask = (xwalk_dict['lu.SamplingMethod']['xwalk']['destination'] == 'ID')
-    xwalk_dict['lu.SamplingMethod']['xwalk']['source'] =  np.where(mask, 'ID_Code', xwalk_dict['lu.SamplingMethod']['xwalk']['source'])
+    xwalk_dict['lu.SamplingMethod']['xwalk']['source'] =  np.where(mask, 'Protocol_ID', xwalk_dict['lu.SamplingMethod']['xwalk']['source'])
+    # Code
+    mask = (xwalk_dict['lu.SamplingMethod']['xwalk']['destination'] == 'Code')
+    xwalk_dict['lu.SamplingMethod']['xwalk']['source'] =  np.where(mask, 'Protocol_ID', xwalk_dict['lu.SamplingMethod']['xwalk']['source'])
+    # Label
+    mask = (xwalk_dict['lu.SamplingMethod']['xwalk']['destination'] == 'Label')
+    xwalk_dict['lu.SamplingMethod']['xwalk']['source'] =  np.where(mask, 'Protocol_Name', xwalk_dict['lu.SamplingMethod']['xwalk']['source'])
+    # Summary
+    mask = (xwalk_dict['lu.SamplingMethod']['xwalk']['destination'] == 'Summary')
+    xwalk_dict['lu.SamplingMethod']['xwalk']['source'] =  np.where(mask, 'Protocol_Name', xwalk_dict['lu.SamplingMethod']['xwalk']['source'])
 
     # Calculated fields
     calculated_fields = [
