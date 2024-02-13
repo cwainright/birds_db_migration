@@ -490,24 +490,47 @@ def _lu_WindCode(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TOD
 
     # 1:1 fields
     one_to_one_fields = [
+        'ID'
+        ,'Code'
+        ,'Description'
     ]
     # assign grouping variable `calculation` for the 1:1 fields
     mask = (xwalk_dict['lu.WindCode']['xwalk']['destination'].isin(one_to_one_fields))
     xwalk_dict['lu.WindCode']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['lu.WindCode']['xwalk']['calculation'])
     # ID
     mask = (xwalk_dict['lu.WindCode']['xwalk']['destination'] == 'ID')
-    xwalk_dict['lu.WindCode']['xwalk']['source'] =  np.where(mask, 'ID_Code', xwalk_dict['lu.WindCode']['xwalk']['source'])
+    xwalk_dict['lu.WindCode']['xwalk']['source'] =  np.where(mask, 'Wind_Code', xwalk_dict['lu.WindCode']['xwalk']['source'])
+    # Code
+    mask = (xwalk_dict['lu.WindCode']['xwalk']['destination'] == 'Code')
+    xwalk_dict['lu.WindCode']['xwalk']['source'] =  np.where(mask, 'Wind_Code', xwalk_dict['lu.WindCode']['xwalk']['source'])
+    # Description
+    mask = (xwalk_dict['lu.WindCode']['xwalk']['destination'] == 'Description')
+    xwalk_dict['lu.WindCode']['xwalk']['source'] =  np.where(mask, 'Wind_Code_Description', xwalk_dict['lu.WindCode']['xwalk']['source'])
 
     # Calculated fields
     calculated_fields = [
+        'Label'
+        ,'WindSpeedLabel_mph'
     ]
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['lu.WindCode']['xwalk']['destination'].isin(calculated_fields))
     xwalk_dict['lu.WindCode']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu.WindCode']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
     xwalk_dict['lu.WindCode']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['lu.WindCode']['xwalk']['calculation'])
+    # Label varchar(25) string-split tlu_Wind_Code.Wind_Code_Description
+    mask = (xwalk_dict['lu.WindCode']['xwalk']['destination'] == 'Label')
+    xwalk_dict['lu.WindCode']['xwalk']['source'] = np.where(mask, "xwalk_dict['lu.WindCode']['tbl_load']['Label'] = xwalk_dict['lu.WindCode']['source'].Wind_Code_Description.str.split(')').str[0].str.replace('(','',regex=False).str.replace(')','',regex=False).str.replace('movement','mvmnt',regex=False)", xwalk_dict['lu.WindCode']['xwalk']['source'])
+    xwalk_dict['lu.WindCode']['xwalk']['note'] = np.where(mask, "varchar(25) string-split tlu_Wind_Code.Wind_Code_Description", xwalk_dict['lu.WindCode']['xwalk']['note'])
+    # WindSpeedLabel_mph varchar(20) string-split tlu_Wind_Code.Wind_Code_Description
+    mask = (xwalk_dict['lu.WindCode']['xwalk']['destination'] == 'WindSpeedLabel_mph')
+    xwalk_dict['lu.WindCode']['xwalk']['source'] = np.where(mask, "xwalk_dict['lu.WindCode']['tbl_load']['WindSpeedLabel_mph'] = xwalk_dict['lu.WindCode']['source'].Wind_Code_Description.str.split(')').str[0].str.split('(').str[1].str.replace(' mph','',regex=False)", xwalk_dict['lu.WindCode']['xwalk']['source'])
+    xwalk_dict['lu.WindCode']['xwalk']['note'] = np.where(mask, "varchar(20) string-split tlu_Wind_Code.Wind_Code_Description", xwalk_dict['lu.WindCode']['xwalk']['note'])
+
+    # WindSpeedLabel_mph
 
     # Blanks
     blank_fields = [
+        'SortOrder'
+        ,'Rowversion'
     ]
     # assign grouping variable `calculation` for the blank fields
     mask = (xwalk_dict['lu.WindCode']['xwalk']['destination'].isin(blank_fields))
