@@ -251,7 +251,7 @@ def _ncrn_BirdDetection(xwalk_dict:dict) -> dict:
 
     return xwalk_dict
 
-def _ncrn_Protocol(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
+def _ncrn_Protocol(xwalk_dict:dict) -> dict:
     """Crosswalk source.tbl_Protocol to destination.ncrn.Protocol
 
     Args:
@@ -365,7 +365,7 @@ def _ncrn_Location(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##T
 
     return xwalk_dict
 
-def _ncrn_Park(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
+def _ncrn_Park(xwalk_dict:dict) -> dict:
     """Crosswalk source.tlu_Park_Code to destination.ncrn.Park
 
     Args:
@@ -424,7 +424,7 @@ def _ncrn_Park(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO#
 
     return xwalk_dict
 
-def _lu_TimeInterval(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
+def _lu_TimeInterval(xwalk_dict:dict) -> dict:
     """Crosswalk source.tlu_interval to destination.lu.TimeInterval
 
     Args:
@@ -478,7 +478,7 @@ def _lu_TimeInterval(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO#
 
     return xwalk_dict
 
-def _lu_WindCode(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
+def _lu_WindCode(xwalk_dict:dict) -> dict:
     """Crosswalk source.tlu_Wind_Code to destination.lu.WindCode
 
     Args:
@@ -540,8 +540,7 @@ def _lu_WindCode(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TOD
 
     return xwalk_dict
 
-
-def _lu_DataProcessingLevel(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
+def _lu_DataProcessingLevel(xwalk_dict:dict) -> dict:
     """Crosswalk source.DataProcessingLevel to destination.lu.DataProcessingLevel
 
     Args:
@@ -553,13 +552,34 @@ def _lu_DataProcessingLevel(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO
 
     # 1:1 fields
     one_to_one_fields = [
+        'ID'
+        ,'Code'
+        ,'Label'
+        ,'Summary'
+        ,'IsActive'
+        ,'ProcessOrder'
     ]
     # assign grouping variable `calculation` for the 1:1 fields
     mask = (xwalk_dict['lu.DataProcessingLevel']['xwalk']['destination'].isin(one_to_one_fields))
     xwalk_dict['lu.DataProcessingLevel']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['lu.DataProcessingLevel']['xwalk']['calculation'])
     # ID
     mask = (xwalk_dict['lu.DataProcessingLevel']['xwalk']['destination'] == 'ID')
-    xwalk_dict['lu.DataProcessingLevel']['xwalk']['source'] =  np.where(mask, 'ID_Code', xwalk_dict['lu.DataProcessingLevel']['xwalk']['source'])
+    xwalk_dict['lu.DataProcessingLevel']['xwalk']['source'] =  np.where(mask, 'ID', xwalk_dict['lu.DataProcessingLevel']['xwalk']['source'])
+    # Code
+    mask = (xwalk_dict['lu.DataProcessingLevel']['xwalk']['destination'] == 'Code')
+    xwalk_dict['lu.DataProcessingLevel']['xwalk']['source'] =  np.where(mask, 'Code', xwalk_dict['lu.DataProcessingLevel']['xwalk']['source'])
+    # Label
+    mask = (xwalk_dict['lu.DataProcessingLevel']['xwalk']['destination'] == 'Label')
+    xwalk_dict['lu.DataProcessingLevel']['xwalk']['source'] =  np.where(mask, 'Label', xwalk_dict['lu.DataProcessingLevel']['xwalk']['source'])
+    # Summary
+    mask = (xwalk_dict['lu.DataProcessingLevel']['xwalk']['destination'] == 'Summary')
+    xwalk_dict['lu.DataProcessingLevel']['xwalk']['source'] =  np.where(mask, 'Summary', xwalk_dict['lu.DataProcessingLevel']['xwalk']['source'])
+    # IsActive
+    mask = (xwalk_dict['lu.DataProcessingLevel']['xwalk']['destination'] == 'IsActive')
+    xwalk_dict['lu.DataProcessingLevel']['xwalk']['source'] =  np.where(mask, 'IsActive', xwalk_dict['lu.DataProcessingLevel']['xwalk']['source'])
+    # ProcessOrder
+    mask = (xwalk_dict['lu.DataProcessingLevel']['xwalk']['destination'] == 'ProcessOrder')
+    xwalk_dict['lu.DataProcessingLevel']['xwalk']['source'] =  np.where(mask, 'ProcessOrder', xwalk_dict['lu.DataProcessingLevel']['xwalk']['source'])
 
     # Calculated fields
     calculated_fields = [
@@ -634,7 +654,7 @@ def _lu_DetectionType(xwalk_dict:dict) -> dict:
 
     return xwalk_dict
 
-def _lu_DistanceClass(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
+def _lu_DistanceClass(xwalk_dict:dict) -> dict:
     """Crosswalk source.dbo_tlu_Distance_Estimate to destination.lu.DistanceClass
 
     Args:
@@ -688,7 +708,7 @@ def _lu_DistanceClass(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO
 
     return xwalk_dict
 
-def _lu_GeodeticDatum(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
+def _lu_GeodeticDatum(xwalk_dict:dict) -> dict:
     """Crosswalk source.tlu_Datum to destination.lu.GeodeticDatum
 
     Args:
@@ -736,7 +756,7 @@ def _lu_GeodeticDatum(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO
 
     return xwalk_dict
 
-def _lu_Sex(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
+def _lu_Sex(xwalk_dict:dict) -> dict:
     """Crosswalk source.tlu_Sex_Code to destination.lu.Sex
 
     Args:
@@ -830,7 +850,7 @@ def _ncrn_Contact(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TO
 
     return xwalk_dict
 
-def _lu_PrecipitationType(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
+def _lu_PrecipitationType(xwalk_dict:dict) -> dict:
     """Crosswalk source.tlu_Sky_Code to destination.lu.PrecipitationType
 
     Args:
@@ -964,7 +984,7 @@ def _ncrn_BirdGroups(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO#
 
     return xwalk_dict
 
-def _lu_NoiseLevel(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
+def _lu_NoiseLevel(xwalk_dict:dict) -> dict:
     """Crosswalk source.tlu_Disturbance to destination.lu.NoiseLevel
 
     Args:
@@ -1016,7 +1036,6 @@ def _lu_NoiseLevel(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##T
     xwalk_dict['lu.NoiseLevel']['xwalk']['note'] =  np.where(mask, 'this field was not collected by NCRN and has no NCRN equivalent', xwalk_dict['lu.NoiseLevel']['xwalk']['note'])
 
     return xwalk_dict
-
 
 def _ncrn_AuditLog(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
     """Crosswalk source.tbl_History to destination.ncrn.AuditLog
