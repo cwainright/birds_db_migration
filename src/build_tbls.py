@@ -3,14 +3,12 @@ import pandas as pd
 import src.db_connect as dbc
 import assets.assets as assets
 
-tbl_list = list(assets.TBL_XWALK.values())
-template_list = list(assets.TBL_XWALK.keys())
+# tbl_list = list(assets.TBL_XWALK.values())
+# template_list = list(assets.TBL_XWALK.keys())
+TBL_XWALK = assets.TBL_XWALK
 
-def _get_dest_tbls(dest:str='assets/templates/templates.pkl', template_list:list=template_list) -> dict:
+def _get_dest_tbls() -> dict:
     """Make empty dataframes with the correct column names and order for each table to be loaded
-
-    Args:
-        dest (str, optional): Absolute or relative filepath where you want to save the dictionary of dataframes
 
     Returns:
         dict: Dictionary of dataframes
@@ -23,20 +21,18 @@ def _get_dest_tbls(dest:str='assets/templates/templates.pkl', template_list:list
     """
     con = dbc._db_connect('local')
     template_dict = {}
-    for tbl in template_list:
-        SQL_QUERY = f"""SELECT TOP 5 * FROM [{assets.LOC_DB}].[dbo].[{tbl}];"""
-        template_dict[tbl] = pd.read_sql_query(SQL_QUERY,con)
+    for schema in TBL_XWALK.keys():
+        for tbl in TBL_XWALK[schema].keys():
+            SQL_QUERY = f"""SELECT TOP 5 * FROM [{assets.LOC_DB}].[{schema}].[{tbl}];"""
+            template_dict[tbl] = pd.read_sql_query(SQL_QUERY,con)
     
     # close connection
     con.close()
 
     return template_dict
 
-def _get_src_tbls(tbl_list:list=tbl_list) -> dict:
+def _get_src_tbls() -> dict:
     """Make empty dataframes with the correct column names and order for each table to be loaded
-
-    Args:
-        dest (str, optional): Absolute or relative filepath where you want to save the dictionary of dataframes
 
     Returns:
         dict: Dictionary of dataframes
@@ -50,8 +46,9 @@ def _get_src_tbls(tbl_list:list=tbl_list) -> dict:
     # connect to db
     con = dbc._db_connect('access')
     tbl_dict = {}
-    for tbl in tbl_list:
-        tbl_dict[tbl] = dbc._exec_qry(con=con, qry=f'get_{tbl}')
+    for schema in TBL_XWALK.keys():
+        for tbl in TBL_XWALK[schema].values():
+            tbl_dict[tbl] = dbc._exec_qry(con=con, qry=f'get_{tbl}')
 
     # close connection
     con.close()

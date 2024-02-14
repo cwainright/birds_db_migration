@@ -6,7 +6,8 @@ import src.build_tbls as bt
 import src.tbl_xwalks as tx
 import numpy as np
 
-template_list = list(assets.TBL_XWALK.keys())
+# template_list = list(assets.TBL_XWALK.keys())
+TBL_XWALK = assets.TBL_XWALK
 
 def make_birds(dest:str='') -> dict:
     """Create a dictionary of crosswalks for each table in the source (Access) and destination (SQL Server) databases
@@ -31,22 +32,24 @@ def make_birds(dest:str='') -> dict:
 
     # main object to hold data
     xwalk_dict = {}
-    for tbl in template_list:
-        xwalk_dict[tbl] = {
-            'xwalk': pd.DataFrame(columns=['destination', 'source', 'calculation', 'note']) # the crosswalk to translate from `source` to `tbl_load`
-            ,'source_name': assets.TBL_XWALK[tbl] # name of source table
-            ,'source': pd.DataFrame() # source data
-            ,'destination': dest_dict[tbl] # destination data (mostly just for its column names and order)
-            ,'tbl_load': pd.DataFrame() # `source` data crosswalked to the destination schema
-            ,'payload_cols': [] # the columns to extract from `tbl_load` and load into `payload`
-            ,'payload': pd.DataFrame() # `tbl_load` transformed for loading to destination database
-            ,'tsql': '' # the t-sql to load the `payload` to the destination table
-        }
-        xwalk_dict[tbl]['source'] = source_dict[xwalk_dict[tbl]['source_name']] # route the source data to its placeholder
-        xwalk_dict[tbl]['tbl_load'] = pd.DataFrame(columns=xwalk_dict[tbl]['destination'].columns)
-        xwalk_dict[tbl]['xwalk']['destination'] = xwalk_dict[tbl]['destination'].columns # route the destination columns to their placeholder in the crosswalk
-        exclude_cols = ['ID', 'Rowversion', 'UserCode'] # list of columns that SQL Server should calculate upon data loading; these cols should not be part of the payload
-        xwalk_dict[tbl]['payload_cols'] = [x for x in xwalk_dict[tbl]['destination'].columns if x not in exclude_cols] # the columns to extract from `tbl_load` and load into `payload`
+    for schema in TBL_XWALK.keys():
+        xwalk_dict[schema] = {}
+        for tbl in TBL_XWALK[schema].keys():
+            xwalk_dict[schema][tbl] = {
+                'xwalk': pd.DataFrame(columns=['destination', 'source', 'calculation', 'note']) # the crosswalk to translate from `source` to `tbl_load`
+                ,'source_name': assets.TBL_XWALK[schema][tbl] # name of source table
+                ,'source': pd.DataFrame() # source data
+                ,'destination': dest_dict[tbl] # destination data (mostly just for its column names and order)
+                ,'tbl_load': pd.DataFrame() # `source` data crosswalked to the destination schema
+                ,'payload_cols': [] # the columns to extract from `tbl_load` and load into `payload`
+                ,'payload': pd.DataFrame() # `tbl_load` transformed for loading to destination database
+                ,'tsql': '' # the t-sql to load the `payload` to the destination table
+            }
+            xwalk_dict[schema][tbl]['source'] = source_dict[xwalk_dict[schema][tbl]['source_name']] # route the source data to its placeholder
+            xwalk_dict[schema][tbl]['tbl_load'] = pd.DataFrame(columns=xwalk_dict[schema][tbl]['destination'].columns)
+            xwalk_dict[schema][tbl]['xwalk']['destination'] = xwalk_dict[schema][tbl]['destination'].columns # route the destination columns to their placeholder in the crosswalk
+            exclude_cols = ['ID', 'Rowversion', 'UserCode'] # list of columns that SQL Server should calculate upon data loading; these cols should not be part of the payload
+            xwalk_dict[schema][tbl]['payload_cols'] = [x for x in xwalk_dict[schema][tbl]['destination'].columns if x not in exclude_cols] # the columns to extract from `tbl_load` and load into `payload`
 
     # create xwalk for each destination table
     xwalk_dict = _create_xwalks(xwalk_dict)
@@ -115,43 +118,44 @@ def _execute_xwalk_exceptions(xwalk_dict:dict) -> dict:
 def _execute_xwalks(xwalk_dict:dict) -> dict:
     # TODO: this function should execute the instructions stored in each table's `xwalk` to produce a `tbl_load`
 
-    for tbl in template_list:
-        xwalk = xwalk_dict[tbl]['xwalk']
-        
-        # if destination column has a one-to-one source field, execute assignments
-        one_to_ones = list(xwalk[xwalk['calculation']=='map_source_to_destination_1_to_1'].destination.values)
-        for dest_col in one_to_ones:
-            src_col = xwalk[xwalk['destination']==dest_col].source.values[0]
-            try:
-                xwalk_dict[tbl]['tbl_load'][dest_col] = xwalk_dict[tbl]['source'][src_col]
-            except:
-                print(f"WARNING! 1:1 destination column `{tbl}.{dest_col}` failed because its source column `['{tbl}']['source'][{src_col}]` did not resolve correctly. Debug its xwalk in src.tbl_xwalks")
+    for schema in TBL_XWALK.keys():
+        for tbl in TBL_XWALK[schema].keys():
+            xwalk = xwalk_dict[schema][tbl]['xwalk']
+            
+            # if destination column has a one-to-one source field, execute assignments
+            one_to_ones = list(xwalk[xwalk['calculation']=='map_source_to_destination_1_to_1'].destination.values)
+            for dest_col in one_to_ones:
+                src_col = xwalk[xwalk['destination']==dest_col].source.values[0]
+                try:
+                    xwalk_dict[schema][tbl]['tbl_load'][dest_col] = xwalk_dict[schema][tbl]['source'][src_col]
+                except:
+                    print(f"WARNING! 1:1 destination column `{tbl}.{dest_col}` failed because its source column `['{tbl}']['source'][{src_col}]` did not resolve correctly. Debug its xwalk in src.tbl_xwalks")
 
-        # if destination column requires calculations, calculate
-        mask = (xwalk['calculation']=='calculate_dest_field_from_source_field') & (xwalk['source']!='placeholder') # TODO: DELETE THIS LINE, FOR TESTING ONLY
-        # mask = (xwalk['calculation']=='calculate_dest_field_from_source_field') # TODO: KEEP: for production
-        calculates = list(xwalk[mask].destination.values)
-        for dest_col in calculates:
-            src_col = xwalk[xwalk['destination']==dest_col].source.values[0]
-            # code_lines = xwalk[xwalk['destination']==dest_col].source.values[0].astype(str).split('$splithere$')
-            code_lines = xwalk[xwalk['destination']==dest_col].source.values[0]
-            code_lines = code_lines.split('$splithere$')
-            for line in code_lines:
-                if line != 'placeholder':
-                    # line = line.replace('xwalk_dict', 'testdict') # for debugging
-                    try:
-                        exec(line)
-                    except:
-                        print(f'WARNING! Calculated column `{tbl}.{dest_col}`, code line {line} failed. Debug its xwalk in src.tbl_xwalks')
-        
-        # if destination column is blank field, assign blank
-        blanks = list(xwalk[xwalk['calculation']=='blank_field'].destination.values)
-        for dest_col in blanks:
-            src_col = xwalk[xwalk['destination']==dest_col].source.values[0]
-            xwalk_dict[tbl]['tbl_load'][dest_col] = np.NaN
+            # if destination column requires calculations, calculate
+            mask = (xwalk['calculation']=='calculate_dest_field_from_source_field') & (xwalk['source']!='placeholder') # TODO: DELETE THIS LINE, FOR TESTING ONLY
+            # mask = (xwalk['calculation']=='calculate_dest_field_from_source_field') # TODO: KEEP: for production
+            calculates = list(xwalk[mask].destination.values)
+            for dest_col in calculates:
+                src_col = xwalk[xwalk['destination']==dest_col].source.values[0]
+                # code_lines = xwalk[xwalk['destination']==dest_col].source.values[0].astype(str).split('$splithere$')
+                code_lines = xwalk[xwalk['destination']==dest_col].source.values[0]
+                code_lines = code_lines.split('$splithere$')
+                for line in code_lines:
+                    if line != 'placeholder':
+                        # line = line.replace('xwalk_dict', 'testdict') # for debugging
+                        try:
+                            exec(line)
+                        except:
+                            print(f'WARNING! Calculated column `{tbl}.{dest_col}`, code line {line} failed. Debug its xwalk in src.tbl_xwalks')
+            
+            # if destination column is blank field, assign blank
+            blanks = list(xwalk[xwalk['calculation']=='blank_field'].destination.values)
+            for dest_col in blanks:
+                src_col = xwalk[xwalk['destination']==dest_col].source.values[0]
+                xwalk_dict[schema][tbl]['tbl_load'][dest_col] = np.NaN
 
 
-    xwalk_dict = tx._add_row_id(xwalk_dict)
+        xwalk_dict = tx._add_row_id(xwalk_dict)
     
     return xwalk_dict
 
