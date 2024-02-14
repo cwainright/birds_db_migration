@@ -106,17 +106,18 @@ def _create_xwalks(xwalk_dict:dict) -> dict:
     xwalk_dict = tx._ncrn_AuditLogDetail(xwalk_dict)
     xwalk_dict = tx._lu_SamplingMethod(xwalk_dict)
     xwalk_dict = tx._lu_Habitat(xwalk_dict)
+    xwalk_dict = tx._ncrn_BirdSpecies(xwalk_dict)
 
     return xwalk_dict
 
 def _execute_xwalk_exceptions(xwalk_dict:dict) -> dict:
     # TODO: if a destination table requires the creation of temp table (e.g., CTE, execution of a second query, or generation of a lookup), it doesn't fit our model, so we need to execute an exception
     xwalk_dict = tx._exception_ncrn_DetectionEvent(xwalk_dict)
+    xwalk_dict = tx._exception_ncrn_BirdSpecies(xwalk_dict)
 
     return xwalk_dict
 
 def _execute_xwalks(xwalk_dict:dict) -> dict:
-    # TODO: this function should execute the instructions stored in each table's `xwalk` to produce a `tbl_load`
 
     for schema in TBL_XWALK.keys():
         for tbl in TBL_XWALK[schema].keys():
@@ -167,7 +168,7 @@ def _generate_payload(xwalk_dict:dict) -> dict:
 def _generate_tsql(xwalk_dict:dict) -> dict:
     # TODO: generate the INSERT INTO sql for each `payload`
     # e.g.,
-    # INSERT INTO [NCRN_Landbirds].[dbo].[lu.ExperienceLevel] ([ID],[Code],[Label],[Description],[SortOrder]) VALUES (2,'EXP','Expert','An expert',2)
+    # INSERT INTO [NCRN_Landbirds].[lu].[ExperienceLevel] ([ID],[Code],[Label],[Description],[SortOrder]) VALUES (2,'EXP','Expert','An expert',2)
 
     # review db_loader.load_db.load_option_b() for details
 

@@ -987,6 +987,86 @@ def _ncrn_BirdGroups(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO#
 
     return xwalk_dict
 
+def _ncrn_BirdSpecies(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
+    """Crosswalk source.tlu_Species to destination.ncrn.BirdSpecies
+
+    Args:
+        xwalk_dict (dict): dictionary of column names crosswalked between source and destination tables
+
+    Returns:
+        dict: dictionary of column names crosswalked between source and destination tables with data updated for this table
+    """
+
+    # 1:1 fields
+    one_to_one_fields = [
+        'ID'
+        ,'Code'
+        ,'CommonName'
+        ,'ScientificName'
+        ,'Family'
+        ,'Order'
+        ,'TaxonomicOrder'
+        ,'IsActive'
+        ,'IsTarget'
+        ,'SynonymID'
+    ]
+    # assign grouping variable `calculation` for the 1:1 fields
+    mask = (xwalk_dict['ncrn']['BirdSpecies']['xwalk']['destination'].isin(one_to_one_fields))
+    xwalk_dict['ncrn']['BirdSpecies']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['ncrn']['BirdSpecies']['xwalk']['calculation'])
+    # ID
+    mask = (xwalk_dict['ncrn']['BirdSpecies']['xwalk']['destination'] == 'ID')
+    xwalk_dict['ncrn']['BirdSpecies']['xwalk']['source'] =  np.where(mask, 'AOU_Code', xwalk_dict['ncrn']['BirdSpecies']['xwalk']['source'])
+    # Code
+    mask = (xwalk_dict['ncrn']['BirdSpecies']['xwalk']['destination'] == 'Code')
+    xwalk_dict['ncrn']['BirdSpecies']['xwalk']['source'] =  np.where(mask, 'AOU_Code', xwalk_dict['ncrn']['BirdSpecies']['xwalk']['source'])
+    # CommonName
+    mask = (xwalk_dict['ncrn']['BirdSpecies']['xwalk']['destination'] == 'CommonName')
+    xwalk_dict['ncrn']['BirdSpecies']['xwalk']['source'] =  np.where(mask, 'Common_Name', xwalk_dict['ncrn']['BirdSpecies']['xwalk']['source'])
+    # ScientificName
+    mask = (xwalk_dict['ncrn']['BirdSpecies']['xwalk']['destination'] == 'ScientificName')
+    xwalk_dict['ncrn']['BirdSpecies']['xwalk']['source'] =  np.where(mask, 'Scientific_Name', xwalk_dict['ncrn']['BirdSpecies']['xwalk']['source'])
+    # Family
+    mask = (xwalk_dict['ncrn']['BirdSpecies']['xwalk']['destination'] == 'Family')
+    xwalk_dict['ncrn']['BirdSpecies']['xwalk']['source'] =  np.where(mask, 'Family', xwalk_dict['ncrn']['BirdSpecies']['xwalk']['source'])
+    # Order
+    mask = (xwalk_dict['ncrn']['BirdSpecies']['xwalk']['destination'] == 'Order')
+    xwalk_dict['ncrn']['BirdSpecies']['xwalk']['source'] =  np.where(mask, 'Order', xwalk_dict['ncrn']['BirdSpecies']['xwalk']['source'])
+    # TaxonomicOrder
+    mask = (xwalk_dict['ncrn']['BirdSpecies']['xwalk']['destination'] == 'TaxonomicOrder')
+    xwalk_dict['ncrn']['BirdSpecies']['xwalk']['source'] =  np.where(mask, 'Taxonomic_Order', xwalk_dict['ncrn']['BirdSpecies']['xwalk']['source'])
+    # IsActive
+    mask = (xwalk_dict['ncrn']['BirdSpecies']['xwalk']['destination'] == 'IsActive')
+    xwalk_dict['ncrn']['BirdSpecies']['xwalk']['source'] =  np.where(mask, 'IsActive', xwalk_dict['ncrn']['BirdSpecies']['xwalk']['source'])
+    # IsTarget
+    mask = (xwalk_dict['ncrn']['BirdSpecies']['xwalk']['destination'] == 'IsTarget')
+    xwalk_dict['ncrn']['BirdSpecies']['xwalk']['source'] =  np.where(mask, 'IsTarget', xwalk_dict['ncrn']['BirdSpecies']['xwalk']['source'])
+    # SynonymID
+    mask = (xwalk_dict['ncrn']['BirdSpecies']['xwalk']['destination'] == 'SynonymID')
+    xwalk_dict['ncrn']['BirdSpecies']['xwalk']['source'] =  np.where(mask, 'SynonymID', xwalk_dict['ncrn']['BirdSpecies']['xwalk']['source'])
+
+    # Calculated fields
+    calculated_fields = [
+        'Comments'
+    ]
+    # assign grouping variable `calculation` for the calculated fields
+    mask = (xwalk_dict['ncrn']['BirdSpecies']['xwalk']['destination'].isin(calculated_fields))
+    xwalk_dict['ncrn']['BirdSpecies']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn']['BirdSpecies']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['ncrn']['BirdSpecies']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn']['BirdSpecies']['xwalk']['calculation'])
+
+    # Blanks
+    blank_fields = [
+        'ModifiedDate'
+        ,'ModifiedBy'
+        ,'Rowversion'
+    ]
+    # assign grouping variable `calculation` for the blank fields
+    mask = (xwalk_dict['ncrn']['BirdSpecies']['xwalk']['destination'].isin(blank_fields))
+    xwalk_dict['ncrn']['BirdSpecies']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn']['BirdSpecies']['xwalk']['calculation'])
+    xwalk_dict['ncrn']['BirdSpecies']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn']['BirdSpecies']['xwalk']['source'])
+    xwalk_dict['ncrn']['BirdSpecies']['xwalk']['note'] =  np.where(mask, 'this field was not collected by NCRN and has no NCRN equivalent', xwalk_dict['ncrn']['BirdSpecies']['xwalk']['note'])
+
+    return xwalk_dict
+
 def _lu_NoiseLevel(xwalk_dict:dict) -> dict:
     """Crosswalk source.tlu_Disturbance to destination.lu.NoiseLevel
 
@@ -1261,6 +1341,28 @@ def _exception_ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
     xwalk_dict['ncrn']['DetectionEvent']['source']['start_time'] = np.where((xwalk_dict['ncrn']['DetectionEvent']['source']['start_time'].isna()), datetime.time(0, 0),xwalk_dict['ncrn']['DetectionEvent']['source']['start_time'] )
     xwalk_dict['ncrn']['DetectionEvent']['source']['Date'] = np.where((xwalk_dict['ncrn']['DetectionEvent']['source']['Date'].isna()), datetime.date(1900, 1, 1),xwalk_dict['ncrn']['DetectionEvent']['source']['Date'] )
     xwalk_dict['ncrn']['DetectionEvent']['source'].loc[:,'activity_start_datetime'] = pd.to_datetime(xwalk_dict['ncrn']['DetectionEvent']['source'].Date.astype(str)+' '+xwalk_dict['ncrn']['DetectionEvent']['source'].start_time.astype(str))
+
+    return xwalk_dict
+
+def _exception_ncrn_BirdSpecies(xwalk_dict:dict) -> dict:
+    """The source table tlu_Species is missing some required attributes so add them"""
+
+    # TODO: only overwrite when there's a blank
+    # If there's a value in xwalk_dict['ncrn']['BirdSpecies']['source'] for an attribute but not in csv for that attribute, keep the one from source
+    
+    # get the best-available taxonomic info
+    csv = pd.read_csv(r'assets\db\official_BirdSpecies.csv')
+    df = xwalk_dict['ncrn']['BirdSpecies']['source'].copy()
+    df = df[[x for x in df.columns if x == 'AOU_Code' or x not in csv.columns]]
+    df = df.merge(csv, on='AOU_Code', how='left')
+
+    # get the best-available secondary attributes
+    csv = pd.read_csv(r'assets\db\bird_species.csv') # 'integration' [netnmidn].[BirdSpecies]
+    csv = csv[['Code', 'IsActive', 'IsTarget', 'SynonymID']]
+    csv.rename(columns={'Code':'AOU_Code'}, inplace=True)
+    df = df.merge(csv, on='AOU_Code', how='left')
+
+    xwalk_dict['ncrn']['BirdSpecies']['source'] = df
 
     return xwalk_dict
 
