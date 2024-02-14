@@ -3,8 +3,6 @@ import pandas as pd
 import src.db_connect as dbc
 import assets.assets as assets
 
-# tbl_list = list(assets.TBL_XWALK.values())
-# template_list = list(assets.TBL_XWALK.keys())
 TBL_XWALK = assets.TBL_XWALK
 
 def _get_dest_tbls() -> dict:
@@ -16,8 +14,6 @@ def _get_dest_tbls() -> dict:
     Examples:
         import src.make_templates as bt
         testdict = bt._get_dest_tbls()
-        with open('saved_dictionary.pkl', 'rb') as f:
-            loaded_dict = pickle.load(f)
     """
     con = dbc._db_connect('local')
     template_dict = {}
@@ -40,8 +36,6 @@ def _get_src_tbls() -> dict:
     Examples:
         import src.make_templates as bt
         testdict = bt._get_src_tbls()
-        with open('saved_dictionary.pkl', 'rb') as f:
-            loaded_dict = pickle.load(f)
     """
     # connect to db
     con = dbc._db_connect('access')
