@@ -4,9 +4,9 @@ import pandas as pd
 import pickle
 import src.build_tbls as bt
 import src.tbl_xwalks as tx
+import src.check as c
 import numpy as np
 
-# template_list = list(assets.TBL_XWALK.keys())
 TBL_XWALK = assets.TBL_XWALK
 
 def make_birds(dest:str='') -> dict:
@@ -58,19 +58,19 @@ def make_birds(dest:str='') -> dict:
     xwalk_dict = _execute_xwalk_exceptions(xwalk_dict)
 
     # validate
-    xwalk_dict = _validate_xwalks(xwalk_dict)
+    xwalk_dict = c._validate_xwalks(xwalk_dict)
 
     # execute xwalk to generate load
     xwalk_dict = _execute_xwalks(xwalk_dict)
 
     # validate
-    xwalk_dict = _validate_tbl_loads(xwalk_dict)
+    xwalk_dict = c._validate_tbl_loads(xwalk_dict)
 
     # generate payload
     xwalk_dict = _generate_payload(xwalk_dict)
 
     # validate payload
-    xwalk_dict = _validate_payload(xwalk_dict)
+    xwalk_dict = c._validate_payload(xwalk_dict)
 
     # generate t-sql
     xwalk_dict = _generate_tsql(xwalk_dict)
@@ -159,53 +159,9 @@ def _execute_xwalks(xwalk_dict:dict) -> dict:
     
     return xwalk_dict
 
-def _validate_tbl_loads(xwalk_dict:dict) -> dict:
-    # TODO: this function should check that the `tbl_load` attr produced from each `source` and `xwalk` is valid
-
-    # check that dims of `tbl_load` == dims of `source` (same number of rows and columns)
-    xwalk_dict = _validate_dims(xwalk_dict)
-    # check that each column in `tbl_load` exists in `destination`
-    # check that the column order in `tbl_load` matches that of `destination`
-    xwalk_dict = _validate_cols(xwalk_dict)
-    # check constraints? may be more work than simply letting sqlserver do the checks
-    xwalk_dict = _validate_referential_integrity(xwalk_dict)
-    return xwalk_dict
-
-
-def _validate_xwalks(xwalk_dict:dict) -> dict:
-    # TODO: this function should check that the `xwalk` attr produced for each `tbl_load` is valid
-
-    # find and report missing values
-    # missing = xwalk_dict['ncrn.DetectionEvent']['xwalk'][xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'].isna()].destination.unique()
-    # if len(missing) >0:
-    #     for m in missing:
-    #         print(f'[\'ncrn.DetectionEvent\'][\'xwalk\'] is missing a `source` value where `destination`==\'{m}\'.')
-
-    # how else can the xwalk go sideways?
-
-    return xwalk_dict
-
-def _validate_dims(xwalk_dict:dict) -> dict:
-    # TODO: check that dims of `tbl_load` == dims of `source` (same number of rows and columns)
-    return xwalk_dict
-
-def _validate_cols(xwalk_dict:dict) -> dict:
-    # TODO: check that each column in `tbl_load` exists in `destination`
-    # TODO: check that the column order in `tbl_load` matches that of `destination`
-    return xwalk_dict
-
-def _validate_referential_integrity(xwalk_dict:dict) -> dict:
-    # TODO: check that the INT id for each GUID lines up among related tables
-    return xwalk_dict
-
 def _generate_payload(xwalk_dict:dict) -> dict:
     # TODO: this function should take `tbl_load` and make final changes before loading
     # e.g., `tbl_load` is allowed to hold NCRN's GUIDs but `payload` should either replace the GUIDs with INTs or leave out that column altogether
-    return xwalk_dict
-
-def _validate_payload(xwalk_dict:dict) -> dict:
-    # TODO: this function should validate `payload`
-    # TODO: All `payload`s should have >0 columns; if there are no columns, payload-generation failed.
     return xwalk_dict
 
 def _generate_tsql(xwalk_dict:dict) -> dict:
@@ -216,3 +172,4 @@ def _generate_tsql(xwalk_dict:dict) -> dict:
     # review db_loader.load_db.load_option_b() for details
 
     return xwalk_dict
+
