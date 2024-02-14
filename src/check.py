@@ -2,10 +2,16 @@ import pandas as pd
 
 
 def check_birds(xwalk_dict:dict) -> None:
-    # TODO: this should check `make_birds()` output against the known set of tables in our db
+    """Validate a dictionary of birds data
+
+    Args:
+        xwalk_dict (dict): The dictionary output by src.make_templates.make_birds().
+
+    Returns:
+        None: This function returns None.
+    """
     _check_schema(xwalk_dict=xwalk_dict)
     _check_blanks(xwalk_dict=xwalk_dict)
-
     return None
 
 def _check_schema(xwalk_dict:dict) -> None:
@@ -30,7 +36,7 @@ def _check_schema(xwalk_dict:dict) -> None:
         # print(f'        "{schema}": {len(xwalk_dict[schema].keys())}')
         counter += len(xwalk_dict[schema].keys())
     if len(mydf) == counter:
-        print(f'The dictionary contains the same count of tables as the db schema: {counter}')
+        print(f'SUCCESS: The dictionary contains the same count of tables as the db schema: {counter}')
     else:
         print('')
         print('WARNING: The dictionary and schema have different counts of tables!')
@@ -39,7 +45,7 @@ def _check_schema(xwalk_dict:dict) -> None:
         print(f'Tables present in dictionary but absent from db schema (n): {len(present_xwalk_dict_absent_db)}')
         for tbl in present_xwalk_dict_absent_db:
             print(f'    {tbl}')
-        print(f'Tables present in db and absent but dictionary (n): {len(present_db_absent_xwalk_dict)}')
+        print(f'Tables present in db but absent from dictionary (n): {len(present_db_absent_xwalk_dict)}')
         for tbl in present_db_absent_xwalk_dict:
             print(f'    {tbl}')
 
@@ -88,9 +94,10 @@ def _validate_xwalks(xwalk_dict:dict) -> dict:
 
     return xwalk_dict
 
-def _go_deeper(myd:dict, exclusions:list) -> None:
+def _traverse(myd:dict, exclusions:list) -> None:
+    """Recursively check levels of input dictionary until we get the right depth; allows for schema addition"""
     mykeys = []
-    def __go_deeper(myd):
+    def __traverse(myd):
         if isinstance(myd, dict):
             if 'source' in myd.keys():
                 for k in list(myd.keys()):
@@ -98,20 +105,20 @@ def _go_deeper(myd:dict, exclusions:list) -> None:
                         mykeys.append(k)
             else:
                 for k in myd:
-                    __go_deeper(myd[k])
+                    __traverse(myd[k])
         else:
             pass
-    __go_deeper(myd)
+    __traverse(myd)
     mykeys = [x for x in mykeys if x not in exclusions]
 
     return mykeys
 
 def _check_blanks(xwalk_dict:dict) -> None:
     print('')
-    print('Checking for attributes and tables...')
+    print('Checking each table for required attributes...')
     print('')
-    exclusions = ['tsql', 'payload']
-    mykeys = _go_deeper(xwalk_dict, exclusions)
+    exclusions = ['tsql', 'payload'] # remove each element once we add modules to populate
+    mykeys = _traverse(xwalk_dict, exclusions)
 
     missing = {}
     for k in mykeys:
