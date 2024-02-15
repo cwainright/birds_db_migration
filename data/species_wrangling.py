@@ -16,11 +16,14 @@ locs = testdict['ncrn']['Location']['source'].copy()
 questions = species[species['AOU_Code'].isin(realvals.AOU_Code.unique())==False].AOU_Code.unique()
 fielddata = testdict['ncrn']['BirdDetection']['source'].copy()
 events = testdict['ncrn']['DetectionEvent']['source'].copy()
+contacts = testdict['ncrn']['Contact']['source']
 
 df = events.rename(columns={'event_id':'Event_ID'}).merge(fielddata, on='Event_ID', how='left')
 df = df.merge(species, on='AOU_Code', how='left')
 df = df.rename(columns={'location_id':'Location_ID'}).merge(locs, on='Location_ID', how='left')
-df = df[['Event_ID', 'Location_ID', 'Unit_Code', 'Plot_Name', 'Date', 'AOU_Code']]
+df = df.rename(columns={'entered_by':'Entered_By'}).merge(contacts, left_on='Entered_By', right_on='Contact_ID', how='left')
+df['Entered_By'] = df['First_Name'].astype(str) + ' ' + df['Last_Name'].astype(str)
+df = df[['Event_ID', 'Location_ID', 'Entered_By', 'Unit_Code', 'Plot_Name', 'Date', 'AOU_Code']]
 df = df[df['AOU_Code'].isin(questions)]
 df.AOU_Code.unique()
 len(df.AOU_Code.unique())
@@ -50,6 +53,7 @@ summarydf['maxdate'] = ''
 summarydf['mindate'] = ''
 # summarydf['most_common_park'] = ''
 summarydf['most_common_plot'] = ''
+summarydf['most_common_entered'] = ''
 summarydf['scientific_name'] = np.NaN
 summarydf['common_name'] = np.NaN
 
@@ -58,12 +62,16 @@ for c in summarydf.AOU_Code.values:
     maxdate = max(df[df['AOU_Code']==c].Date)
     # com_park = df[df['AOU_Code']==c].groupby(['Unit_Code']).size().reset_index(name='count').sort_values(['count'], ascending=False).max(level=0).Unit_Code.unique()[0]
     com_loc = df[df['AOU_Code']==c].groupby(['Plot_Name']).size().reset_index(name='count').sort_values(['count'], ascending=False).max(level=0).Plot_Name.unique()[0]
+    com_ent = df[df['AOU_Code']==c].groupby(['Entered_By']).size().reset_index(name='count').sort_values(['count'], ascending=False).max(level=0).Entered_By.unique()[0]
+    if com_ent == 'nan nan':
+        com_ent = df[df['AOU_Code']==c].groupby(['Entered_By']).size().reset_index(name='count').sort_values(['count'], ascending=False).max(level=0).Entered_By.unique()[1]
     summarydf['mindate'] = np.where(summarydf['AOU_Code']==c, mindate, summarydf['mindate'])
     summarydf['maxdate'] = np.where(summarydf['AOU_Code']==c, maxdate, summarydf['maxdate'])
     # summarydf['most_common_park'] = np.where(summarydf['AOU_Code']==c, com_park, summarydf['most_common_park'])
     summarydf['most_common_plot'] = np.where(summarydf['AOU_Code']==c, com_loc, summarydf['most_common_plot'])
+    summarydf['most_common_entered'] = np.where(summarydf['AOU_Code']==c, com_ent, summarydf['most_common_entered'])
 
 save_to = r'data/species_questions_20240215.csv'
-summarydf.to_csv(r'data/species_questions_20240215.csv', index=False)
+summarydf.to_csv(save_to, index=False)
 
 testdf = pd.read_csv(save_to)
