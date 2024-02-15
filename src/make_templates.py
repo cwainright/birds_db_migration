@@ -130,7 +130,7 @@ def _execute_xwalks(xwalk_dict:dict) -> dict:
                 try:
                     xwalk_dict[schema][tbl]['tbl_load'][dest_col] = xwalk_dict[schema][tbl]['source'][src_col]
                 except:
-                    print(f"WARNING! 1:1 destination column `{tbl}.{dest_col}` failed because its source column `['{tbl}']['source'][{src_col}]` did not resolve correctly. Debug its xwalk in src.tbl_xwalks")
+                    print(f"WARNING! 1:1 destination column `dict['{schema}']['{tbl}']['tbl_load']['{dest_col}']` failed because its source column `dict['{schema}']['{tbl}']['source']['{src_col}']` did not resolve correctly. Debug `dict['{schema}']['{tbl}']['tbl_load']['xwalk']` in src.tbl_xwalks._{schema}_{tbl}()")
 
             # if destination column requires calculations, calculate
             mask = (xwalk['calculation']=='calculate_dest_field_from_source_field') & (xwalk['source']!='placeholder') # TODO: DELETE THIS LINE, FOR TESTING ONLY
@@ -147,7 +147,7 @@ def _execute_xwalks(xwalk_dict:dict) -> dict:
                         try:
                             exec(line)
                         except:
-                            print(f'WARNING! Calculated column `{tbl}.{dest_col}`, code line {line} failed. Debug its xwalk in src.tbl_xwalks')
+                            print(f"WARNING! Calculated column `dict['{schema}']['{tbl}']['tbl_load']['{dest_col}']`, code line `{line}` failed. Debug `dict['{schema}']['{tbl}']['tbl_load']['xwalk']` in src.tbl_xwalks._{schema}_{tbl}()")
             
             # if destination column is blank field, assign blank
             blanks = list(xwalk[xwalk['calculation']=='blank_field'].destination.values)
