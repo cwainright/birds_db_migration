@@ -6,6 +6,8 @@ import src.build_tbls as bt
 import src.tbl_xwalks as tx
 import src.check as c
 import numpy as np
+import datetime as dt
+import time
 
 TBL_XWALK = assets.TBL_XWALK
 
@@ -24,6 +26,11 @@ def make_birds(dest:str='') -> dict:
         with open('saved_dictionary.pkl', 'rb') as f:
             loaded_dict = pickle.load(f) 
     """
+    print('')
+    print('Building birds...')
+    print('')
+    print('')
+    start_time = time.time()
     if dest !='':
         assert dest.endswith('.pkl'), print(f'You entered `{dest}`. If you want to save the output of `make_xwalks()`, `dest` must end in ".pkl"')
 
@@ -80,7 +87,13 @@ def make_birds(dest:str='') -> dict:
         with open(dest, 'wb') as f:
             pickle.dump(xwalk_dict, f)
         print(f'Output saved to `{dest}`')
-    
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    elapsed_time = str(dt.timedelta(seconds=elapsed_time))
+    elapsed_time = elapsed_time.split('.')[0]
+    print('')
+    print(f'`make_birds()` succeeded in: {elapsed_time}')
+
     return xwalk_dict
 
 def _create_xwalks(xwalk_dict:dict) -> dict:
