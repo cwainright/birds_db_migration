@@ -1324,13 +1324,31 @@ def _lu_Habitat(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO
 
     # 1:1 fields
     one_to_one_fields = [
+        'ID'
+        ,'Code'
+        ,'Label'
+        ,'Description'
+        ,'Group'
     ]
     # assign grouping variable `calculation` for the 1:1 fields
     mask = (xwalk_dict['lu']['Habitat']['xwalk']['destination'].isin(one_to_one_fields))
     xwalk_dict['lu']['Habitat']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['lu']['Habitat']['xwalk']['calculation'])
     # ID
     mask = (xwalk_dict['lu']['Habitat']['xwalk']['destination'] == 'ID')
-    xwalk_dict['lu']['Habitat']['xwalk']['source'] =  np.where(mask, 'ID_Code', xwalk_dict['lu']['Habitat']['xwalk']['source'])
+    xwalk_dict['lu']['Habitat']['xwalk']['source'] = np.where(mask, 'ID', xwalk_dict['lu']['Habitat']['xwalk']['source'])
+    xwalk_dict['lu']['Habitat']['xwalk']['note'] = np.where(mask, "NCRN doesn't keep this table so borrow from NETNMIDN", xwalk_dict['lu']['Habitat']['xwalk']['note'])
+    # Code
+    mask = (xwalk_dict['lu']['Habitat']['xwalk']['destination'] == 'Code')
+    xwalk_dict['lu']['Habitat']['xwalk']['source'] = np.where(mask, 'Code', xwalk_dict['lu']['Habitat']['xwalk']['source'])
+    # Label
+    mask = (xwalk_dict['lu']['Habitat']['xwalk']['destination'] == 'Label')
+    xwalk_dict['lu']['Habitat']['xwalk']['source'] = np.where(mask, 'Label', xwalk_dict['lu']['Habitat']['xwalk']['source'])
+    # Description
+    mask = (xwalk_dict['lu']['Habitat']['xwalk']['destination'] == 'Description')
+    xwalk_dict['lu']['Habitat']['xwalk']['source'] = np.where(mask, 'Description', xwalk_dict['lu']['Habitat']['xwalk']['source'])
+    # Group
+    mask = (xwalk_dict['lu']['Habitat']['xwalk']['destination'] == 'Group')
+    xwalk_dict['lu']['Habitat']['xwalk']['source'] = np.where(mask, 'Group', xwalk_dict['lu']['Habitat']['xwalk']['source'])
 
     # Calculated fields
     calculated_fields = [
@@ -1342,6 +1360,7 @@ def _lu_Habitat(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO
 
     # Blanks
     blank_fields = [
+        'Rowversion'
     ]
     # assign grouping variable `calculation` for the blank fields
     mask = (xwalk_dict['lu']['Habitat']['xwalk']['destination'].isin(blank_fields))
@@ -1446,6 +1465,17 @@ def _exception_ncrn_AuditLogDetail(xwalk_dict:dict) -> dict:
     df = df[[x for x in df.columns if x in additions or x in history.columns]]
 
     xwalk_dict['ncrn']['AuditLogDetail']['source'] = df
+
+    return xwalk_dict
+
+def _exception_lu_Habitat(xwalk_dict:dict) -> dict:
+    """NCRN doesn't keep this table so borrow from NETNMIDN"""
+
+    filename = r'assets\db\lu_habitat.csv'
+    habitat = pd.read_csv(filename)
+
+    xwalk_dict['lu']['Habitat']['source'] = habitat
+    xwalk_dict['lu']['Habitat']['source_name'] = 'NETNMIDN_Landbirds.lu.Habitat'
 
     return xwalk_dict
 

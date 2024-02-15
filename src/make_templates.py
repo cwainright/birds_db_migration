@@ -115,6 +115,7 @@ def _execute_xwalk_exceptions(xwalk_dict:dict) -> dict:
     xwalk_dict = tx._exception_ncrn_DetectionEvent(xwalk_dict)
     xwalk_dict = tx._exception_ncrn_BirdSpecies(xwalk_dict)
     xwalk_dict = tx._exception_ncrn_AuditLogDetail(xwalk_dict)
+    xwalk_dict = tx._exception_lu_Habitat(xwalk_dict)
 
     return xwalk_dict
 
