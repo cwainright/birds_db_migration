@@ -1120,7 +1120,7 @@ def _lu_NoiseLevel(xwalk_dict:dict) -> dict:
 
     return xwalk_dict
 
-def _ncrn_AuditLog(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
+def _ncrn_AuditLog(xwalk_dict:dict) -> dict:
     """Crosswalk source.tbl_History to destination.ncrn.AuditLog
 
     Args:
@@ -1132,21 +1132,39 @@ def _ncrn_AuditLog(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##T
 
     # 1:1 fields
     one_to_one_fields = [
+        'ID'
+        ,'username'
+        ,'DetectionEventID'
+        ,'Description'
     ]
     # assign grouping variable `calculation` for the 1:1 fields
     mask = (xwalk_dict['ncrn']['AuditLog']['xwalk']['destination'].isin(one_to_one_fields))
     xwalk_dict['ncrn']['AuditLog']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['ncrn']['AuditLog']['xwalk']['calculation'])
     # ID
     mask = (xwalk_dict['ncrn']['AuditLog']['xwalk']['destination'] == 'ID')
-    xwalk_dict['ncrn']['AuditLog']['xwalk']['source'] =  np.where(mask, 'ID_Code', xwalk_dict['ncrn']['AuditLog']['xwalk']['source'])
+    xwalk_dict['ncrn']['AuditLog']['xwalk']['source'] =  np.where(mask, 'History_ID', xwalk_dict['ncrn']['AuditLog']['xwalk']['source'])
+    # username
+    mask = (xwalk_dict['ncrn']['AuditLog']['xwalk']['destination'] == 'username')
+    xwalk_dict['ncrn']['AuditLog']['xwalk']['source'] =  np.where(mask, 'Contact_ID', xwalk_dict['ncrn']['AuditLog']['xwalk']['source'])
+    # Description
+    mask = (xwalk_dict['ncrn']['AuditLog']['xwalk']['destination'] == 'Description')
+    xwalk_dict['ncrn']['AuditLog']['xwalk']['source'] =  np.where(mask, 'Value_History_Notes', xwalk_dict['ncrn']['AuditLog']['xwalk']['source'])
+    # DetectionEventID
+    mask = (xwalk_dict['ncrn']['AuditLog']['xwalk']['destination'] == 'DetectionEventID')
+    xwalk_dict['ncrn']['AuditLog']['xwalk']['source'] =  np.where(mask, 'Record_ID', xwalk_dict['ncrn']['AuditLog']['xwalk']['source'])
 
     # Calculated fields
     calculated_fields = [
+        'LogDate'
     ]
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['ncrn']['AuditLog']['xwalk']['destination'].isin(calculated_fields))
     xwalk_dict['ncrn']['AuditLog']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn']['AuditLog']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
     xwalk_dict['ncrn']['AuditLog']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn']['AuditLog']['xwalk']['calculation'])
+    # LogDate
+    mask = (xwalk_dict['ncrn']['AuditLog']['xwalk']['destination'] == 'LogDate')
+    xwalk_dict['ncrn']['AuditLog']['xwalk']['source'] =  np.where(mask, "xwalk_dict['ncrn']['AuditLog']['tbl_load']['LogDate']=np.where(xwalk_dict['ncrn']['AuditLog']['source']['Change_Date'].isna(),np.datetime64('1900-01-01T00:00:00.000000000'),xwalk_dict['ncrn']['AuditLog']['source']['Change_Date'])", xwalk_dict['ncrn']['AuditLog']['xwalk']['source'])
+    xwalk_dict['ncrn']['AuditLog']['xwalk']['note'] = np.where(mask, "DATETIME NOT NULL; History_ID (tbl_load.ID) 20210525074241-398932278.156281, Record_ID (tbl_load.DetectionEventID) {C15DFDCF-428A-4980-B6AC-682C9D08054E} recorded null Change_Date; required field so fill in 1900-01-01", xwalk_dict['ncrn']['AuditLog']['xwalk']['note'])
 
     # Blanks
     blank_fields = [
@@ -1375,3 +1393,4 @@ def _add_row_id(xwalk_dict:dict) -> dict:
                 xwalk_dict[schema][tbl]['tbl_load']['rowid'] = xwalk_dict[schema][tbl]['tbl_load'].index+1
 
     return xwalk_dict
+
