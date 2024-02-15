@@ -1177,7 +1177,7 @@ def _ncrn_AuditLog(xwalk_dict:dict) -> dict:
 
     return xwalk_dict
 
-def _ncrn_AuditLogDetail(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
+def _ncrn_AuditLogDetail(xwalk_dict:dict) -> dict:
     """Crosswalk source.tbl_History to destination.ncrn.AuditLogDetail
 
     Args:
@@ -1189,21 +1189,62 @@ def _ncrn_AuditLogDetail(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##T
 
     # 1:1 fields
     one_to_one_fields = [
+        'ID'
+        ,'AuditLogID'
+        ,'OldValue'
+        ,'NewValue'
+        ,'EntityAffected'
+        ,'FieldName'
+        ,'ProtocolID'
+        ,'Description'
     ]
     # assign grouping variable `calculation` for the 1:1 fields
     mask = (xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['destination'].isin(one_to_one_fields))
     xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['calculation'])
     # ID
     mask = (xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['destination'] == 'ID')
-    xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['source'] =  np.where(mask, 'ID_Code', xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['source'])
+    xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['source'] =  np.where(mask, 'History_ID', xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['source'])
+    xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['note'] = np.where(mask, "NCRN only kept one history table (tbl_History), so ncrn.AuditLogDetail and ncrn.AuditLog were historically 1:1", xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['note'])
+    # AuditLogID
+    mask = (xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['destination'] == 'AuditLogID')
+    xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['source'] =  np.where(mask, 'History_ID', xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['source'])
+    # NewValue
+    mask = (xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['destination'] == 'NewValue')
+    xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['source'] =  np.where(mask, 'Value_New', xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['source'])
+    # OldValue
+    mask = (xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['destination'] == 'OldValue')
+    xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['source'] =  np.where(mask, 'Value_Old', xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['source'])
+    # EntityAffected
+    mask = (xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['destination'] == 'EntityAffected')
+    xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['source'] =  np.where(mask, 'Table_Name', xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['source'])
+    # FieldName
+    mask = (xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['destination'] == 'FieldName')
+    xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['source'] =  np.where(mask, 'Record_ID_Field_Name', xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['source'])
+    # Description
+    mask = (xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['destination'] == 'Description')
+    xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['source'] =  np.where(mask, 'Field_Name', xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['source'])
+    # ProtocolID join protocol ID to this via exception
+    mask = (xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['destination'] == 'ProtocolID')
+    xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['source'] =  np.where(mask, "protocol_id", xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['source'])
+    xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['note'] = np.where(mask, "tbl_History left join tbl_Events to add protocol id and name", xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['note'])
 
     # Calculated fields
     calculated_fields = [
+        'RecordLocatorPath'
+        ,'Action'
     ]
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['destination'].isin(calculated_fields))
     xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
     xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['calculation'])
+    # RecordLocatorPath VARCHAR (200) matching format '<Protocol = Region 1 landbird monitoring protocol><DetectionEvent = Jul  9 2020  8:50AM>'
+    mask = (xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['destination'] == 'RecordLocatorPath')
+    xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn']['AuditLogDetail']['tbl_load']['RecordLocatorPath']='<Protocol='+xwalk_dict['ncrn']['AuditLogDetail']['source']['protocol_name'].astype(str)+'><DetectionEvent='+xwalk_dict['ncrn']['AuditLogDetail']['source']['Date'].astype(str)+'>'", xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['source'])
+    xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['note'] = np.where(mask, "VARCHAR (200) matching format '<Protocol = Region 1 landbird monitoring protocol><DetectionEvent = Jul  9 2020  8:50AM>'", xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['note'])
+    # Action VARCHAR (10) NOT NULL, not constrained; one-word description of what changed in the record
+    mask = (xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['destination'] == 'Action')
+    xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['source'] =  np.where(mask, "xwalk_dict['ncrn']['AuditLogDetail']['tbl_load']['Action']=np.where(xwalk_dict['ncrn']['AuditLogDetail']['source'].Value_Old.isna(),'Add','Update')", xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['source'])
+    xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['note'] = np.where(mask, "VARCHAR (10) NOT NULL, not constrained; one-word description of what changed in the record", xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['note'])
 
     # Blanks
     blank_fields = [
@@ -1391,6 +1432,20 @@ def _add_row_id(xwalk_dict:dict) -> dict:
         for tbl in xwalk_dict[schema].keys():
             if len(xwalk_dict[schema][tbl]['tbl_load'])>0:
                 xwalk_dict[schema][tbl]['tbl_load']['rowid'] = xwalk_dict[schema][tbl]['tbl_load'].index+1
+
+    return xwalk_dict
+
+def _exception_ncrn_AuditLogDetail(xwalk_dict:dict) -> dict:
+    """The source table tbl_History does not include protocol so add it"""
+
+    history = xwalk_dict['ncrn']['AuditLogDetail']['source'].copy()
+    events = xwalk_dict['ncrn']['DetectionEvent']['source'].copy()
+
+    df = history.merge(events, left_on='Record_ID',  right_on='event_id', how='left')
+    additions = ['protocol_id', 'protocol_name', 'Date']
+    df = df[[x for x in df.columns if x in additions or x in history.columns]]
+
+    xwalk_dict['ncrn']['AuditLogDetail']['source'] = df
 
     return xwalk_dict
 
