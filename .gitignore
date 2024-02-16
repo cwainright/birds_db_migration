@@ -162,3 +162,8 @@ cython_debug/
 assets
 sandbox.py
 todo.txt
+handoff_notes.txt
+udel_questions.txt
+src/qry/devops
+data/*.csv
+data/*.xlsx
