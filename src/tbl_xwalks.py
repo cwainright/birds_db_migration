@@ -940,7 +940,7 @@ def _ncrn_BirdSpeciesGroup(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO#
 
     return xwalk_dict
 
-def _ncrn_BirdGroups(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
+def _ncrn_BirdGroups(xwalk_dict:dict) -> dict:
     """Crosswalk source.dbo_tlu_Guild_Assignment to destination.ncrn.BirdGroups
 
     Args:
@@ -952,32 +952,53 @@ def _ncrn_BirdGroups(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO#
 
     # ncrn.BirdGroups
     # looks like dbo_tlu_Guild_Assignment LEFT JOIN dbo_tbl_Guilds?
-    # dbo_tlu_Guild_Assignment.Guild_Assignment_ID == dbo.ncrn.BirdGroups.ID --I know this GUID needs to be translated to INT
+    # dbo_tlu_Guild_Assignment.Guild_Assignment_ID == dbo.ncrn.BirdGroups.ID
     # dbo_tlu_GuildAssignment.Guild_Level == dbo.ncrn.BirdGroups.GroupName
-    # dbo.ncrn.BirdGroups.GroupName = 1 --BIT; all of our groups are guilds
+    # dbo.ncrn.BirdGroups.IsGuild = 1 --BIT; all of our groups are guilds
     # dbo_tlu_GuildAssignment.Active == dbo.ncrn.BirdGroups.IsActive
     # dbo_tbl_Guilds.Integrity_Element + dbo_tbl_Guilds.Guild_Name == dbo.ncrn.BirdGroups.Comment
 
     # 1:1 fields
     one_to_one_fields = [
+        'ID'
+        ,'GroupName'
+        ,'IsActive'
     ]
     # assign grouping variable `calculation` for the 1:1 fields
     mask = (xwalk_dict['ncrn']['BirdGroups']['xwalk']['destination'].isin(one_to_one_fields))
     xwalk_dict['ncrn']['BirdGroups']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['ncrn']['BirdGroups']['xwalk']['calculation'])
     # ID
     mask = (xwalk_dict['ncrn']['BirdGroups']['xwalk']['destination'] == 'ID')
-    xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'] =  np.where(mask, 'ID_Code', xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'])
+    xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'] =  np.where(mask, 'Guild_Assignment_ID', xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'])
+    # GroupName
+    mask = (xwalk_dict['ncrn']['BirdGroups']['xwalk']['destination'] == 'GroupName')
+    xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'] =  np.where(mask, 'Guild_Level', xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'])
+    # IsActive
+    mask = (xwalk_dict['ncrn']['BirdGroups']['xwalk']['destination'] == 'IsActive')
+    xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'] =  np.where(mask, 'Active', xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'])
+
 
     # Calculated fields
     calculated_fields = [
+        'IsGuild'
+        ,'Comment'
     ]
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['ncrn']['BirdGroups']['xwalk']['destination'].isin(calculated_fields))
     xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn']['BirdGroups']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
     xwalk_dict['ncrn']['BirdGroups']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn']['BirdGroups']['xwalk']['calculation'])
+    # IsGuild
+    mask = (xwalk_dict['ncrn']['BirdGroups']['xwalk']['destination'] == 'IsGuild')
+    xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'] =  np.where(mask, "xwalk_dict['ncrn']['BirdGroups']['tbl_load']['IsGuild']=np.where(xwalk_dict['ncrn']['BirdGroups']['source']['GuildCategory'].isna(),0,1)", xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'])
+    xwalk_dict['ncrn']['BirdGroups']['xwalk']['note'] =  np.where(mask, 'tbd', xwalk_dict['ncrn']['BirdGroups']['xwalk']['note'])
+    # Comment
+    mask = (xwalk_dict['ncrn']['BirdGroups']['xwalk']['destination'] == 'Comment')
+    xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'] =  np.where(mask, "xwalk_dict['ncrn']['BirdGroups']['tbl_load']['Comment'] = 'Description:'+xwalk_dict['ncrn']['BirdGroups']['source']['Guild_Description'].astype(str)+';Code:'+xwalk_dict['ncrn']['BirdGroups']['source']['GuildCode'].astype(str)+';Integrity_Element:'+xwalk_dict['ncrn']['BirdGroups']['source']['Integrity_Element'].astype(str)+';GuildCategory:'+xwalk_dict['ncrn']['BirdGroups']['source']['GuildCategory'].astype(str)", xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'])
+    xwalk_dict['ncrn']['BirdGroups']['xwalk']['note'] =  np.where(mask, 'VARCHAR(MAX); a concatenation of all the leftover attributes from dbo_tlu_Guild_Assignment LEFT JOIN dbo_tbl_Guilds ON dbo_tlu_Guild_Assignment.Guild_ID = dbo_tbl_Guilds.Guild_ID', xwalk_dict['ncrn']['BirdGroups']['xwalk']['note'])
 
     # Blanks
     blank_fields = [
+        'Rowversion'
     ]
     # assign grouping variable `calculation` for the blank fields
     mask = (xwalk_dict['ncrn']['BirdGroups']['xwalk']['destination'].isin(blank_fields))
@@ -1310,7 +1331,7 @@ def _lu_SamplingMethod(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TOD
     return xwalk_dict
 
 
-def _lu_Habitat(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
+def _lu_Habitat(xwalk_dict:dict) -> dict:
     """Crosswalk source.tbl_Protocol to destination.lu.Habitat
 
     Args:
@@ -1476,6 +1497,13 @@ def _exception_lu_Habitat(xwalk_dict:dict) -> dict:
 
     xwalk_dict['lu']['Habitat']['source'] = habitat
     xwalk_dict['lu']['Habitat']['source_name'] = 'NETNMIDN_Landbirds.lu.Habitat'
+
+    return xwalk_dict
+
+def _exception_ncrn_BirdSpeciesGroups(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
+    """This table is empty in NETNMIDN and NCRN doesn't keep it"""
+    # TODO: add an empty `xwalk` and `tbl_load` here
+
 
     return xwalk_dict
 
