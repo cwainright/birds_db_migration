@@ -2,5 +2,5 @@
 import pandas as pd
 import numpy as np
 
-def load_tbl(tbl:str, df:pd.DataFrame) -> None:
+def load_tbl(db:str, tbl:str, df:pd.DataFrame) -> None:
     pass
