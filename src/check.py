@@ -1,5 +1,6 @@
 import pandas as pd
 
+EXCLUSIONS = ['tsql', 'payload'] # remove each element once we add modules to populate
 
 def check_birds(xwalk_dict:dict) -> None:
     """Validate a dictionary of birds data
@@ -10,8 +11,14 @@ def check_birds(xwalk_dict:dict) -> None:
     Returns:
         None: This function returns None.
     """
+    print('')
+    print(f'Validating dictionary against db schema...')
     _check_schema(xwalk_dict=xwalk_dict)
+    print('')
+    print('Checking each table for required attributes...')
+    _validate_xwalks(xwalk_dict=xwalk_dict)
     _check_blanks(xwalk_dict=xwalk_dict)
+
     return None
 
 def _check_schema(xwalk_dict:dict) -> None:
@@ -26,11 +33,7 @@ def _check_schema(xwalk_dict:dict) -> None:
 
     present_xwalk_dict_absent_db = [x for x in tbls if x not in mydf.name.unique()]
     present_db_absent_xwalk_dict = [x for x in mydf.name.unique() if x not in tbls]
-    print('')
-    print(f'Validating dictionary against db schema...')
-    # print(f'Dimensions of dictionary:')
-    # print(f'    Count of schemas: {len(xwalk_dict)}')
-    # print(f'    Count of tables in each schema:')
+
     counter = 0
     for schema in xwalk_dict.keys():
         # print(f'        "{schema}": {len(xwalk_dict[schema].keys())}')
@@ -84,17 +87,60 @@ def _validate_referential_integrity(xwalk_dict:dict) -> dict:
 def _validate_xwalks(xwalk_dict:dict) -> dict:
     # TODO: this function should check that the `xwalk` attr produced for each `tbl_load` is valid
 
-    # find and report missing values
-    # missing = xwalk_dict['ncrn.DetectionEvent']['xwalk'][xwalk_dict['ncrn.DetectionEvent']['xwalk']['source'].isna()].destination.unique()
-    # if len(missing) >0:
-    #     for m in missing:
-    #         print(f'[\'ncrn.DetectionEvent\'][\'xwalk\'] is missing a `source` value where `destination`==\'{m}\'.')
+    print('')
+    mykeys = ['xwalk']
 
-    # how else can the xwalk go sideways?
+    missing = {}
+    for k in mykeys:
+        missing[k] = {
+            'counter':0
+            ,'mylist':[]
+        }
+
+    missing_vals = {}
+    for schema in xwalk_dict.keys():
+        missing_vals[schema] = {}
+        for tbl in xwalk_dict[schema].keys():
+            missing_vals[schema][tbl] = {}
+            for k in mykeys:
+                missing_vals[schema][tbl][k] = {}
+
+                mask = (xwalk_dict[schema][tbl]['xwalk'].source.isna()) | (xwalk_dict[schema][tbl]['xwalk'].source == 'tbd') | (xwalk_dict[schema][tbl]['xwalk'].source == 'placeholder')
+                mysub = xwalk_dict[schema][tbl]['xwalk'][mask]
+                if len(mysub) >0:
+                    missing[k]['counter'] +=1
+                    missing[k]['mylist'].append(f"dict['{schema}']['{tbl}']['{k}']")
+
+    tbls_missing = {
+        'tbl_missing':[]
+        ,'tables':{}
+    }
+    for schema in missing_vals.keys():
+        for tbl in missing_vals[schema].keys():
+            counter = 0
+            if len(missing_vals[schema][tbl]) >0:
+                counter += 1
+                for attr in missing_vals[schema][tbl]:
+                    tbls_missing['tbl_missing'].append(attr)
+    
+    # summarize output by attribute
+    successes = []
+    for k in missing:
+        if missing[k]['counter'] >0:
+            print(f"WARNING: Attribute `{k}` has empty slots in {missing[k]['counter']} tables!")
+            for v in missing[k]['mylist']:
+                print(f'    {v}')
+        else:
+            successes.append(k)
+    if len(successes)==len(mykeys):
+        print('SUCCESS: All `xwalks` are complete!')
+
+    print('')
+    
 
     return xwalk_dict
 
-def _traverse(myd:dict, exclusions:list) -> None:
+def _traverse(myd:dict, EXCLUSIONS:list) -> None:
     """Recursively check levels of input dictionary until we get the right depth; allows for schema addition"""
     mykeys = []
     def __traverse(myd):
@@ -109,16 +155,13 @@ def _traverse(myd:dict, exclusions:list) -> None:
         else:
             pass
     __traverse(myd)
-    mykeys = [x for x in mykeys if x not in exclusions]
+    mykeys = [x for x in mykeys if x not in EXCLUSIONS]
 
     return mykeys
 
 def _check_blanks(xwalk_dict:dict) -> None:
-    print('')
-    print('Checking each table for required attributes...')
-    print('')
-    exclusions = ['tsql', 'payload'] # remove each element once we add modules to populate
-    mykeys = _traverse(xwalk_dict, exclusions)
+
+    mykeys = _traverse(xwalk_dict, EXCLUSIONS)
 
     missing = {}
     for k in mykeys:
@@ -134,7 +177,7 @@ def _check_blanks(xwalk_dict:dict) -> None:
         for tbl in xwalk_dict[schema].keys():
             missing_vals[schema][tbl] = []
             for k in xwalk_dict[schema][tbl].keys():
-                if k not in exclusions:
+                if k not in EXCLUSIONS:
                     if k == 'destination':
                         if len(xwalk_dict[schema][tbl][k].columns) == 0:
                             missing[k]['counter'] +=1
@@ -186,5 +229,6 @@ def _check_blanks(xwalk_dict:dict) -> None:
     #                     print(f'        {attr}')
     # else:
     #     print('SUCCESS: All tables have all required attributes!')
+    print('')
 
     return None
