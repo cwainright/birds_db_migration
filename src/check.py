@@ -107,7 +107,7 @@ def _validate_xwalks(xwalk_dict:dict) -> dict:
 
                 mask = (xwalk_dict[schema][tbl]['xwalk'].source.isna()) | (xwalk_dict[schema][tbl]['xwalk'].source == 'tbd') | (xwalk_dict[schema][tbl]['xwalk'].source == 'placeholder')
                 mysub = xwalk_dict[schema][tbl]['xwalk'][mask]
-                if len(mysub) >0:
+                if len(mysub) >0 or len(xwalk_dict[schema][tbl]['xwalk'])==0:
                     missing[k]['counter'] +=1
                     missing[k]['mylist'].append(f"dict['{schema}']['{tbl}']['{k}']")
 
