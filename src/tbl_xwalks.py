@@ -1150,6 +1150,10 @@ def _ncrn_BirdSpecies(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO
     mask = (xwalk_dict['ncrn']['BirdSpecies']['xwalk']['destination'].isin(calculated_fields))
     xwalk_dict['ncrn']['BirdSpecies']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn']['BirdSpecies']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
     xwalk_dict['ncrn']['BirdSpecies']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn']['BirdSpecies']['xwalk']['calculation'])
+    # Comments
+    mask = (xwalk_dict['ncrn']['BirdSpecies']['xwalk']['destination'] == 'Comments')
+    xwalk_dict['ncrn']['BirdSpecies']['xwalk']['source'] =  np.where(mask, "xwalk_dict['ncrn']['BirdSpecies']['tbl_load']['Comments']=np.NaN", xwalk_dict['ncrn']['BirdSpecies']['xwalk']['source'])
+    xwalk_dict['ncrn']['BirdSpecies']['xwalk']['note'] =  np.where(mask, 'VARCHAR (1000) NULL; leaving blank because all other attributes are being cast to ncrn.BirdGroups and ncrn.BirdSpeciesPark', xwalk_dict['ncrn']['BirdSpecies']['xwalk']['note'])
 
     # Blanks
     blank_fields = [
