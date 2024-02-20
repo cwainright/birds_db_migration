@@ -828,6 +828,10 @@ def _ncrn_Contact(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TO
     one_to_one_fields = [
         'ID'
         ,'IsActive'
+        ,'LastName'
+        ,'FirstName'
+        ,'Organization'
+        ,'ExperienceLevelID'
     ]
     # assign grouping variable `calculation` for the 1:1 fields
     mask = (xwalk_dict['ncrn']['Contact']['xwalk']['destination'].isin(one_to_one_fields))
@@ -837,18 +841,42 @@ def _ncrn_Contact(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TO
     xwalk_dict['ncrn']['Contact']['xwalk']['source'] =  np.where(mask, 'Contact_ID', xwalk_dict['ncrn']['Contact']['xwalk']['source'])
     # IsActive
     mask = (xwalk_dict['ncrn']['Contact']['xwalk']['destination'] == 'IsActive')
-    xwalk_dict['ncrn']['Contact']['xwalk']['source'] =  np.where(mask, 'Contact_ID', xwalk_dict['ncrn']['Contact']['xwalk']['source'])
+    xwalk_dict['ncrn']['Contact']['xwalk']['source'] =  np.where(mask, 'Active_Contact', xwalk_dict['ncrn']['Contact']['xwalk']['source'])
+    # LastName
+    mask = (xwalk_dict['ncrn']['Contact']['xwalk']['destination'] == 'LastName')
+    xwalk_dict['ncrn']['Contact']['xwalk']['source'] =  np.where(mask, 'Last_Name', xwalk_dict['ncrn']['Contact']['xwalk']['source'])
+    # FirstName
+    mask = (xwalk_dict['ncrn']['Contact']['xwalk']['destination'] == 'FirstName')
+    xwalk_dict['ncrn']['Contact']['xwalk']['source'] =  np.where(mask, 'First_Name', xwalk_dict['ncrn']['Contact']['xwalk']['source'])
+    # Organization
+    mask = (xwalk_dict['ncrn']['Contact']['xwalk']['destination'] == 'Organization')
+    xwalk_dict['ncrn']['Contact']['xwalk']['source'] =  np.where(mask, 'Organization', xwalk_dict['ncrn']['Contact']['xwalk']['source'])
+    # ExperienceLevelID
+    mask = (xwalk_dict['ncrn']['Contact']['xwalk']['destination'] == 'ExperienceLevelID')
+    xwalk_dict['ncrn']['Contact']['xwalk']['source'] =  np.where(mask, 'ExperienceLevelID', xwalk_dict['ncrn']['Contact']['xwalk']['source'])
+    xwalk_dict['ncrn']['Contact']['xwalk']['note'] = np.where(mask, "mapped from lu.ExperienceLevel via tbl_xwalks._exception_ncrn_Contact()", xwalk_dict['ncrn']['Contact']['xwalk']['note'])
 
     # Calculated fields
     calculated_fields = [
+        'Notes'
+        ,'NetworkCode'
     ]
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['ncrn']['Contact']['xwalk']['destination'].isin(calculated_fields))
     xwalk_dict['ncrn']['Contact']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn']['Contact']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
     xwalk_dict['ncrn']['Contact']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn']['Contact']['xwalk']['calculation'])
+    # Notes
+    mask = (xwalk_dict['ncrn']['Contact']['xwalk']['destination'] == 'Notes')
+    xwalk_dict['ncrn']['Contact']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn']['Contact']['tbl_load']['Notes']='Work_Phone:'+xwalk_dict['ncrn']['Contact']['source']['Email_Address'].astype(str)+';Work_Phone:'+xwalk_dict['ncrn']['Contact']['source']['Work_Phone'].astype(str)+';Contact_Notes:'+xwalk_dict['ncrn']['Contact']['source']['Contact_Notes'].astype(str)", xwalk_dict['ncrn']['Contact']['xwalk']['source'])
+    xwalk_dict['ncrn']['Contact']['xwalk']['note'] = np.where(mask, "VARCHAR (100) NULL; concatenation of fields present in ncrn source and absent in db schema", xwalk_dict['ncrn']['Contact']['xwalk']['note'])
+    # NetworkCode
+    mask = (xwalk_dict['ncrn']['Contact']['xwalk']['destination'] == 'NetworkCode')
+    xwalk_dict['ncrn']['Contact']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn']['Contact']['tbl_load']['NetworkCode']='NCRN'", xwalk_dict['ncrn']['Contact']['xwalk']['source'])
+    xwalk_dict['ncrn']['Contact']['xwalk']['note'] = np.where(mask, "VARCHAR(4) NOT NULL; hard-code to NCRN", xwalk_dict['ncrn']['Contact']['xwalk']['note'])
 
     # Blanks
     blank_fields = [
+        'Rowversion'
     ]
     # assign grouping variable `calculation` for the blank fields
     mask = (xwalk_dict['ncrn']['Contact']['xwalk']['destination'].isin(blank_fields))
@@ -1676,6 +1704,27 @@ def _exception_lu_ExperienceLevel(xwalk_dict:dict) -> dict:
 
     xwalk_dict['lu']['ExperienceLevel']['source_name'] = 'NETNMIDN_Landbirds.lu.ExperienceLevel'
     xwalk_dict['lu']['ExperienceLevel']['source'] = exp_lev.copy()
+
+    return xwalk_dict
+
+def _exception_ncrn_Contact(xwalk_dict:dict) -> dict:
+    """map experience level to ncrn.Contact.source.ExperienceLevelID"""
+
+    mymap = {}
+    mymap['Crew Leader'] = 3
+    mymap['None'] = 1
+    mymap['Field Technician'] = 2
+    mymap['Data Manager'] = 1
+    mymap['NCRN Data Manager'] = 1
+    mymap['Undergrad'] = 2
+    mymap['Top Dog'] = 3
+
+    xwalk_dict['ncrn']['Contact']['source']['ExperienceLevelID'] = np.NaN
+    xwalk_dict['ncrn']['Contact']['source']['Position_Title'] = xwalk_dict['ncrn']['Contact']['source']['Position_Title'].astype(str)
+
+    for k,v in mymap.items():
+        mask = (xwalk_dict['ncrn']['Contact']['source'].Position_Title == k)
+        xwalk_dict['ncrn']['Contact']['source']['ExperienceLevelID'] = np.where(mask, v, xwalk_dict['ncrn']['Contact']['source']['ExperienceLevelID'])
 
     return xwalk_dict
 
