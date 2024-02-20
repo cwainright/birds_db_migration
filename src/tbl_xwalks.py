@@ -343,6 +343,11 @@ def _ncrn_Location(xwalk_dict:dict) -> dict:
     one_to_one_fields = [
         'ID'
         ,'SiteID'
+        ,'Label'
+        ,'X_Coord_DD_NAD83'
+        ,'Y_Coord_DD_NAD83'
+        ,'GeodeticDatumID'
+        ,'EnteredDate'
     ]
     # assign grouping variable `calculation` for the 1:1 fields
     mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'].isin(one_to_one_fields))
@@ -353,6 +358,82 @@ def _ncrn_Location(xwalk_dict:dict) -> dict:
     # SiteID
     mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'SiteID')
     xwalk_dict['ncrn']['Location']['xwalk']['source'] =  np.where(mask, 'Site_ID', xwalk_dict['ncrn']['Location']['xwalk']['source'])
+    # Label
+    mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'Label')
+    xwalk_dict['ncrn']['Location']['xwalk']['source'] =  np.where(mask, 'Plot_Name', xwalk_dict['ncrn']['Location']['xwalk']['source'])
+    # X_Coord_DD_NAD83
+    mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'X_Coord_DD_NAD83')
+    xwalk_dict['ncrn']['Location']['xwalk']['source'] =  np.where(mask, 'Long_WGS84', xwalk_dict['ncrn']['Location']['xwalk']['source'])
+    # Y_Coord_DD_NAD83
+    mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'Y_Coord_DD_NAD83')
+    xwalk_dict['ncrn']['Location']['xwalk']['source'] =  np.where(mask, 'Lat_WGS84', xwalk_dict['ncrn']['Location']['xwalk']['source'])
+    # GeodeticDatumID
+    mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'GeodeticDatumID')
+    xwalk_dict['ncrn']['Location']['xwalk']['source'] =  np.where(mask, 'Datum', xwalk_dict['ncrn']['Location']['xwalk']['source'])
+    # EnteredDate
+    mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'EnteredDate')
+    xwalk_dict['ncrn']['Location']['xwalk']['source'] =  np.where(mask, 'Establish_Date', xwalk_dict['ncrn']['Location']['xwalk']['source'])
+
+    # Calculated fields
+    calculated_fields = [
+        'HabitatID'
+        ,'EnteredBy'
+        ,'IsActive'
+    ]
+    # assign grouping variable `calculation` for the calculated fields
+    mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'].isin(calculated_fields))
+    xwalk_dict['ncrn']['Location']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn']['Location']['xwalk']['source'])
+    xwalk_dict['ncrn']['Location']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn']['Location']['xwalk']['calculation'])
+    # HabitatID  INT NOT NULL map from dict lu.Habitat
+    mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'HabitatID')
+    xwalk_dict['ncrn']['Location']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn']['Location']['tbl_load']['HabitatID']=np.where((xwalk_dict['ncrn']['Location']['source']['Location_Type']=='Grassland'),1,2)", xwalk_dict['ncrn']['Location']['xwalk']['source'])
+    xwalk_dict['ncrn']['Location']['xwalk']['note'] = np.where(mask, "INT NOT NULL map from dict lu.Habitat", xwalk_dict['ncrn']['Location']['xwalk']['note'])
+    # EnteredBy  VARCHAR (100)  NOT NULL
+    mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'EnteredBy')
+    xwalk_dict['ncrn']['Location']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn']['Location']['tbl_load']['EnteredBy']='C.Wainright initial data load 2024-02-20'", xwalk_dict['ncrn']['Location']['xwalk']['source'])
+    xwalk_dict['ncrn']['Location']['xwalk']['note'] = np.where(mask, "INT NOT NULL map from dict lu.Habitat", xwalk_dict['ncrn']['Location']['xwalk']['note'])
+    # IsSensitive  BIT NOT NULL
+    mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'IsSensitive')
+    # xwalk_dict['ncrn']['Location']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn']['Location']['tbl_load']['IsSensitive']=0", xwalk_dict['ncrn']['Location']['xwalk']['source'])
+    xwalk_dict['ncrn']['Location']['xwalk']['source'] = np.where(mask, "placeholder", xwalk_dict['ncrn']['Location']['xwalk']['source'])
+    xwalk_dict['ncrn']['Location']['xwalk']['note'] = np.where(mask, "placeholder", xwalk_dict['ncrn']['Location']['xwalk']['note'])
+    # IsActive  BIT NOT NULL
+    mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'IsActive')
+    xwalk_dict['ncrn']['Location']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn']['Location']['tbl_load']['IsActive']=np.where((xwalk_dict['ncrn']['Location']['source']['Active']==True),1,0)", xwalk_dict['ncrn']['Location']['xwalk']['source'])
+    xwalk_dict['ncrn']['Location']['xwalk']['note'] = np.where(mask, "BIT NOT NULL map from dict['ncrn']['Location']['xwalk']['source']['Active']", xwalk_dict['ncrn']['Location']['xwalk']['note'])
+
+
+    # Blanks
+    blank_fields = [
+        'Rowversion'
+    ]
+    # assign grouping variable `calculation` for the blank fields
+    mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'].isin(blank_fields))
+    xwalk_dict['ncrn']['Location']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn']['Location']['xwalk']['calculation'])
+    xwalk_dict['ncrn']['Location']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn']['Location']['xwalk']['source'])
+    xwalk_dict['ncrn']['Location']['xwalk']['note'] =  np.where(mask, 'this field was not collected by NCRN and has no NCRN equivalent', xwalk_dict['ncrn']['Location']['xwalk']['note'])
+
+    return xwalk_dict
+
+def _ncrn_Site(xwalk_dict:dict) -> dict:
+    """Crosswalk source.tbl_Sites to destination.ncrn.Site
+
+    Args:
+        xwalk_dict (dict): dictionary of column names crosswalked between source and destination tables
+
+    Returns:
+        dict: dictionary of column names crosswalked between source and destination tables with data updated for this table
+    """
+
+    # 1:1 fields
+    one_to_one_fields = [
+    ]
+    # assign grouping variable `calculation` for the 1:1 fields
+    mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'].isin(one_to_one_fields))
+    xwalk_dict['ncrn']['Location']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['ncrn']['Location']['xwalk']['calculation'])
+    # ID
+    mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'ID')
+    xwalk_dict['ncrn']['Location']['xwalk']['source'] =  np.where(mask, 'Location_ID', xwalk_dict['ncrn']['Location']['xwalk']['source'])
 
     # Calculated fields
     calculated_fields = [
@@ -1747,6 +1828,35 @@ def _exception_ncrn_Location(xwalk_dict:dict) -> dict:
     """map experience level to ncrn.Contact.source.ExperienceLevelID"""
 
     xwalk_dict['ncrn']['Location']['source'] = xwalk_dict['ncrn']['Location']['source'][xwalk_dict['ncrn']['Location']['source']['Location_ID'].isin(xwalk_dict['ncrn']['DetectionEvent']['source'].location_id.unique())]
+    
+    # add lat/lon decimal degrees from UTM when dec degrees are missing
+    mysites = xwalk_dict['ncrn']['Location']['source'][xwalk_dict['ncrn']['Location']['source']['Long_WGS84'].isna()].Location_ID.unique()
+    mymap = {}
+    for site in mysites:
+        mymap[site] = {
+            'Lat_WGS84':np.NaN
+            ,'Long_WGS84':np.NaN
+        }
+    # hard-code values are from https://tagis.dep.wv.gov/convert/convertClassic.html
+    # convert the Zone 18N UTM values to decimal degrees
+    # e.g., 265250 E, 4371750 N, Zone 18, Datum NAD83 == -77.728683, 39.463336
+    mymap['20070118125204-200309872.627258']['Lat_WGS84'] = -77.780567
+    mymap['20070118125204-200309872.627258']['Long_WGS84'] = 39.306708
+    mymap['20070118125204-21898925.3044128']['Lat_WGS84'] = -77.780922
+    mymap['20070118125204-21898925.3044128']['Long_WGS84'] = 39.315708
+    mymap['20070118125204-472600340.843201']['Lat_WGS84'] = -77.778206
+    mymap['20070118125204-472600340.843201']['Long_WGS84'] = 39.320278
+    mymap['20070118125204-560659170.150757']['Lat_WGS84'] = -77.734403
+    mymap['20070118125204-560659170.150757']['Long_WGS84'] = 39.460950
+    mymap['20070118125204-842249035.835266']['Lat_WGS84'] = -77.752528
+    mymap['20070118125204-842249035.835266']['Long_WGS84'] = 39.478539
+    mymap['20070118125204-896642208.099365']['Lat_WGS84'] = -77.728683
+    mymap['20070118125204-896642208.099365']['Long_WGS84'] = 39.463336
+    
+    for k,v in mymap.items():
+        mask = (xwalk_dict['ncrn']['Location']['source']['Location_ID']==k)
+        xwalk_dict['ncrn']['Location']['source']['Lat_WGS84'] = np.where(mask, v['Lat_WGS84'], xwalk_dict['ncrn']['Location']['source']['Lat_WGS84'])
+        xwalk_dict['ncrn']['Location']['source']['Long_WGS84'] = np.where(mask, v['Long_WGS84'], xwalk_dict['ncrn']['Location']['source']['Long_WGS84'])
 
     return xwalk_dict
 
