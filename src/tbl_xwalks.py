@@ -327,7 +327,7 @@ def _ncrn_Protocol(xwalk_dict:dict) -> dict:
 
     return xwalk_dict
 
-def _ncrn_Location(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
+def _ncrn_Location(xwalk_dict:dict) -> dict:
     """Crosswalk source.tbl_Locations to destination.ncrn.Location
 
     Args:
@@ -341,20 +341,25 @@ def _ncrn_Location(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##T
 
     # 1:1 fields
     one_to_one_fields = [
+        'ID'
+        ,'SiteID'
     ]
     # assign grouping variable `calculation` for the 1:1 fields
     mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'].isin(one_to_one_fields))
     xwalk_dict['ncrn']['Location']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['ncrn']['Location']['xwalk']['calculation'])
     # ID
     mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'ID')
-    xwalk_dict['ncrn']['Location']['xwalk']['source'] =  np.where(mask, 'ID_Code', xwalk_dict['ncrn']['Location']['xwalk']['source'])
+    xwalk_dict['ncrn']['Location']['xwalk']['source'] =  np.where(mask, 'Location_ID', xwalk_dict['ncrn']['Location']['xwalk']['source'])
+    # SiteID
+    mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'SiteID')
+    xwalk_dict['ncrn']['Location']['xwalk']['source'] =  np.where(mask, 'Site_ID', xwalk_dict['ncrn']['Location']['xwalk']['source'])
 
     # Calculated fields
     calculated_fields = [
     ]
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'].isin(calculated_fields))
-    xwalk_dict['ncrn']['Location']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn']['Location']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['ncrn']['Location']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn']['Location']['xwalk']['source'])
     xwalk_dict['ncrn']['Location']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn']['Location']['xwalk']['calculation'])
 
     # Blanks
@@ -1629,7 +1634,7 @@ def _exception_ncrn_BirdSpecies(xwalk_dict:dict) -> dict:
 def _add_row_id(xwalk_dict:dict) -> dict:
     # 1-index row-id for all tables
 
-    for schema in TBL_XWALK.keys():
+    for schema in xwalk_dict.keys():
         for tbl in xwalk_dict[schema].keys():
             if len(xwalk_dict[schema][tbl]['tbl_load'])>0:
                 xwalk_dict[schema][tbl]['tbl_load']['rowid'] = xwalk_dict[schema][tbl]['tbl_load'].index+1
@@ -1683,6 +1688,16 @@ def _exception_ncrn_BirdSpeciesGroups(xwalk_dict:dict) -> dict: ##TODO##TODO##TO
 
     return xwalk_dict
 
+def _exception_ncrn_ProtocolDetectionType(xwalk_dict:dict) -> dict:
+    """This table is empty in NETNMIDN but it's a bridge table between ncrn.BirdSpecies and ncrn.BirdGroups"""
+    # TODO: create `source` here
+    # TODO: create `source_name` here
+
+    xwalk_dict['ncrn']['ProtocolDetectionType']['source_name'] = 'tbd'
+    # xwalk_dict['ncrn']['ProtocolDetectionType']['source_name'] = pd.DataFrame()
+
+    return xwalk_dict
+
 def _exception_ncrn_BirdSpeciesPark(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
     """This is a bridge table between ncrn.BirdSpecies and ncrn.Park"""
     # TODO: create `source` here
@@ -1725,6 +1740,13 @@ def _exception_ncrn_Contact(xwalk_dict:dict) -> dict:
     for k,v in mymap.items():
         mask = (xwalk_dict['ncrn']['Contact']['source'].Position_Title == k)
         xwalk_dict['ncrn']['Contact']['source']['ExperienceLevelID'] = np.where(mask, v, xwalk_dict['ncrn']['Contact']['source']['ExperienceLevelID'])
+
+    return xwalk_dict
+
+def _exception_ncrn_Location(xwalk_dict:dict) -> dict:
+    """map experience level to ncrn.Contact.source.ExperienceLevelID"""
+
+    xwalk_dict['ncrn']['Location']['source'] = xwalk_dict['ncrn']['Location']['source'][xwalk_dict['ncrn']['Location']['source']['Location_ID'].isin(xwalk_dict['ncrn']['DetectionEvent']['source'].location_id.unique())]
 
     return xwalk_dict
 
