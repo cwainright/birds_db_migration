@@ -24,6 +24,12 @@ def check_birds(xwalk_dict:dict) -> None:
 def _check_schema(xwalk_dict:dict) -> None:
     """Check the dictionary's table schema against the db's schema"""
     mydf = pd.read_csv(r'assets\db\db_schema.csv')
+    # 'assets\db\db_schema.csv' is the result of running the below query against NCRN_Landbirds
+    # USE [db_name_here]
+    # GO 
+    # SELECT *
+    # FROM sys.Tables
+    # GO
     mydf = mydf[['name', 'object_id']]
     mydf['exists'] = False
     tbls = []
@@ -39,7 +45,7 @@ def _check_schema(xwalk_dict:dict) -> None:
         # print(f'        "{schema}": {len(xwalk_dict[schema].keys())}')
         counter += len(xwalk_dict[schema].keys())
     if len(mydf) == counter:
-        print(f'SUCCESS: The dictionary contains the same count of tables as the db schema: {counter}')
+        print(f'SUCCESS: The dictionary contains the same count of tables as the db schema (n): {counter}')
     else:
         print('')
         print('WARNING: The dictionary and schema have different counts of tables!')
@@ -51,6 +57,8 @@ def _check_schema(xwalk_dict:dict) -> None:
         print(f'Tables present in db but absent from dictionary (n): {len(present_db_absent_xwalk_dict)}')
         for tbl in present_db_absent_xwalk_dict:
             print(f'    {tbl}')
+    if len(present_xwalk_dict_absent_db) == 0 and len(present_db_absent_xwalk_dict) == 0:
+        print(f'SUCCESS: The dictionary contains the same table names as the db schema')
 
     return None
 
