@@ -10,6 +10,7 @@ import datetime as dt
 import time
 
 TBL_XWALK = assets.TBL_XWALK
+TBL_ADDITIONS = assets.TBL_ADDITIONS
 
 def make_birds(dest:str='') -> dict:
     """Create a dictionary of crosswalks for each table in the source (Access) and destination (SQL Server) databases
@@ -39,6 +40,7 @@ def make_birds(dest:str='') -> dict:
 
     # main object to hold data
     xwalk_dict = {}
+    # add the tables for which we have a source and assign their attributes
     for schema in TBL_XWALK.keys():
         xwalk_dict[schema] = {}
         for tbl in TBL_XWALK[schema].keys():
@@ -53,10 +55,30 @@ def make_birds(dest:str='') -> dict:
                 ,'tsql': '' # the t-sql to load the `payload` to the destination table
             }
             xwalk_dict[schema][tbl]['source'] = source_dict[xwalk_dict[schema][tbl]['source_name']] # route the source data to its placeholder
+
+    # add the tables for which we have no source
+    for schema in TBL_ADDITIONS.keys():
+        if schema not in xwalk_dict.keys():
+            xwalk_dict[schema] = {}
+        for tbl in TBL_ADDITIONS[schema]:
+            xwalk_dict[schema][tbl] = {
+                'xwalk': pd.DataFrame(columns=['destination', 'source', 'calculation', 'note']) # the crosswalk to translate from `source` to `tbl_load`
+                ,'source_name': '' # name of source table
+                ,'source': pd.DataFrame() # source data
+                ,'destination': dest_dict[tbl] # destination data (mostly just for its column names and order)
+                ,'tbl_load': pd.DataFrame() # `source` data crosswalked to the destination schema
+                ,'payload_cols': [] # the columns to extract from `tbl_load` and load into `payload`
+                ,'payload': pd.DataFrame() # `tbl_load` transformed for loading to destination database
+                ,'tsql': '' # the t-sql to load the `payload` to the destination table
+            }
+    
+    for schema in xwalk_dict.keys():
+        for tbl in xwalk_dict[schema].keys():
             xwalk_dict[schema][tbl]['tbl_load'] = pd.DataFrame(columns=xwalk_dict[schema][tbl]['destination'].columns)
             xwalk_dict[schema][tbl]['xwalk']['destination'] = xwalk_dict[schema][tbl]['destination'].columns # route the destination columns to their placeholder in the crosswalk
             exclude_cols = ['ID', 'Rowversion', 'UserCode'] # list of columns that SQL Server should calculate upon data loading; these cols should not be part of the payload
             xwalk_dict[schema][tbl]['payload_cols'] = [x for x in xwalk_dict[schema][tbl]['destination'].columns if x not in exclude_cols] # the columns to extract from `tbl_load` and load into `payload`
+
 
     # create xwalk for each destination table
     xwalk_dict = _create_xwalks(xwalk_dict)
@@ -129,6 +151,11 @@ def _execute_xwalk_exceptions(xwalk_dict:dict) -> dict:
     xwalk_dict = tx._exception_ncrn_BirdSpecies(xwalk_dict)
     xwalk_dict = tx._exception_ncrn_AuditLogDetail(xwalk_dict)
     xwalk_dict = tx._exception_lu_Habitat(xwalk_dict)
+
+    # tables that have no equivalent in NCRN's db and require creation
+    xwalk_dict = tx._exception_ncrn_BirdSpeciesGroups(xwalk_dict)
+    # xwalk_dict = tx._exception_ncrn_BirdSpeciesPark(xwalk_dict)
+    # xwalk_dict = tx._exception_lu_ExperienceLevel(xwalk_dict)
 
     return xwalk_dict
 

@@ -6,6 +6,7 @@ import warnings
 warnings.simplefilter(action='ignore', category=UserWarning)
 
 TBL_XWALK = assets.TBL_XWALK
+TBL_ADDITIONS = assets.TBL_ADDITIONS
 
 def _get_dest_tbls() -> dict:
     """Make empty dataframes with the correct column names and order for each table to be loaded
@@ -23,6 +24,11 @@ def _get_dest_tbls() -> dict:
     counter = 0
     for schema in TBL_XWALK.keys():
         for tbl in TBL_XWALK[schema].keys():
+            SQL_QUERY = f"""SELECT TOP 5 * FROM [{assets.LOC_DB}].[{schema}].[{tbl}];"""
+            template_dict[tbl] = pd.read_sql_query(SQL_QUERY,con)
+            counter += 1
+    for schema in TBL_ADDITIONS.keys():
+        for tbl in TBL_ADDITIONS[schema]:
             SQL_QUERY = f"""SELECT TOP 5 * FROM [{assets.LOC_DB}].[{schema}].[{tbl}];"""
             template_dict[tbl] = pd.read_sql_query(SQL_QUERY,con)
             counter += 1
