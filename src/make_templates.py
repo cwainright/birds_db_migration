@@ -153,6 +153,7 @@ def _create_xwalks(xwalk_dict:dict) -> dict:
     xwalk_dict = tx._ncrn_ProtocolPrecipitationType(xwalk_dict)
     xwalk_dict = tx._ncrn_ProtocolNoiseLevel(xwalk_dict)
     xwalk_dict = tx._ncrn_ProtocolTimeInterval(xwalk_dict)
+    xwalk_dict = tx._ncrn_ProtocolDetectionType(xwalk_dict)
 
     return xwalk_dict
 
@@ -171,7 +172,6 @@ def _execute_xwalk_exceptions(xwalk_dict:dict) -> dict:
     xwalk_dict = tx._exception_ncrn_BirdSpeciesGroups(xwalk_dict)
     xwalk_dict = tx._exception_ncrn_BirdSpeciesPark(xwalk_dict)
     xwalk_dict = tx._exception_lu_ExperienceLevel(xwalk_dict)
-    # xwalk_dict = tx._exception_ncrn_ProtocolDetectionType(xwalk_dict)
     xwalk_dict = tx._exception_ncrn_ScannedFile(xwalk_dict)
     xwalk_dict = tx._exception_lu_TemperatureUnit(xwalk_dict)
     xwalk_dict = tx._exception_lu_ProtectedStatus(xwalk_dict)
@@ -181,6 +181,7 @@ def _execute_xwalk_exceptions(xwalk_dict:dict) -> dict:
     xwalk_dict = tx._exception_ncrn_ProtocolPrecipitationType(xwalk_dict)
     xwalk_dict = tx._exception_ncrn_ProtocolNoiseLevel(xwalk_dict)
     xwalk_dict = tx._exception_ncrn_ProtocolTimeInterval(xwalk_dict)
+    xwalk_dict = tx._exception_ncrn_ProtocolDetectionType(xwalk_dict)
 
     return xwalk_dict
 

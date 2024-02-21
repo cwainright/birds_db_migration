@@ -1820,12 +1820,6 @@ def _exception_ncrn_BirdSpeciesGroups(xwalk_dict:dict) -> dict: ##TODO##TODO##TO
 
     return xwalk_dict
 
-def _exception_ncrn_ProtocolDetectionType(xwalk_dict:dict) -> dict:
-    """This table is empty in NETNMIDN but it's a bridge table between ncrn.BirdSpecies and ncrn.BirdGroups"""
-    # TODO: create `source` here
-
-    return xwalk_dict
-
 def _exception_ncrn_BirdSpeciesPark(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
     """This is a bridge table between ncrn.BirdSpecies and ncrn.Park"""
     # TODO: create `source` here
@@ -2169,6 +2163,66 @@ def _ncrn_ProtocolTimeInterval(xwalk_dict:dict) -> dict:
     xwalk_dict['ncrn']['ProtocolTimeInterval']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn']['ProtocolTimeInterval']['xwalk']['calculation'])
     xwalk_dict['ncrn']['ProtocolTimeInterval']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn']['ProtocolTimeInterval']['xwalk']['source'])
     xwalk_dict['ncrn']['ProtocolTimeInterval']['xwalk']['note'] =  np.where(mask, 'this field was not collected by ncrn and has no ncrn equivalent', xwalk_dict['ncrn']['ProtocolTimeInterval']['xwalk']['note'])
+
+    return xwalk_dict
+
+def _exception_ncrn_ProtocolDetectionType(xwalk_dict:dict) -> dict:
+    """ncrn.ProtocolDetectionType is a bridge table between ncrn.Protocol and lu.DetectionType that does not exist in source"""
+
+    protocols = xwalk_dict['ncrn']['Protocol']['source']
+    DetectionTypes = xwalk_dict['lu']['DetectionType']['source']
+
+    df = pd.DataFrame()
+    for protocol in protocols.Protocol_ID.unique():
+        DetectionTypes2 = DetectionTypes.copy()
+        DetectionTypes2['ProtocolID'] = protocol
+        df = pd.concat([df, DetectionTypes2])
+    df = df[['ID_Code', 'ProtocolID']]
+    df = df.reset_index()
+    del df['index']
+    df['ID'] = df.index+1
+    xwalk_dict['ncrn']['ProtocolDetectionType']['source'] = df.copy()
+
+    return xwalk_dict
+
+def _ncrn_ProtocolDetectionType(xwalk_dict:dict) -> dict:
+    """ncrn.ProtocolDetectionType is a bridge table between ncrn.Protocol and lu.DetectionType that does not exist in source"""
+
+    # 1:1 fields
+    one_to_one_fields = [
+        'ID'
+        ,'ProtocolID'
+        ,'DetectionTypeID'
+    ]
+    # assign grouping variable `calculation` for the 1:1 fields
+    mask = (xwalk_dict['ncrn']['ProtocolDetectionType']['xwalk']['destination'].isin(one_to_one_fields))
+    xwalk_dict['ncrn']['ProtocolDetectionType']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['ncrn']['ProtocolDetectionType']['xwalk']['calculation'])
+    # ID
+    mask = (xwalk_dict['ncrn']['ProtocolDetectionType']['xwalk']['destination'] == 'ID')
+    xwalk_dict['ncrn']['ProtocolDetectionType']['xwalk']['source'] =  np.where(mask, 'ID', xwalk_dict['ncrn']['ProtocolDetectionType']['xwalk']['source'])
+    # ProtocolID
+    mask = (xwalk_dict['ncrn']['ProtocolDetectionType']['xwalk']['destination'] == 'ProtocolID')
+    xwalk_dict['ncrn']['ProtocolDetectionType']['xwalk']['source'] =  np.where(mask, 'ProtocolID', xwalk_dict['ncrn']['ProtocolDetectionType']['xwalk']['source'])
+    # DetectionTypeID
+    mask = (xwalk_dict['ncrn']['ProtocolDetectionType']['xwalk']['destination'] == 'DetectionTypeID')
+    xwalk_dict['ncrn']['ProtocolDetectionType']['xwalk']['source'] =  np.where(mask, 'ID_Code', xwalk_dict['ncrn']['ProtocolDetectionType']['xwalk']['source'])
+
+    # Calculated fields
+    calculated_fields = [
+    ]
+    # assign grouping variable `calculation` for the calculated fields
+    mask = (xwalk_dict['ncrn']['ProtocolDetectionType']['xwalk']['destination'].isin(calculated_fields))
+    xwalk_dict['ncrn']['ProtocolDetectionType']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn']['ProtocolDetectionType']['xwalk']['source'])
+    xwalk_dict['ncrn']['ProtocolDetectionType']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn']['ProtocolDetectionType']['xwalk']['calculation'])
+
+    # Blanks
+    blank_fields = [
+    ]
+    # assign grouping variable `calculation` for the blank fields
+    mask = (xwalk_dict['ncrn']['ProtocolDetectionType']['xwalk']['destination'].isin(blank_fields))
+    xwalk_dict['ncrn']['ProtocolDetectionType']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn']['ProtocolDetectionType']['xwalk']['calculation'])
+    xwalk_dict['ncrn']['ProtocolDetectionType']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn']['ProtocolDetectionType']['xwalk']['source'])
+    xwalk_dict['ncrn']['ProtocolDetectionType']['xwalk']['note'] =  np.where(mask, 'this field was not collected by ncrn and has no ncrn equivalent', xwalk_dict['ncrn']['ProtocolDetectionType']['xwalk']['note'])
 
     return xwalk_dict
 
