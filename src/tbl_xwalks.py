@@ -26,6 +26,8 @@ import numpy as np
 import src.db_connect as dbc
 import datetime
 import assets.assets as assets
+import warnings
+warnings.simplefilter(action='ignore', category=UserWarning)
 
 TBL_XWALK = assets.TBL_XWALK
 
@@ -1699,6 +1701,16 @@ def _exception_ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
     xwalk_dict['ncrn']['DetectionEvent']['source']['Date'] = np.where((xwalk_dict['ncrn']['DetectionEvent']['source']['Date'].isna()), datetime.date(1900, 1, 1),xwalk_dict['ncrn']['DetectionEvent']['source']['Date'] )
     xwalk_dict['ncrn']['DetectionEvent']['source'].loc[:,'activity_start_datetime'] = pd.to_datetime(xwalk_dict['ncrn']['DetectionEvent']['source'].Date.astype(str)+' '+xwalk_dict['ncrn']['DetectionEvent']['source'].start_time.astype(str))
 
+
+
+    # TODO: add additional rows from assets.C_DB to xwalk_dict['ncrn']['DetectionEvent']['source']
+    con = dbc._db_connect('c')
+    tbl = 'tbl_Events'
+    df = dbc._exec_qry(con=con, qry=f'get_c_{tbl}')
+    con.close()
+    xwalk_dict['ncrn']['DetectionEvent']['source'] = pd.concat([xwalk_dict['ncrn']['DetectionEvent']['source'], df])
+
+
     return xwalk_dict
 
 def _exception_ncrn_BirdSpecies(xwalk_dict:dict) -> dict:
@@ -1838,23 +1850,34 @@ def _exception_ncrn_Contact(xwalk_dict:dict) -> dict:
 def _exception_ncrn_Location(xwalk_dict:dict) -> dict:
     """
     Clean up source.tbl_Locations
+
+    1. Add additional rows from second source.tbl_Field_Data to ncrn.BirdDetection
     
-    1. Filter source.tbl_Locations
+    2. Filter source.tbl_Locations
     source.tbl_Locations contains >4k sampling locations (i.e. unique `tbl_Locations.Location_ID`s.
     ~80% of those `Location_ID`s have zero site visits.
     Here, we filter out the locations that have zero site visits because, if we've never been there since monitoring started, they're not real.
     It's not clear why there are so many erroneous sampling locations in `source.tbl_Locations`.
 
-    2. Add missing lat/lon for real `Location_ID`s
+    3. Add missing lat/lon for real `Location_ID`s
     Six `Location_ID`s that we have visited have no lat/lon but do have UTMs.
     Here, we manually look up the missing lat/lon values and map them to `Location_ID`s.
 
-    3. concat all of the remaining attributes into a `ncrn.Location.Notes` field
+    4. concat all of the remaining attributes into a `ncrn.Location.Notes` field
     """
-    # 1. filter
+    # 1. query additional rows from second source db, append to existing source
+    # TODO: add additional rows from assets.C_DB to xwalk_dict['ncrn']['Location']['source']
+
+    con = dbc._db_connect('c')
+    tbl = 'tbl_Locations'
+    df = dbc._exec_qry(con=con, qry=f'get_c_{tbl}')
+    con.close()
+    xwalk_dict['ncrn']['Location']['source'] = pd.concat([xwalk_dict['ncrn']['Location']['source'], df])
+
+    # 2. filter
     xwalk_dict['ncrn']['Location']['source'] = xwalk_dict['ncrn']['Location']['source'][xwalk_dict['ncrn']['Location']['source']['Location_ID'].isin(xwalk_dict['ncrn']['DetectionEvent']['source'].location_id.unique())]
     
-    # 2. add lat/lon decimal degrees from UTM when dec degrees are missing
+    # 3. add lat/lon decimal degrees from UTM when dec degrees are missing
     mysites = xwalk_dict['ncrn']['Location']['source'][xwalk_dict['ncrn']['Location']['source']['Long_WGS84'].isna()].Location_ID.unique()
     mymap = {}
     for site in mysites:
@@ -1883,7 +1906,8 @@ def _exception_ncrn_Location(xwalk_dict:dict) -> dict:
         xwalk_dict['ncrn']['Location']['source'].loc[mask, 'Lat_WGS84'] = v['Lat_WGS84']
         xwalk_dict['ncrn']['Location']['source'].loc[mask, 'Long_WGS84'] = v['Long_WGS84']
 
-    # 3. add notes
+    # 4. add notes
+    # concatenate all of the remaining field names and values into a string and assign to 'Notes'
     used_cols = [
         'Location_ID'
         ,'Site_ID'
@@ -1914,3 +1938,20 @@ def _exception_ncrn_Location(xwalk_dict:dict) -> dict:
 
     return xwalk_dict
 
+
+
+def _exception_ncrn_BirdDetection(xwalk_dict:dict) -> dict:
+    """_summary_
+
+    1. Add additional rows from second source.tbl_Field_Data to ncrn.BirdDetection
+    """
+    # TODO: add additional rows from assets.C_DB to xwalk_dict['ncrn']['BirdDetection']['source']
+
+    con = dbc._db_connect('c')
+    tbl = 'tbl_Field_Data'
+    df = dbc._exec_qry(con=con, qry=f'get_c_{tbl}')
+    con.close()
+
+    xwalk_dict['ncrn']['BirdDetection']['source'] = pd.concat([xwalk_dict['ncrn']['BirdDetection']['source'], df])
+
+    return xwalk_dict

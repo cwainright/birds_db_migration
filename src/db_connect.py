@@ -17,6 +17,8 @@ def _db_connect(db:str) -> None:
         con_str = f'DRIVER={{SQL Server}};SERVER={assets.DEV_SRV};DATABASE={assets.DEV_DB}'
     elif db.lower() == 'access':
         con_str = 'Driver={Microsoft Access Driver (*.mdb, *.accdb)};' + 'DBQ=' + f'{assets.ACC_DB}' + ';'
+    elif db.lower() == 'c':
+        con_str = 'Driver={Microsoft Access Driver (*.mdb, *.accdb)};' + 'DBQ=' + f'{assets.C_DB}' + ';'
     try:
         con = pyodbc.connect(con_str)
         return con

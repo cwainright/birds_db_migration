@@ -146,8 +146,9 @@ def _create_xwalks(xwalk_dict:dict) -> dict:
     return xwalk_dict
 
 def _execute_xwalk_exceptions(xwalk_dict:dict) -> dict:
-    # TODO: if a destination table requires the creation of temp table (e.g., CTE, execution of a second query, or generation of a lookup), it doesn't fit our model, so we need to execute an exception
+    # tables that require the creation of one-or-more temp tables (e.g., CTE, execution of additional queries, or generation of lookups)
     xwalk_dict = tx._exception_ncrn_DetectionEvent(xwalk_dict)
+    xwalk_dict = tx._exception_ncrn_BirdDetection(xwalk_dict)
     xwalk_dict = tx._exception_ncrn_BirdSpecies(xwalk_dict)
     xwalk_dict = tx._exception_ncrn_AuditLogDetail(xwalk_dict)
     xwalk_dict = tx._exception_lu_Habitat(xwalk_dict)
