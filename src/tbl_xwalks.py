@@ -438,30 +438,58 @@ def _ncrn_Site(xwalk_dict:dict) -> dict:
 
     # 1:1 fields
     one_to_one_fields = [
+        'ID'
+        ,'ParkUnitID'
+        ,'Label'
+        ,'Description'
+        ,'SiteNotes'
     ]
     # assign grouping variable `calculation` for the 1:1 fields
-    mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'].isin(one_to_one_fields))
-    xwalk_dict['ncrn']['Location']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['ncrn']['Location']['xwalk']['calculation'])
+    mask = (xwalk_dict['ncrn']['Site']['xwalk']['destination'].isin(one_to_one_fields))
+    xwalk_dict['ncrn']['Site']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['ncrn']['Site']['xwalk']['calculation'])
     # ID
-    mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'ID')
-    xwalk_dict['ncrn']['Location']['xwalk']['source'] =  np.where(mask, 'Location_ID', xwalk_dict['ncrn']['Location']['xwalk']['source'])
+    mask = (xwalk_dict['ncrn']['Site']['xwalk']['destination'] == 'ID')
+    xwalk_dict['ncrn']['Site']['xwalk']['source'] =  np.where(mask, 'Site_ID', xwalk_dict['ncrn']['Site']['xwalk']['source'])
+    # ParkUnitID
+    mask = (xwalk_dict['ncrn']['Site']['xwalk']['destination'] == 'ParkUnitID')
+    xwalk_dict['ncrn']['Site']['xwalk']['source'] =  np.where(mask, 'Unit_Code', xwalk_dict['ncrn']['Site']['xwalk']['source'])
+    # Label
+    mask = (xwalk_dict['ncrn']['Site']['xwalk']['destination'] == 'Label')
+    xwalk_dict['ncrn']['Site']['xwalk']['source'] =  np.where(mask, 'Site_Name', xwalk_dict['ncrn']['Site']['xwalk']['source'])
+    # Description
+    mask = (xwalk_dict['ncrn']['Site']['xwalk']['destination'] == 'Description')
+    xwalk_dict['ncrn']['Site']['xwalk']['source'] =  np.where(mask, 'Site_Desc', xwalk_dict['ncrn']['Site']['xwalk']['source'])
+    # SiteNotes
+    mask = (xwalk_dict['ncrn']['Site']['xwalk']['destination'] == 'SiteNotes')
+    xwalk_dict['ncrn']['Site']['xwalk']['source'] =  np.where(mask, 'Site_Notes', xwalk_dict['ncrn']['Site']['xwalk']['source'])
+    # IsActive
+    mask = (xwalk_dict['ncrn']['Site']['xwalk']['destination'] == 'IsActive')
+    xwalk_dict['ncrn']['Site']['xwalk']['source'] =  np.where(mask, 'Active', xwalk_dict['ncrn']['Site']['xwalk']['source'])
 
     # Calculated fields
     calculated_fields = [
+        'IsActive'
     ]
     # assign grouping variable `calculation` for the calculated fields
-    mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'].isin(calculated_fields))
-    xwalk_dict['ncrn']['Location']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn']['Location']['xwalk']['source'])
-    xwalk_dict['ncrn']['Location']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn']['Location']['xwalk']['calculation'])
+    mask = (xwalk_dict['ncrn']['Site']['xwalk']['destination'].isin(calculated_fields))
+    xwalk_dict['ncrn']['Site']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn']['Site']['xwalk']['source'])
+    xwalk_dict['ncrn']['Site']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn']['Site']['xwalk']['calculation'])
+    # IsActive  BIT NOT NULL
+    mask = (xwalk_dict['ncrn']['Site']['xwalk']['destination'] == 'IsActive')
+    xwalk_dict['ncrn']['Site']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn']['Site']['tbl_load']['IsActive']=np.where((xwalk_dict['ncrn']['Site']['source']['Active']==False),0,1)", xwalk_dict['ncrn']['Site']['xwalk']['source'])
+    xwalk_dict['ncrn']['Site']['xwalk']['note'] = np.where(mask, "BIT NOT NULL map from tbl_Locations.Active left-joined to tbl_Sites as dict['ncrn']['Site']['xwalk']['source']['Active']", xwalk_dict['ncrn']['Site']['xwalk']['note'])
 
     # Blanks
     blank_fields = [
+        'ParentSiteID'
+        ,'ImportNotes'
+        ,'Rowversion'
     ]
     # assign grouping variable `calculation` for the blank fields
-    mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'].isin(blank_fields))
-    xwalk_dict['ncrn']['Location']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn']['Location']['xwalk']['calculation'])
-    xwalk_dict['ncrn']['Location']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn']['Location']['xwalk']['source'])
-    xwalk_dict['ncrn']['Location']['xwalk']['note'] =  np.where(mask, 'this field was not collected by NCRN and has no NCRN equivalent', xwalk_dict['ncrn']['Location']['xwalk']['note'])
+    mask = (xwalk_dict['ncrn']['Site']['xwalk']['destination'].isin(blank_fields))
+    xwalk_dict['ncrn']['Site']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn']['Site']['xwalk']['calculation'])
+    xwalk_dict['ncrn']['Site']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn']['Site']['xwalk']['source'])
+    xwalk_dict['ncrn']['Site']['xwalk']['note'] =  np.where(mask, 'this field was not collected by NCRN and has no NCRN equivalent', xwalk_dict['ncrn']['Site']['xwalk']['note'])
 
     return xwalk_dict
 
@@ -1936,20 +1964,31 @@ def _exception_ncrn_Location(xwalk_dict:dict) -> dict:
 
     return xwalk_dict
 
-
-
 def _exception_ncrn_BirdDetection(xwalk_dict:dict) -> dict:
-    """_summary_
+    """Clean up source.tbl_Field_Data
 
     1. Add additional rows from second source.tbl_Field_Data to ncrn.BirdDetection
     """
-    # TODO: add additional rows from assets.C_DB to xwalk_dict['ncrn']['BirdDetection']['source']
-
     con = dbc._db_connect('c')
     tbl = 'tbl_Field_Data'
     df = dbc._exec_qry(con=con, qry=f'get_c_{tbl}')
     con.close()
 
     xwalk_dict['ncrn']['BirdDetection']['source'] = pd.concat([xwalk_dict['ncrn']['BirdDetection']['source'], df])
+
+    return xwalk_dict
+
+def _exception_ncrn_Site(xwalk_dict:dict) -> dict:
+    """Clean up source.tbl_Sites
+
+    1. Add additional rows from second source.tbl_Field_Data to ncrn.BirdDetection
+    """
+
+    df = xwalk_dict['ncrn']['Location']['source'][['Site_ID', 'Active']]
+    df = df[df['Site_ID'].isna()==False]
+    df = df.drop_duplicates('Site_ID')
+    if len(df) != len(df.Site_ID.unique()):
+        print('Bug in `_exception_ncrn_Site()`. Review')
+    xwalk_dict['ncrn']['Site']['source'] = xwalk_dict['ncrn']['Site']['source'].merge(df, on='Site_ID', how='left')
 
     return xwalk_dict

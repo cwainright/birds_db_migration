@@ -72,13 +72,13 @@ def make_birds(dest:str='') -> dict:
                 ,'tsql': '' # the t-sql to load the `payload` to the destination table
             }
     
+    # distribute and assign attributes from query results (`bt.get_src_tbls()` and `bt._get_dest_tbls()`)
     for schema in xwalk_dict.keys():
         for tbl in xwalk_dict[schema].keys():
             xwalk_dict[schema][tbl]['tbl_load'] = pd.DataFrame(columns=xwalk_dict[schema][tbl]['destination'].columns)
             xwalk_dict[schema][tbl]['xwalk']['destination'] = xwalk_dict[schema][tbl]['destination'].columns # route the destination columns to their placeholder in the crosswalk
             exclude_cols = ['ID', 'Rowversion', 'UserCode'] # list of columns that SQL Server should calculate upon data loading; these cols should not be part of the payload
             xwalk_dict[schema][tbl]['payload_cols'] = [x for x in xwalk_dict[schema][tbl]['destination'].columns if x not in exclude_cols] # the columns to extract from `tbl_load` and load into `payload`
-
 
     # create xwalk for each destination table
     xwalk_dict = _create_xwalks(xwalk_dict)
@@ -142,6 +142,7 @@ def _create_xwalks(xwalk_dict:dict) -> dict:
     xwalk_dict = tx._lu_SamplingMethod(xwalk_dict)
     xwalk_dict = tx._lu_Habitat(xwalk_dict)
     xwalk_dict = tx._ncrn_BirdSpecies(xwalk_dict)
+    xwalk_dict = tx._ncrn_Site(xwalk_dict)
 
     return xwalk_dict
 
@@ -154,6 +155,7 @@ def _execute_xwalk_exceptions(xwalk_dict:dict) -> dict:
     xwalk_dict = tx._exception_lu_Habitat(xwalk_dict)
     xwalk_dict = tx._exception_ncrn_Contact(xwalk_dict)
     xwalk_dict = tx._exception_ncrn_Location(xwalk_dict)
+    xwalk_dict = tx._exception_ncrn_Site(xwalk_dict)
 
     # tables that have no equivalent in NCRN's db and require creation
     xwalk_dict = tx._exception_ncrn_BirdSpeciesGroups(xwalk_dict)
