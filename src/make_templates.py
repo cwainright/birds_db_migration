@@ -145,6 +145,7 @@ def _create_xwalks(xwalk_dict:dict) -> dict:
     xwalk_dict = tx._ncrn_Site(xwalk_dict)
     xwalk_dict = tx._ncrn_ScannedFile(xwalk_dict)
     xwalk_dict = tx._ncrn_TemperatureUnit(xwalk_dict)
+    xwalk_dict = tx._lu_ExperienceLevel(xwalk_dict)
 
     return xwalk_dict
 

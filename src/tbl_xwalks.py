@@ -1565,7 +1565,7 @@ def _lu_SamplingMethod(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TOD
     return xwalk_dict
 
 def _lu_ExperienceLevel(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
-    """Crosswalk lu.ExperienceLevel
+    """A table NCRN doesn't maintain but values are loosely based on tbl_Contacts.Position_Title
 
     Args:
         xwalk_dict (dict): dictionary of column names crosswalked between source and destination tables
@@ -1578,6 +1578,7 @@ def _lu_ExperienceLevel(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TO
     one_to_one_fields = [
         'ID'
         ,'Code'
+        ,'Label'
         ,'Description'
         ,'SortOrder'
     ]
@@ -1590,12 +1591,12 @@ def _lu_ExperienceLevel(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TO
     # Code
     mask = (xwalk_dict['lu']['ExperienceLevel']['xwalk']['destination'] == 'Code')
     xwalk_dict['lu']['ExperienceLevel']['xwalk']['source'] =  np.where(mask, 'Code', xwalk_dict['lu']['ExperienceLevel']['xwalk']['source'])
+    # Label
+    mask = (xwalk_dict['lu']['ExperienceLevel']['xwalk']['destination'] == 'Label')
+    xwalk_dict['lu']['ExperienceLevel']['xwalk']['source'] =  np.where(mask, 'Label', xwalk_dict['lu']['ExperienceLevel']['xwalk']['source'])
     # Description
     mask = (xwalk_dict['lu']['ExperienceLevel']['xwalk']['destination'] == 'Description')
     xwalk_dict['lu']['ExperienceLevel']['xwalk']['source'] =  np.where(mask, 'Description', xwalk_dict['lu']['ExperienceLevel']['xwalk']['source'])
-    # SortOrder
-    mask = (xwalk_dict['lu']['ExperienceLevel']['xwalk']['destination'] == 'SortOrder')
-    xwalk_dict['lu']['ExperienceLevel']['xwalk']['source'] =  np.where(mask, 'SortOrder', xwalk_dict['lu']['ExperienceLevel']['xwalk']['source'])
 
     # Calculated fields
     calculated_fields = [
@@ -1608,6 +1609,7 @@ def _lu_ExperienceLevel(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TO
     # Blanks
     blank_fields = [
         'Rowversion'
+        ,'SortOrder'
     ]
     # assign grouping variable `calculation` for the blank fields
     mask = (xwalk_dict['lu']['ExperienceLevel']['xwalk']['destination'].isin(blank_fields))
@@ -1814,7 +1816,7 @@ def _exception_ncrn_BirdSpeciesGroups(xwalk_dict:dict) -> dict: ##TODO##TODO##TO
     # 1  |       465      |    20080421161312-627642035.484314     | NaN
     # 2  |       465      |    20080421161058-412766814.231873     | NaN
 
-    xwalk_dict['ncrn']['BirdSpeciesGroups']['source_name'] = xwalk_dict['ncrn']['BirdSpecies']['source_name']
+    # xwalk_dict['ncrn']['BirdSpeciesGroups']['source_name'] = xwalk_dict['ncrn']['BirdSpecies']['source_name']
 
     return xwalk_dict
 
@@ -1965,18 +1967,19 @@ def _ncrn_TemperatureUnit(xwalk_dict:dict) -> dict:
     return xwalk_dict
 
 def _exception_lu_ExperienceLevel(xwalk_dict:dict) -> dict:
-    """NCRN doesn't keep this table and NETNMIDN's tbl NETNMIDN_Landbirds.lu.ExperienceLevel is empty so we add a dataframe here"""
+    """A table NCRN doesn't maintain but values are loosely based on tbl_Contacts.Position_Title"""
 
     exp_lev = {
         'ID':[1,2,3,4]
-        ,'Code':['unk', 'tech', 'lead', 'pro']
+        ,'Code':['unk', 'tech', 'lead', 'exp']
+        ,'Label':['Unknown', 'Field technician', 'Field lead', 'Expert']
         ,'Description':['Unknown level of experience', 'Cursory training and basic experience in mid-Atlantic grassland/forestland bird identification', 'Considerable training and solid experience in mid-Atlantic grassland/forestland bird identification', 'An expert in mid-Atlantic grassland/forestland bird identification']
         ,'SortOrder':[np.NaN, np.NaN, np.NaN, np.NaN]
+        ,'Rowversion':[np.NaN, np.NaN, np.NaN, np.NaN]
     }
 
     exp_lev = pd.DataFrame(exp_lev)
 
-    xwalk_dict['lu']['ExperienceLevel']['source_name'] = 'NETNMIDN_Landbirds.lu.ExperienceLevel'
     xwalk_dict['lu']['ExperienceLevel']['source'] = exp_lev.copy()
 
     return xwalk_dict
