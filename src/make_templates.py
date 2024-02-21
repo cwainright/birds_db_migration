@@ -147,6 +147,9 @@ def _create_xwalks(xwalk_dict:dict) -> dict:
     xwalk_dict = tx._lu_TemperatureUnit(xwalk_dict)
     xwalk_dict = tx._lu_ExperienceLevel(xwalk_dict)
     xwalk_dict = tx._lu_ProtectedStatus(xwalk_dict)
+    xwalk_dict = tx._dbo_Role(xwalk_dict)
+    xwalk_dict = tx._dbo_ParkUser(xwalk_dict)
+    xwalk_dict = tx._ncrn_ProtocolWindCode(xwalk_dict)
 
     return xwalk_dict
 
@@ -169,6 +172,9 @@ def _execute_xwalk_exceptions(xwalk_dict:dict) -> dict:
     xwalk_dict = tx._exception_ncrn_ScannedFile(xwalk_dict)
     xwalk_dict = tx._exception_lu_TemperatureUnit(xwalk_dict)
     xwalk_dict = tx._exception_lu_ProtectedStatus(xwalk_dict)
+    xwalk_dict = tx._exception_dbo_Role(xwalk_dict)
+    xwalk_dict = tx._exception_dbo_ParkUser(xwalk_dict)
+    xwalk_dict = tx._exception_ncrn_ProtocolWindCode(xwalk_dict)
 
     return xwalk_dict
 
@@ -185,7 +191,7 @@ def _execute_xwalks(xwalk_dict:dict) -> dict:
                 try:
                     xwalk_dict[schema][tbl]['tbl_load'][dest_col] = xwalk_dict[schema][tbl]['source'][src_col]
                 except:
-                    print(f"WARNING! 1:1 destination column `dict['{schema}']['{tbl}']['tbl_load']['{dest_col}']` failed because its source column `dict['{schema}']['{tbl}']['source']['{src_col}']` did not resolve correctly. Debug `dict['{schema}']['{tbl}']['tbl_load']['xwalk']` in src.tbl_xwalks._{schema}_{tbl}()")
+                    print(f"WARNING! 1:1 destination column `dict['{schema}']['{tbl}']['tbl_load']['{dest_col}']` failed because its source column `dict['{schema}']['{tbl}']['source']['{src_col}']` did not resolve correctly. Debug `dict['{schema}']['{tbl}']['xwalk']` in src.tbl_xwalks._{schema}_{tbl}()")
 
             # if destination column requires calculations, calculate
             mask = (xwalk['calculation']=='calculate_dest_field_from_source_field') & (xwalk['source']!='placeholder') # TODO: DELETE THIS LINE, FOR TESTING ONLY
@@ -202,7 +208,7 @@ def _execute_xwalks(xwalk_dict:dict) -> dict:
                         try:
                             exec(line)
                         except:
-                            print(f"WARNING! Calculated column `dict['{schema}']['{tbl}']['tbl_load']['{dest_col}']`, code line `{line}` failed. Debug `dict['{schema}']['{tbl}']['tbl_load']['xwalk']` in src.tbl_xwalks._{schema}_{tbl}()")
+                            print(f"WARNING! Calculated column `dict['{schema}']['{tbl}']['tbl_load']['{dest_col}']`, code line `{line}` failed. Debug `dict['{schema}']['{tbl}']['xwalk']` in src.tbl_xwalks._{schema}_{tbl}()")
             
             # if destination column is blank field, assign blank
             blanks = list(xwalk[xwalk['calculation']=='blank_field'].destination.values)

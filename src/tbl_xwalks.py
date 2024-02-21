@@ -1853,13 +1853,13 @@ def _ncrn_ScannedFile(xwalk_dict:dict) -> dict:
     # ID
     mask = (xwalk_dict['ncrn']['ScannedFile']['xwalk']['destination'] == 'ID')
     xwalk_dict['ncrn']['ScannedFile']['xwalk']['source'] =  np.where(mask, 'ID', xwalk_dict['ncrn']['ScannedFile']['xwalk']['source'])
-    # Code
+    # DetectionEventID
     mask = (xwalk_dict['ncrn']['ScannedFile']['xwalk']['destination'] == 'DetectionEventID')
     xwalk_dict['ncrn']['ScannedFile']['xwalk']['source'] =  np.where(mask, 'DetectionEventID', xwalk_dict['ncrn']['ScannedFile']['xwalk']['source'])
     # Description
     mask = (xwalk_dict['ncrn']['ScannedFile']['xwalk']['destination'] == 'Description')
     xwalk_dict['ncrn']['ScannedFile']['xwalk']['source'] =  np.where(mask, 'Description', xwalk_dict['ncrn']['ScannedFile']['xwalk']['source'])
-    # SortOrder
+    # FileName
     mask = (xwalk_dict['ncrn']['ScannedFile']['xwalk']['destination'] == 'FileName')
     xwalk_dict['ncrn']['ScannedFile']['xwalk']['source'] =  np.where(mask, 'FileName', xwalk_dict['ncrn']['ScannedFile']['xwalk']['source'])
 
@@ -1880,6 +1880,113 @@ def _ncrn_ScannedFile(xwalk_dict:dict) -> dict:
     xwalk_dict['ncrn']['ScannedFile']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn']['ScannedFile']['xwalk']['calculation'])
     xwalk_dict['ncrn']['ScannedFile']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn']['ScannedFile']['xwalk']['source'])
     xwalk_dict['ncrn']['ScannedFile']['xwalk']['note'] =  np.where(mask, 'this field was not collected by NCRN and has no NCRN equivalent', xwalk_dict['ncrn']['ScannedFile']['xwalk']['note'])
+
+    return xwalk_dict
+
+def _exception_dbo_ParkUser(xwalk_dict:dict) -> dict:
+    """dbo.ParkUser is a table that does not exist in source"""
+    # this is an empty table for the initial database load because we have no scanned files
+    return xwalk_dict
+
+def _dbo_ParkUser(xwalk_dict:dict) -> dict:
+    """This is a bridge table between dbo.BirdSpecies and dbo.Park"""
+
+        # 1:1 fields
+    one_to_one_fields = [
+        'ID'
+        ,'ParkID'
+        ,'UserID'
+    ]
+    # assign grouping variable `calculation` for the 1:1 fields
+    mask = (xwalk_dict['dbo']['ParkUser']['xwalk']['destination'].isin(one_to_one_fields))
+    xwalk_dict['dbo']['ParkUser']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['dbo']['ParkUser']['xwalk']['calculation'])
+    # ID
+    mask = (xwalk_dict['dbo']['ParkUser']['xwalk']['destination'] == 'ID')
+    xwalk_dict['dbo']['ParkUser']['xwalk']['source'] =  np.where(mask, 'ID', xwalk_dict['dbo']['ParkUser']['xwalk']['source'])
+    # ParkID
+    mask = (xwalk_dict['dbo']['ParkUser']['xwalk']['destination'] == 'ParkID')
+    xwalk_dict['dbo']['ParkUser']['xwalk']['source'] =  np.where(mask, 'ParkID', xwalk_dict['dbo']['ParkUser']['xwalk']['source'])
+    # UserID
+    mask = (xwalk_dict['dbo']['ParkUser']['xwalk']['destination'] == 'UserID')
+    xwalk_dict['dbo']['ParkUser']['xwalk']['source'] =  np.where(mask, 'UserID', xwalk_dict['dbo']['ParkUser']['xwalk']['source'])
+
+    # Calculated fields
+    calculated_fields = [
+    ]
+    # assign grouping variable `calculation` for the calculated fields
+    mask = (xwalk_dict['dbo']['ParkUser']['xwalk']['destination'].isin(calculated_fields))
+    xwalk_dict['dbo']['ParkUser']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['dbo']['ParkUser']['xwalk']['source'])
+    xwalk_dict['dbo']['ParkUser']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['dbo']['ParkUser']['xwalk']['calculation'])
+
+    # Blanks
+    blank_fields = [
+    ]
+    # assign grouping variable `calculation` for the blank fields
+    mask = (xwalk_dict['dbo']['ParkUser']['xwalk']['destination'].isin(blank_fields))
+    xwalk_dict['dbo']['ParkUser']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['dbo']['ParkUser']['xwalk']['calculation'])
+    xwalk_dict['dbo']['ParkUser']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['dbo']['ParkUser']['xwalk']['source'])
+    xwalk_dict['dbo']['ParkUser']['xwalk']['note'] =  np.where(mask, 'this field was not collected by dbo and has no dbo equivalent', xwalk_dict['dbo']['ParkUser']['xwalk']['note'])
+
+    return xwalk_dict
+
+def _exception_ncrn_ProtocolWindCode(xwalk_dict:dict) -> dict:
+    """ncrn.ProtocolWindCode is a bridge table between ncrn.Protocol and lu.WindCode that does not exist in source"""
+
+    protocols = xwalk_dict['ncrn']['Protocol']['source']
+    windcodes = xwalk_dict['lu']['WindCode']['source']
+
+    df = pd.DataFrame()
+    for protocol in protocols.Protocol_ID.unique():
+        windcodes2 = windcodes.copy()
+        windcodes2['ProtocolID'] = protocol
+        df = pd.concat([df, windcodes2])
+    df = df[['Wind_Code', 'ProtocolID']]
+    df = df.reset_index()
+    del df['index']
+    df['ID'] = df.index+1
+    xwalk_dict['ncrn']['ProtocolWindCode']['source'] = df.copy()
+
+    return xwalk_dict
+
+def _ncrn_ProtocolWindCode(xwalk_dict:dict) -> dict:
+    """ncrn.ProtocolWindCode is a bridge table between ncrn.Protocol and lu.WindCode that does not exist in source"""
+
+    # 1:1 fields
+    one_to_one_fields = [
+        'ID'
+        ,'ProtocolID'
+        ,'WindCodeID'
+    ]
+    # assign grouping variable `calculation` for the 1:1 fields
+    mask = (xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['destination'].isin(one_to_one_fields))
+    xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['calculation'])
+    # ID
+    mask = (xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['destination'] == 'ID')
+    xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['source'] =  np.where(mask, 'ID', xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['source'])
+    # ProtocolID
+    mask = (xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['destination'] == 'ProtocolID')
+    xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['source'] =  np.where(mask, 'ProtocolID', xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['source'])
+    # WindCodeID
+    mask = (xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['destination'] == 'WindCodeID')
+    xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['source'] =  np.where(mask, 'Wind_Code', xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['source'])
+
+    # Calculated fields
+    calculated_fields = [
+    ]
+    # assign grouping variable `calculation` for the calculated fields
+    mask = (xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['destination'].isin(calculated_fields))
+    xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['source'])
+    xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['calculation'])
+
+    # Blanks
+    blank_fields = [
+        'Rowversion'
+    ]
+    # assign grouping variable `calculation` for the blank fields
+    mask = (xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['destination'].isin(blank_fields))
+    xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['calculation'])
+    xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['source'])
+    xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['note'] =  np.where(mask, 'this field was not collected by ncrn and has no ncrn equivalent', xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['note'])
 
     return xwalk_dict
 
@@ -2026,6 +2133,57 @@ def _exception_lu_ExperienceLevel(xwalk_dict:dict) -> dict:
     exp_lev = pd.DataFrame(exp_lev)
 
     xwalk_dict['lu']['ExperienceLevel']['source'] = exp_lev.copy()
+
+    return xwalk_dict
+
+def _exception_dbo_Role(xwalk_dict:dict) -> dict:
+    """A table NCRN doesn't maintain but vadboes are loosely based on tbl_Contacts.Position_Title"""
+
+    df = {
+        'ID':[1,2,3,4]
+        ,'Label':['Administrator', 'DataReader', 'ParkDataEntry', 'ProtocolLead']
+    }
+
+    df = pd.DataFrame(df)
+
+    xwalk_dict['dbo']['Role']['source'] = df.copy()
+
+    return xwalk_dict
+
+def _dbo_Role(xwalk_dict:dict) -> dict:
+    """Table of db roles, not a NCRN table"""
+
+        # 1:1 fields
+    one_to_one_fields = [
+        'ID'
+        ,'Label'
+    ]
+    # assign grouping variable `calculation` for the 1:1 fields
+    mask = (xwalk_dict['dbo']['Role']['xwalk']['destination'].isin(one_to_one_fields))
+    xwalk_dict['dbo']['Role']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['dbo']['Role']['xwalk']['calculation'])
+    # ID
+    mask = (xwalk_dict['dbo']['Role']['xwalk']['destination'] == 'ID')
+    xwalk_dict['dbo']['Role']['xwalk']['source'] =  np.where(mask, 'ID', xwalk_dict['dbo']['Role']['xwalk']['source'])
+    # ID
+    mask = (xwalk_dict['dbo']['Role']['xwalk']['destination'] == 'Label')
+    xwalk_dict['dbo']['Role']['xwalk']['source'] =  np.where(mask, 'Label', xwalk_dict['dbo']['Role']['xwalk']['source'])
+
+    # Calculated fields
+    calculated_fields = [
+    ]
+    # assign grouping variable `calculation` for the calculated fields
+    mask = (xwalk_dict['dbo']['Role']['xwalk']['destination'].isin(calculated_fields))
+    xwalk_dict['dbo']['Role']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['dbo']['Role']['xwalk']['source'])
+    xwalk_dict['dbo']['Role']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['dbo']['Role']['xwalk']['calculation'])
+
+    # Blanks
+    blank_fields = [
+    ]
+    # assign grouping variable `calculation` for the blank fields
+    mask = (xwalk_dict['dbo']['Role']['xwalk']['destination'].isin(blank_fields))
+    xwalk_dict['dbo']['Role']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['dbo']['Role']['xwalk']['calculation'])
+    xwalk_dict['dbo']['Role']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['dbo']['Role']['xwalk']['source'])
+    xwalk_dict['dbo']['Role']['xwalk']['note'] =  np.where(mask, 'this field was not collected by dbo and has no dbo equivalent', xwalk_dict['dbo']['Role']['xwalk']['note'])
 
     return xwalk_dict
 
