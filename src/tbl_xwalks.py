@@ -348,6 +348,8 @@ def _ncrn_Location(xwalk_dict:dict) -> dict:
         ,'Y_Coord_DD_NAD83'
         ,'GeodeticDatumID'
         ,'EnteredDate'
+        ,'Code'
+        ,'Notes'
     ]
     # assign grouping variable `calculation` for the 1:1 fields
     mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'].isin(one_to_one_fields))
@@ -373,6 +375,14 @@ def _ncrn_Location(xwalk_dict:dict) -> dict:
     # EnteredDate
     mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'EnteredDate')
     xwalk_dict['ncrn']['Location']['xwalk']['source'] =  np.where(mask, 'Establish_Date', xwalk_dict['ncrn']['Location']['xwalk']['source'])
+    # Code
+    mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'Code')
+    xwalk_dict['ncrn']['Location']['xwalk']['source'] =  np.where(mask, 'Plot_Name', xwalk_dict['ncrn']['Location']['xwalk']['source'])
+    # Notes
+    mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'Notes')
+    xwalk_dict['ncrn']['Location']['xwalk']['source'] =  np.where(mask, 'Notes', xwalk_dict['ncrn']['Location']['xwalk']['source'])
+    xwalk_dict['ncrn']['Location']['xwalk']['note'] = np.where(mask, "VARCHAR (1000) NULL concatenation of attributes present in source and absent from db schema", xwalk_dict['ncrn']['Location']['xwalk']['note'])
+
 
     # Calculated fields
     calculated_fields = [
@@ -402,10 +412,11 @@ def _ncrn_Location(xwalk_dict:dict) -> dict:
     xwalk_dict['ncrn']['Location']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn']['Location']['tbl_load']['IsActive']=np.where((xwalk_dict['ncrn']['Location']['source']['Active']==True),1,0)", xwalk_dict['ncrn']['Location']['xwalk']['source'])
     xwalk_dict['ncrn']['Location']['xwalk']['note'] = np.where(mask, "BIT NOT NULL map from dict['ncrn']['Location']['xwalk']['source']['Active']", xwalk_dict['ncrn']['Location']['xwalk']['note'])
 
-
     # Blanks
     blank_fields = [
         'Rowversion'
+        ,'OldCode'
+        ,'LegacyCode'
     ]
     # assign grouping variable `calculation` for the blank fields
     mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'].isin(blank_fields))
@@ -1825,11 +1836,25 @@ def _exception_ncrn_Contact(xwalk_dict:dict) -> dict:
     return xwalk_dict
 
 def _exception_ncrn_Location(xwalk_dict:dict) -> dict:
-    """map experience level to ncrn.Contact.source.ExperienceLevelID"""
+    """
+    Clean up source.tbl_Locations
+    
+    1. Filter source.tbl_Locations
+    source.tbl_Locations contains >4k sampling locations (i.e. unique `tbl_Locations.Location_ID`s.
+    ~80% of those `Location_ID`s have zero site visits.
+    Here, we filter out the locations that have zero site visits because, if we've never been there since monitoring started, they're not real.
+    It's not clear why there are so many erroneous sampling locations in `source.tbl_Locations`.
 
+    2. Add missing lat/lon for real `Location_ID`s
+    Six `Location_ID`s that we have visited have no lat/lon but do have UTMs.
+    Here, we manually look up the missing lat/lon values and map them to `Location_ID`s.
+
+    3. concat all of the remaining attributes into a `ncrn.Location.Notes` field
+    """
+    # 1. filter
     xwalk_dict['ncrn']['Location']['source'] = xwalk_dict['ncrn']['Location']['source'][xwalk_dict['ncrn']['Location']['source']['Location_ID'].isin(xwalk_dict['ncrn']['DetectionEvent']['source'].location_id.unique())]
     
-    # add lat/lon decimal degrees from UTM when dec degrees are missing
+    # 2. add lat/lon decimal degrees from UTM when dec degrees are missing
     mysites = xwalk_dict['ncrn']['Location']['source'][xwalk_dict['ncrn']['Location']['source']['Long_WGS84'].isna()].Location_ID.unique()
     mymap = {}
     for site in mysites:
@@ -1855,8 +1880,37 @@ def _exception_ncrn_Location(xwalk_dict:dict) -> dict:
     
     for k,v in mymap.items():
         mask = (xwalk_dict['ncrn']['Location']['source']['Location_ID']==k)
-        xwalk_dict['ncrn']['Location']['source']['Lat_WGS84'] = np.where(mask, v['Lat_WGS84'], xwalk_dict['ncrn']['Location']['source']['Lat_WGS84'])
-        xwalk_dict['ncrn']['Location']['source']['Long_WGS84'] = np.where(mask, v['Long_WGS84'], xwalk_dict['ncrn']['Location']['source']['Long_WGS84'])
+        xwalk_dict['ncrn']['Location']['source'].loc[mask, 'Lat_WGS84'] = v['Lat_WGS84']
+        xwalk_dict['ncrn']['Location']['source'].loc[mask, 'Long_WGS84'] = v['Long_WGS84']
+
+    # 3. add notes
+    used_cols = [
+        'Location_ID'
+        ,'Site_ID'
+        ,'Plot_Name'
+        ,'Long_WGS84'
+        ,'Lat_WGS84'
+        ,'Datum'
+        ,'Establish_Date'
+        ,'Plot_Name'
+        ,'Location_Type'
+        ,'Active'
+    ]
+    remaining_cols = [x for x in xwalk_dict['ncrn']['Location']['source'].columns if x not in used_cols]
+
+    mymap = {}
+    mymap['Location_ID'] = []
+    mymap['Notes'] = []
+    for loc in xwalk_dict['ncrn']['Location']['source'].Location_ID.unique():
+        mymap['Location_ID'].append(loc)
+        mystrings = []
+        mask = (xwalk_dict['ncrn']['Location']['source']['Location_ID']==loc)
+        for col in remaining_cols:
+            mystrings.append(f'{col}:' + str(xwalk_dict['ncrn']['Location']['source'][mask][col].values[0]))
+        mymap['Notes'].append(';'.join(mystrings))
+
+    mymap = pd.DataFrame(mymap)
+    xwalk_dict['ncrn']['Location']['source'] = xwalk_dict['ncrn']['Location']['source'].merge(mymap, on='Location_ID', how='left')
 
     return xwalk_dict
 
