@@ -1814,7 +1814,30 @@ def _exception_ncrn_BirdSpeciesGroups(xwalk_dict:dict) -> dict:
     # 1  |       465      |    20080421161312-627642035.484314     | NaN
     # 2  |       465      |    20080421161058-412766814.231873     | NaN
 
-    # xwalk_dict['ncrn']['BirdSpeciesGroups']['source_name'] = xwalk_dict['ncrn']['BirdSpecies']['source_name']
+
+    species = xwalk_dict['ncrn']['BirdSpecies']['source'].copy()
+    groups = xwalk_dict['ncrn']['BirdGroups']['source'].copy()
+
+    targets = [
+        'AOU_Code'
+        ,'Trophic_Level'
+        ,'Foraging_Behavior'
+        ,'Nesting_Placement'
+        ,'Nest_Height'
+        ,'Mass_Quartiles'
+        ,'PIF_Avg_Groups'
+        ,'Primary_Habitat'
+        ,'Number_Broods'
+    ]
+
+    species = species[targets]
+    species = species.melt(id_vars=['AOU_Code'])
+
+    # next step is make `groups` into a lookup table
+    # need a column in `species` that's a unique combination of `species.variable` and `species.value`
+    # need a column in `groups` that's a unique combination of `groups.Guild_Assignment_Code` and `groups.Guild_Name`
+
+    # note: groups.Guild_Name has spaces while species.variable has underscores
 
     return xwalk_dict
 
