@@ -1883,7 +1883,7 @@ def _ncrn_ScannedFile(xwalk_dict:dict) -> dict:
 
     return xwalk_dict
 
-def _exception_ncrn_TemperatureUnit(xwalk_dict:dict) -> dict:
+def _exception_lu_TemperatureUnit(xwalk_dict:dict) -> dict:
     """ncrn.TemperatureUnit is a table that does not exist in source so create"""
 
     df = pd.DataFrame({
@@ -1916,7 +1916,52 @@ def _exception_ncrn_TemperatureUnit(xwalk_dict:dict) -> dict:
 
     return xwalk_dict
 
-def _ncrn_TemperatureUnit(xwalk_dict:dict) -> dict:
+def _lu_ProtectedStatus(xwalk_dict:dict) -> dict:
+    """This is a bridge table between ncrn.BirdSpecies and ncrn.Park"""
+
+        # 1:1 fields
+    one_to_one_fields = [
+        'ID'
+        ,'Code'
+        ,'Label'
+        ,'Summary'
+    ]
+    # assign grouping variable `calculation` for the 1:1 fields
+    mask = (xwalk_dict['lu']['ProtectedStatus']['xwalk']['destination'].isin(one_to_one_fields))
+    xwalk_dict['lu']['ProtectedStatus']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['lu']['ProtectedStatus']['xwalk']['calculation'])
+    # ID
+    mask = (xwalk_dict['lu']['ProtectedStatus']['xwalk']['destination'] == 'ID')
+    xwalk_dict['lu']['ProtectedStatus']['xwalk']['source'] =  np.where(mask, 'ID', xwalk_dict['lu']['ProtectedStatus']['xwalk']['source'])
+    # Code
+    mask = (xwalk_dict['lu']['ProtectedStatus']['xwalk']['destination'] == 'Code')
+    xwalk_dict['lu']['ProtectedStatus']['xwalk']['source'] =  np.where(mask, 'Code', xwalk_dict['lu']['ProtectedStatus']['xwalk']['source'])
+    # Label
+    mask = (xwalk_dict['lu']['ProtectedStatus']['xwalk']['destination'] == 'Label')
+    xwalk_dict['lu']['ProtectedStatus']['xwalk']['source'] =  np.where(mask, 'Label', xwalk_dict['lu']['ProtectedStatus']['xwalk']['source'])
+    # Summary
+    mask = (xwalk_dict['lu']['ProtectedStatus']['xwalk']['destination'] == 'Summary')
+    xwalk_dict['lu']['ProtectedStatus']['xwalk']['source'] =  np.where(mask, 'Summary', xwalk_dict['lu']['ProtectedStatus']['xwalk']['source'])
+
+    # Calculated fields
+    calculated_fields = [
+    ]
+    # assign grouping variable `calculation` for the calculated fields
+    mask = (xwalk_dict['lu']['ProtectedStatus']['xwalk']['destination'].isin(calculated_fields))
+    xwalk_dict['lu']['ProtectedStatus']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu']['ProtectedStatus']['xwalk']['source'])
+    xwalk_dict['lu']['ProtectedStatus']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['lu']['ProtectedStatus']['xwalk']['calculation'])
+
+    # Blanks
+    blank_fields = [
+    ]
+    # assign grouping variable `calculation` for the blank fields
+    mask = (xwalk_dict['lu']['ProtectedStatus']['xwalk']['destination'].isin(blank_fields))
+    xwalk_dict['lu']['ProtectedStatus']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['lu']['ProtectedStatus']['xwalk']['calculation'])
+    xwalk_dict['lu']['ProtectedStatus']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['lu']['ProtectedStatus']['xwalk']['source'])
+    xwalk_dict['lu']['ProtectedStatus']['xwalk']['note'] =  np.where(mask, 'this field was not collected by lu and has no lu equivalent', xwalk_dict['lu']['ProtectedStatus']['xwalk']['note'])
+
+    return xwalk_dict
+
+def _lu_TemperatureUnit(xwalk_dict:dict) -> dict:
     """This is a bridge table between ncrn.BirdSpecies and ncrn.Park"""
 
         # 1:1 fields
@@ -1981,6 +2026,27 @@ def _exception_lu_ExperienceLevel(xwalk_dict:dict) -> dict:
     exp_lev = pd.DataFrame(exp_lev)
 
     xwalk_dict['lu']['ExperienceLevel']['source'] = exp_lev.copy()
+
+    return xwalk_dict
+
+def _exception_lu_ProtectedStatus(xwalk_dict:dict) -> dict:
+    """A table NCRN doesn't maintain but values are loosely based on tbl_Contacts.Position_Title"""
+
+    protections = {
+        'ID':[1,2,3,4]
+        ,'Code':['LP', 'OP', 'NP', 'NA']
+        ,'Label':['Legally Protected', 'Operationally Protected', 'Not Protected', 'Not Available']
+        ,'Summary':[
+            'Covered under existing statue as being exempt from public dissemination'
+            ,'Data withheld from release to protect resources or site fidelity but may be subject to release upon request'
+            ,'Data is neither legally nor operationally sensitive and therefore does not have any distribution restrictions conditional on protected status'
+            ,np.NaN
+            ]
+    }
+
+    protections = pd.DataFrame(protections)
+
+    xwalk_dict['lu']['ProtectedStatus']['source'] = protections.copy()
 
     return xwalk_dict
 
