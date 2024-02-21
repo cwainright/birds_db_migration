@@ -2226,6 +2226,67 @@ def _ncrn_ProtocolDetectionType(xwalk_dict:dict) -> dict:
 
     return xwalk_dict
 
+def _exception_ncrn_ProtocolDistanceClass(xwalk_dict:dict) -> dict:
+    """ncrn.ProtocolDistanceClass is a bridge table between ncrn.Protocol and lu.DistanceClass that does not exist in source"""
+
+    protocols = xwalk_dict['ncrn']['Protocol']['source']
+    DistanceClasss = xwalk_dict['lu']['DistanceClass']['source']
+
+    df = pd.DataFrame()
+    for protocol in protocols.Protocol_ID.unique():
+        DistanceClasss2 = DistanceClasss.copy()
+        DistanceClasss2['ProtocolID'] = protocol
+        df = pd.concat([df, DistanceClasss2])
+    df = df[['Distance_id', 'ProtocolID']]
+    df = df.reset_index()
+    del df['index']
+    df['ID'] = df.index+1
+    xwalk_dict['ncrn']['ProtocolDistanceClass']['source'] = df.copy()
+
+    return xwalk_dict
+
+def _ncrn_ProtocolDistanceClass(xwalk_dict:dict) -> dict:
+    """ncrn.ProtocolDistanceClass is a bridge table between ncrn.Protocol and lu.DistanceClass that does not exist in source"""
+
+    # 1:1 fields
+    one_to_one_fields = [
+        'ID'
+        ,'ProtocolID'
+        ,'DistanceClassID'
+    ]
+    # assign grouping variable `calculation` for the 1:1 fields
+    mask = (xwalk_dict['ncrn']['ProtocolDistanceClass']['xwalk']['destination'].isin(one_to_one_fields))
+    xwalk_dict['ncrn']['ProtocolDistanceClass']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['ncrn']['ProtocolDistanceClass']['xwalk']['calculation'])
+    # ID
+    mask = (xwalk_dict['ncrn']['ProtocolDistanceClass']['xwalk']['destination'] == 'ID')
+    xwalk_dict['ncrn']['ProtocolDistanceClass']['xwalk']['source'] =  np.where(mask, 'ID', xwalk_dict['ncrn']['ProtocolDistanceClass']['xwalk']['source'])
+    # ProtocolID
+    mask = (xwalk_dict['ncrn']['ProtocolDistanceClass']['xwalk']['destination'] == 'ProtocolID')
+    xwalk_dict['ncrn']['ProtocolDistanceClass']['xwalk']['source'] =  np.where(mask, 'ProtocolID', xwalk_dict['ncrn']['ProtocolDistanceClass']['xwalk']['source'])
+    # DistanceClassID
+    mask = (xwalk_dict['ncrn']['ProtocolDistanceClass']['xwalk']['destination'] == 'DistanceClassID')
+    xwalk_dict['ncrn']['ProtocolDistanceClass']['xwalk']['source'] =  np.where(mask, 'Distance_id', xwalk_dict['ncrn']['ProtocolDistanceClass']['xwalk']['source'])
+
+    # Calculated fields
+    calculated_fields = [
+    ]
+    # assign grouping variable `calculation` for the calculated fields
+    mask = (xwalk_dict['ncrn']['ProtocolDistanceClass']['xwalk']['destination'].isin(calculated_fields))
+    xwalk_dict['ncrn']['ProtocolDistanceClass']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn']['ProtocolDistanceClass']['xwalk']['source'])
+    xwalk_dict['ncrn']['ProtocolDistanceClass']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn']['ProtocolDistanceClass']['xwalk']['calculation'])
+
+    # Blanks
+    blank_fields = [
+        'Rowversion'
+    ]
+    # assign grouping variable `calculation` for the blank fields
+    mask = (xwalk_dict['ncrn']['ProtocolDistanceClass']['xwalk']['destination'].isin(blank_fields))
+    xwalk_dict['ncrn']['ProtocolDistanceClass']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn']['ProtocolDistanceClass']['xwalk']['calculation'])
+    xwalk_dict['ncrn']['ProtocolDistanceClass']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn']['ProtocolDistanceClass']['xwalk']['source'])
+    xwalk_dict['ncrn']['ProtocolDistanceClass']['xwalk']['note'] =  np.where(mask, 'this field was not collected by ncrn and has no ncrn equivalent', xwalk_dict['ncrn']['ProtocolDistanceClass']['xwalk']['note'])
+
+    return xwalk_dict
+
 def _exception_lu_TemperatureUnit(xwalk_dict:dict) -> dict:
     """ncrn.TemperatureUnit is a table that does not exist in source so create"""
 
