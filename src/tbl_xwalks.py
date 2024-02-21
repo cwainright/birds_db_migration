@@ -1821,17 +1821,63 @@ def _exception_ncrn_BirdSpeciesGroups(xwalk_dict:dict) -> dict: ##TODO##TODO##TO
 def _exception_ncrn_ProtocolDetectionType(xwalk_dict:dict) -> dict:
     """This table is empty in NETNMIDN but it's a bridge table between ncrn.BirdSpecies and ncrn.BirdGroups"""
     # TODO: create `source` here
-    # TODO: create `source_name` here
-
-    xwalk_dict['ncrn']['ProtocolDetectionType']['source_name'] = 'tbd'
-    # xwalk_dict['ncrn']['ProtocolDetectionType']['source_name'] = pd.DataFrame()
 
     return xwalk_dict
 
 def _exception_ncrn_BirdSpeciesPark(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
     """This is a bridge table between ncrn.BirdSpecies and ncrn.Park"""
     # TODO: create `source` here
-    # TODO: create `source_name` here
+
+    return xwalk_dict
+
+def _exception_ncrn_ScannedFile(xwalk_dict:dict) -> dict:
+    """ncrn.ScannedFile is a table that does not exist in source"""
+    # this is an empty table for the initial database load because we have no scanned files
+    return xwalk_dict
+
+def _ncrn_ScannedFile(xwalk_dict:dict) -> dict:
+    """This is a bridge table between ncrn.BirdSpecies and ncrn.Park"""
+
+        # 1:1 fields
+    one_to_one_fields = [
+        'ID'
+        ,'DetectionEventID'
+        ,'Description'
+        ,'FileName'
+    ]
+    # assign grouping variable `calculation` for the 1:1 fields
+    mask = (xwalk_dict['ncrn']['ScannedFile']['xwalk']['destination'].isin(one_to_one_fields))
+    xwalk_dict['ncrn']['ScannedFile']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['ncrn']['ScannedFile']['xwalk']['calculation'])
+    # ID
+    mask = (xwalk_dict['ncrn']['ScannedFile']['xwalk']['destination'] == 'ID')
+    xwalk_dict['ncrn']['ScannedFile']['xwalk']['source'] =  np.where(mask, 'ID', xwalk_dict['ncrn']['ScannedFile']['xwalk']['source'])
+    # Code
+    mask = (xwalk_dict['ncrn']['ScannedFile']['xwalk']['destination'] == 'DetectionEventID')
+    xwalk_dict['ncrn']['ScannedFile']['xwalk']['source'] =  np.where(mask, 'DetectionEventID', xwalk_dict['ncrn']['ScannedFile']['xwalk']['source'])
+    # Description
+    mask = (xwalk_dict['ncrn']['ScannedFile']['xwalk']['destination'] == 'Description')
+    xwalk_dict['ncrn']['ScannedFile']['xwalk']['source'] =  np.where(mask, 'Description', xwalk_dict['ncrn']['ScannedFile']['xwalk']['source'])
+    # SortOrder
+    mask = (xwalk_dict['ncrn']['ScannedFile']['xwalk']['destination'] == 'FileName')
+    xwalk_dict['ncrn']['ScannedFile']['xwalk']['source'] =  np.where(mask, 'FileName', xwalk_dict['ncrn']['ScannedFile']['xwalk']['source'])
+
+    # Calculated fields
+    calculated_fields = [
+    ]
+    # assign grouping variable `calculation` for the calculated fields
+    mask = (xwalk_dict['ncrn']['ScannedFile']['xwalk']['destination'].isin(calculated_fields))
+    xwalk_dict['ncrn']['ScannedFile']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn']['ScannedFile']['xwalk']['source'])
+    xwalk_dict['ncrn']['ScannedFile']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn']['ScannedFile']['xwalk']['calculation'])
+
+    # Blanks
+    blank_fields = [
+        'Rowversion'
+    ]
+    # assign grouping variable `calculation` for the blank fields
+    mask = (xwalk_dict['ncrn']['ScannedFile']['xwalk']['destination'].isin(blank_fields))
+    xwalk_dict['ncrn']['ScannedFile']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn']['ScannedFile']['xwalk']['calculation'])
+    xwalk_dict['ncrn']['ScannedFile']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn']['ScannedFile']['xwalk']['source'])
+    xwalk_dict['ncrn']['ScannedFile']['xwalk']['note'] =  np.where(mask, 'this field was not collected by NCRN and has no NCRN equivalent', xwalk_dict['ncrn']['ScannedFile']['xwalk']['note'])
 
     return xwalk_dict
 

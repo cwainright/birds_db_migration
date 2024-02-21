@@ -63,8 +63,8 @@ def make_birds(dest:str='') -> dict:
         for tbl in TBL_ADDITIONS[schema]:
             xwalk_dict[schema][tbl] = {
                 'xwalk': pd.DataFrame(columns=['destination', 'source', 'calculation', 'note']) # the crosswalk to translate from `source` to `tbl_load`
-                ,'source_name': '' # name of source table
-                ,'source': pd.DataFrame() # source data
+                ,'source_name': 'NCRN_Landbirds.'+schema+'.'+tbl # name of source table
+                ,'source': pd.DataFrame(columns=dest_dict[tbl].columns) # source data
                 ,'destination': dest_dict[tbl] # destination data (mostly just for its column names and order)
                 ,'tbl_load': pd.DataFrame() # `source` data crosswalked to the destination schema
                 ,'payload_cols': [] # the columns to extract from `tbl_load` and load into `payload`
@@ -143,6 +143,7 @@ def _create_xwalks(xwalk_dict:dict) -> dict:
     xwalk_dict = tx._lu_Habitat(xwalk_dict)
     xwalk_dict = tx._ncrn_BirdSpecies(xwalk_dict)
     xwalk_dict = tx._ncrn_Site(xwalk_dict)
+    xwalk_dict = tx._ncrn_ScannedFile(xwalk_dict)
 
     return xwalk_dict
 
@@ -162,6 +163,7 @@ def _execute_xwalk_exceptions(xwalk_dict:dict) -> dict:
     xwalk_dict = tx._exception_ncrn_BirdSpeciesPark(xwalk_dict)
     xwalk_dict = tx._exception_lu_ExperienceLevel(xwalk_dict)
     # xwalk_dict = tx._exception_ncrn_ProtocolDetectionType(xwalk_dict)
+    xwalk_dict = tx._exception_ncrn_ScannedFile(xwalk_dict)
 
     return xwalk_dict
 
