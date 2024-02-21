@@ -1990,6 +1990,67 @@ def _ncrn_ProtocolWindCode(xwalk_dict:dict) -> dict:
 
     return xwalk_dict
 
+def _exception_ncrn_ProtocolPrecipitationType(xwalk_dict:dict) -> dict:
+    """ncrn.ProtocolPrecipitationType is a bridge table between ncrn.Protocol and lu.PrecipitationType that does not exist in source"""
+
+    protocols = xwalk_dict['ncrn']['Protocol']['source']
+    PrecipitationTypes = xwalk_dict['lu']['PrecipitationType']['source']
+
+    df = pd.DataFrame()
+    for protocol in protocols.Protocol_ID.unique():
+        PrecipitationTypes2 = PrecipitationTypes.copy()
+        PrecipitationTypes2['ProtocolID'] = protocol
+        df = pd.concat([df, PrecipitationTypes2])
+    df = df[['Sky_Code', 'ProtocolID']]
+    df = df.reset_index()
+    del df['index']
+    df['ID'] = df.index+1
+    xwalk_dict['ncrn']['ProtocolPrecipitationType']['source'] = df.copy()
+
+    return xwalk_dict
+
+def _ncrn_ProtocolPrecipitationType(xwalk_dict:dict) -> dict:
+    """ncrn.ProtocolPrecipitationType is a bridge table between ncrn.Protocol and lu.PrecipitationType that does not exist in source"""
+
+    # 1:1 fields
+    one_to_one_fields = [
+        'ID'
+        ,'ProtocolID'
+        ,'PrecipitationTypeID'
+    ]
+    # assign grouping variable `calculation` for the 1:1 fields
+    mask = (xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['destination'].isin(one_to_one_fields))
+    xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['calculation'])
+    # ID
+    mask = (xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['destination'] == 'ID')
+    xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['source'] =  np.where(mask, 'ID', xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['source'])
+    # ProtocolID
+    mask = (xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['destination'] == 'ProtocolID')
+    xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['source'] =  np.where(mask, 'ProtocolID', xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['source'])
+    # PrecipitationTypeID
+    mask = (xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['destination'] == 'PrecipitationTypeID')
+    xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['source'] =  np.where(mask, 'Sky_Code', xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['source'])
+
+    # Calculated fields
+    calculated_fields = [
+    ]
+    # assign grouping variable `calculation` for the calculated fields
+    mask = (xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['destination'].isin(calculated_fields))
+    xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['source'])
+    xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['calculation'])
+
+    # Blanks
+    blank_fields = [
+        'Rowversion'
+    ]
+    # assign grouping variable `calculation` for the blank fields
+    mask = (xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['destination'].isin(blank_fields))
+    xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['calculation'])
+    xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['source'])
+    xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['note'] =  np.where(mask, 'this field was not collected by ncrn and has no ncrn equivalent', xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['note'])
+
+    return xwalk_dict
+
 def _exception_lu_TemperatureUnit(xwalk_dict:dict) -> dict:
     """ncrn.TemperatureUnit is a table that does not exist in source so create"""
 
