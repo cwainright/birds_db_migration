@@ -151,6 +151,7 @@ def _create_xwalks(xwalk_dict:dict) -> dict:
     xwalk_dict = tx._dbo_ParkUser(xwalk_dict)
     xwalk_dict = tx._ncrn_ProtocolWindCode(xwalk_dict)
     xwalk_dict = tx._ncrn_ProtocolPrecipitationType(xwalk_dict)
+    xwalk_dict = tx._ncrn_ProtocolNoiseLevel(xwalk_dict)
 
     return xwalk_dict
 
@@ -177,6 +178,7 @@ def _execute_xwalk_exceptions(xwalk_dict:dict) -> dict:
     xwalk_dict = tx._exception_dbo_ParkUser(xwalk_dict)
     xwalk_dict = tx._exception_ncrn_ProtocolWindCode(xwalk_dict)
     xwalk_dict = tx._exception_ncrn_ProtocolPrecipitationType(xwalk_dict)
+    xwalk_dict = tx._exception_ncrn_ProtocolNoiseLevel(xwalk_dict)
 
     return xwalk_dict
 

@@ -2051,6 +2051,67 @@ def _ncrn_ProtocolPrecipitationType(xwalk_dict:dict) -> dict:
 
     return xwalk_dict
 
+def _exception_ncrn_ProtocolNoiseLevel(xwalk_dict:dict) -> dict:
+    """ncrn.ProtocolNoiseLevel is a bridge table between ncrn.Protocol and lu.NoiseLevel that does not exist in source"""
+
+    protocols = xwalk_dict['ncrn']['Protocol']['source']
+    NoiseLevels = xwalk_dict['lu']['NoiseLevel']['source']
+
+    df = pd.DataFrame()
+    for protocol in protocols.Protocol_ID.unique():
+        NoiseLevels2 = NoiseLevels.copy()
+        NoiseLevels2['ProtocolID'] = protocol
+        df = pd.concat([df, NoiseLevels2])
+    df = df[['Disturbance_Code', 'ProtocolID']]
+    df = df.reset_index()
+    del df['index']
+    df['ID'] = df.index+1
+    xwalk_dict['ncrn']['ProtocolNoiseLevel']['source'] = df.copy()
+
+    return xwalk_dict
+
+def _ncrn_ProtocolNoiseLevel(xwalk_dict:dict) -> dict:
+    """ncrn.ProtocolNoiseLevel is a bridge table between ncrn.Protocol and lu.NoiseLevel that does not exist in source"""
+
+    # 1:1 fields
+    one_to_one_fields = [
+        'ID'
+        ,'ProtocolID'
+        ,'NoiseLevelID'
+    ]
+    # assign grouping variable `calculation` for the 1:1 fields
+    mask = (xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['destination'].isin(one_to_one_fields))
+    xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['calculation'])
+    # ID
+    mask = (xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['destination'] == 'ID')
+    xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['source'] =  np.where(mask, 'ID', xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['source'])
+    # ProtocolID
+    mask = (xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['destination'] == 'ProtocolID')
+    xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['source'] =  np.where(mask, 'ProtocolID', xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['source'])
+    # NoiseLevelID
+    mask = (xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['destination'] == 'NoiseLevelID')
+    xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['source'] =  np.where(mask, 'Disturbance_Code', xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['source'])
+
+    # Calculated fields
+    calculated_fields = [
+    ]
+    # assign grouping variable `calculation` for the calculated fields
+    mask = (xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['destination'].isin(calculated_fields))
+    xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['source'])
+    xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['calculation'])
+
+    # Blanks
+    blank_fields = [
+        'Rowversion'
+    ]
+    # assign grouping variable `calculation` for the blank fields
+    mask = (xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['destination'].isin(blank_fields))
+    xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['calculation'])
+    xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['source'])
+    xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['note'] =  np.where(mask, 'this field was not collected by ncrn and has no ncrn equivalent', xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['note'])
+
+    return xwalk_dict
+
 def _exception_lu_TemperatureUnit(xwalk_dict:dict) -> dict:
     """ncrn.TemperatureUnit is a table that does not exist in source so create"""
 
