@@ -1881,6 +1881,89 @@ def _ncrn_ScannedFile(xwalk_dict:dict) -> dict:
 
     return xwalk_dict
 
+def _exception_ncrn_TemperatureUnit(xwalk_dict:dict) -> dict:
+    """ncrn.TemperatureUnit is a table that does not exist in source so create"""
+
+    df = pd.DataFrame({
+        'Code':[
+            'F'
+            ,'C'
+        ]
+        ,'Label':[
+            'Farenheit'
+            ,'Celsius'
+        ]
+        ,'Description':[
+            'Degrees Farenheit'
+            ,'Degrees Celsius'
+        ]
+        ,'ValidMinimumValue':[
+            -40
+            ,-40
+        ]
+        ,'ValidMaximumValue':[
+            130
+            ,55
+        ]
+        ,'Rowversion':[
+            np.NaN
+            ,np.NaN
+        ]
+    })
+    xwalk_dict['lu']['TemperatureUnit']['source'] = df
+
+    return xwalk_dict
+
+def _ncrn_TemperatureUnit(xwalk_dict:dict) -> dict:
+    """This is a bridge table between ncrn.BirdSpecies and ncrn.Park"""
+
+        # 1:1 fields
+    one_to_one_fields = [
+        'Code'
+        ,'Label'
+        ,'Description'
+        ,'ValidMinimumValue'
+        ,'ValidMaximumValue'
+    ]
+    # assign grouping variable `calculation` for the 1:1 fields
+    mask = (xwalk_dict['lu']['TemperatureUnit']['xwalk']['destination'].isin(one_to_one_fields))
+    xwalk_dict['lu']['TemperatureUnit']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['lu']['TemperatureUnit']['xwalk']['calculation'])
+    # Code
+    mask = (xwalk_dict['lu']['TemperatureUnit']['xwalk']['destination'] == 'Code')
+    xwalk_dict['lu']['TemperatureUnit']['xwalk']['source'] =  np.where(mask, 'Code', xwalk_dict['lu']['TemperatureUnit']['xwalk']['source'])
+    # Label
+    mask = (xwalk_dict['lu']['TemperatureUnit']['xwalk']['destination'] == 'Label')
+    xwalk_dict['lu']['TemperatureUnit']['xwalk']['source'] =  np.where(mask, 'Label', xwalk_dict['lu']['TemperatureUnit']['xwalk']['source'])
+    # Description
+    mask = (xwalk_dict['lu']['TemperatureUnit']['xwalk']['destination'] == 'Description')
+    xwalk_dict['lu']['TemperatureUnit']['xwalk']['source'] =  np.where(mask, 'Description', xwalk_dict['lu']['TemperatureUnit']['xwalk']['source'])
+    # ValidMinimumValue
+    mask = (xwalk_dict['lu']['TemperatureUnit']['xwalk']['destination'] == 'ValidMinimumValue')
+    xwalk_dict['lu']['TemperatureUnit']['xwalk']['source'] =  np.where(mask, 'ValidMinimumValue', xwalk_dict['lu']['TemperatureUnit']['xwalk']['source'])
+    # ValidMaximumValue
+    mask = (xwalk_dict['lu']['TemperatureUnit']['xwalk']['destination'] == 'ValidMaximumValue')
+    xwalk_dict['lu']['TemperatureUnit']['xwalk']['source'] =  np.where(mask, 'ValidMaximumValue', xwalk_dict['lu']['TemperatureUnit']['xwalk']['source'])
+
+    # Calculated fields
+    calculated_fields = [
+    ]
+    # assign grouping variable `calculation` for the calculated fields
+    mask = (xwalk_dict['lu']['TemperatureUnit']['xwalk']['destination'].isin(calculated_fields))
+    xwalk_dict['lu']['TemperatureUnit']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu']['TemperatureUnit']['xwalk']['source'])
+    xwalk_dict['lu']['TemperatureUnit']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['lu']['TemperatureUnit']['xwalk']['calculation'])
+
+    # Blanks
+    blank_fields = [
+        'Rowversion'
+    ]
+    # assign grouping variable `calculation` for the blank fields
+    mask = (xwalk_dict['lu']['TemperatureUnit']['xwalk']['destination'].isin(blank_fields))
+    xwalk_dict['lu']['TemperatureUnit']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['lu']['TemperatureUnit']['xwalk']['calculation'])
+    xwalk_dict['lu']['TemperatureUnit']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['lu']['TemperatureUnit']['xwalk']['source'])
+    xwalk_dict['lu']['TemperatureUnit']['xwalk']['note'] =  np.where(mask, 'this field was not collected by lu and has no lu equivalent', xwalk_dict['lu']['TemperatureUnit']['xwalk']['note'])
+
+    return xwalk_dict
+
 def _exception_lu_ExperienceLevel(xwalk_dict:dict) -> dict:
     """NCRN doesn't keep this table and NETNMIDN's tbl NETNMIDN_Landbirds.lu.ExperienceLevel is empty so we add a dataframe here"""
 
