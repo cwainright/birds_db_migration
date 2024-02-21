@@ -223,7 +223,7 @@ def _ncrn_BirdDetection(xwalk_dict:dict) -> dict:
     ]
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['ncrn']['BirdDetection']['xwalk']['destination'].isin(calculated_fields))
-    xwalk_dict['ncrn']['BirdDetection']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn']['BirdDetection']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['ncrn']['BirdDetection']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn']['BirdDetection']['xwalk']['source']) 
     xwalk_dict['ncrn']['BirdDetection']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn']['BirdDetection']['xwalk']['calculation'])
     # ExcludeDetection  BIT type (bool as 0 or 1); should be 0 when `DataFlag` == False
     mask = (xwalk_dict['ncrn']['BirdDetection']['xwalk']['destination'] == 'ExcludeDetection')
@@ -529,7 +529,7 @@ def _ncrn_Park(xwalk_dict:dict) -> dict:
     ]
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['ncrn']['Park']['xwalk']['destination'].isin(calculated_fields))
-    xwalk_dict['ncrn']['Park']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn']['Park']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['ncrn']['Park']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn']['Park']['xwalk']['source']) 
     xwalk_dict['ncrn']['Park']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn']['Park']['xwalk']['calculation'])
     # NetworkCode  varchar(4); 4-character network ID
     mask = (xwalk_dict['ncrn']['Park']['xwalk']['destination'] == 'NetworkCode')
@@ -591,7 +591,7 @@ def _lu_TimeInterval(xwalk_dict:dict) -> dict:
     ]
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['lu']['TimeInterval']['xwalk']['destination'].isin(calculated_fields))
-    xwalk_dict['lu']['TimeInterval']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu']['TimeInterval']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['lu']['TimeInterval']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu']['TimeInterval']['xwalk']['source']) 
     xwalk_dict['lu']['TimeInterval']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['lu']['TimeInterval']['xwalk']['calculation'])
 
     # Blanks
@@ -642,7 +642,7 @@ def _lu_WindCode(xwalk_dict:dict) -> dict:
     ]
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['lu']['WindCode']['xwalk']['destination'].isin(calculated_fields))
-    xwalk_dict['lu']['WindCode']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu']['WindCode']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['lu']['WindCode']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu']['WindCode']['xwalk']['source']) 
     xwalk_dict['lu']['WindCode']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['lu']['WindCode']['xwalk']['calculation'])
     # Label varchar(25) string-split tlu_Wind_Code.Wind_Code_Description
     mask = (xwalk_dict['lu']['WindCode']['xwalk']['destination'] == 'Label')
@@ -714,7 +714,7 @@ def _lu_DataProcessingLevel(xwalk_dict:dict) -> dict:
     ]
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['lu']['DataProcessingLevel']['xwalk']['destination'].isin(calculated_fields))
-    xwalk_dict['lu']['DataProcessingLevel']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu']['DataProcessingLevel']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['lu']['DataProcessingLevel']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu']['DataProcessingLevel']['xwalk']['source']) 
     xwalk_dict['lu']['DataProcessingLevel']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['lu']['DataProcessingLevel']['xwalk']['calculation'])
 
     # Blanks
@@ -766,7 +766,7 @@ def _lu_DetectionType(xwalk_dict:dict) -> dict:
     ]
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['lu']['DetectionType']['xwalk']['destination'].isin(calculated_fields))
-    xwalk_dict['lu']['DetectionType']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu']['DetectionType']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['lu']['DetectionType']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu']['DetectionType']['xwalk']['source']) 
     xwalk_dict['lu']['DetectionType']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['lu']['DetectionType']['xwalk']['calculation'])
 
     # Blanks
@@ -816,7 +816,7 @@ def _lu_DistanceClass(xwalk_dict:dict) -> dict:
     ]
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['lu']['DistanceClass']['xwalk']['destination'].isin(calculated_fields))
-    xwalk_dict['lu']['DistanceClass']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu']['DistanceClass']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['lu']['DistanceClass']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu']['DistanceClass']['xwalk']['source']) 
     xwalk_dict['lu']['DistanceClass']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['lu']['DistanceClass']['xwalk']['calculation'])
     # Description varchar(100) concat dbo_tlu_Distance_Estimate.ActiveDate and dbo_tlu_Distance_Estimate.RetireDate
     mask = (xwalk_dict['lu']['DistanceClass']['xwalk']['destination'] == 'Description')
@@ -869,7 +869,7 @@ def _lu_GeodeticDatum(xwalk_dict:dict) -> dict:
     ]
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['lu']['GeodeticDatum']['xwalk']['destination'].isin(calculated_fields))
-    xwalk_dict['lu']['GeodeticDatum']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu']['GeodeticDatum']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['lu']['GeodeticDatum']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu']['GeodeticDatum']['xwalk']['source']) 
     xwalk_dict['lu']['GeodeticDatum']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['lu']['GeodeticDatum']['xwalk']['calculation'])
 
     # Blanks
@@ -921,7 +921,7 @@ def _lu_Sex(xwalk_dict:dict) -> dict:
     ]
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['lu']['Sex']['xwalk']['destination'].isin(calculated_fields))
-    xwalk_dict['lu']['Sex']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu']['Sex']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['lu']['Sex']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu']['Sex']['xwalk']['source']) 
     xwalk_dict['lu']['Sex']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['lu']['Sex']['xwalk']['calculation'])
 
     # Blanks
@@ -936,7 +936,7 @@ def _lu_Sex(xwalk_dict:dict) -> dict:
 
     return xwalk_dict
 
-def _ncrn_Contact(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
+def _ncrn_Contact(xwalk_dict:dict) -> dict:
     """Crosswalk source.tlu_Contacts to destination.ncrn.Contact
 
     Args:
@@ -988,7 +988,7 @@ def _ncrn_Contact(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TO
     ]
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['ncrn']['Contact']['xwalk']['destination'].isin(calculated_fields))
-    xwalk_dict['ncrn']['Contact']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn']['Contact']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['ncrn']['Contact']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn']['Contact']['xwalk']['source']) 
     xwalk_dict['ncrn']['Contact']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn']['Contact']['xwalk']['calculation'])
     # Notes
     mask = (xwalk_dict['ncrn']['Contact']['xwalk']['destination'] == 'Notes')
@@ -1049,7 +1049,7 @@ def _lu_PrecipitationType(xwalk_dict:dict) -> dict:
     ]
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['lu']['PrecipitationType']['xwalk']['destination'].isin(calculated_fields))
-    xwalk_dict['lu']['PrecipitationType']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu']['PrecipitationType']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['lu']['PrecipitationType']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu']['PrecipitationType']['xwalk']['source']) 
     xwalk_dict['lu']['PrecipitationType']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['lu']['PrecipitationType']['xwalk']['calculation'])
 
     # Blanks
@@ -1065,7 +1065,7 @@ def _lu_PrecipitationType(xwalk_dict:dict) -> dict:
 
     return xwalk_dict
 
-def _ncrn_BirdSpeciesPark(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
+def _ncrn_BirdSpeciesPark(xwalk_dict:dict) -> dict:
     """Crosswalk source.tlu_Species to destination.ncrn.BirdSpeciesPark
 
     Args:
@@ -1119,7 +1119,7 @@ def _ncrn_BirdSpeciesPark(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##
     return xwalk_dict
 
 def _ncrn_BirdSpeciesGroup(xwalk_dict:dict) -> dict:
-    """Crosswalk source.tlu_Species to destination.ncrn.BirdSpeciesPark
+    """Bridge table between ncrn.BirdSpecies and ncrn.BirdGroups
 
     Args:
         xwalk_dict (dict): dictionary of column names crosswalked between source and destination tables
@@ -1215,7 +1215,7 @@ def _ncrn_BirdGroups(xwalk_dict:dict) -> dict:
     ]
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['ncrn']['BirdGroups']['xwalk']['destination'].isin(calculated_fields))
-    xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn']['BirdGroups']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn']['BirdGroups']['xwalk']['source']) 
     xwalk_dict['ncrn']['BirdGroups']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn']['BirdGroups']['xwalk']['calculation'])
     # IsGuild
     mask = (xwalk_dict['ncrn']['BirdGroups']['xwalk']['destination'] == 'IsGuild')
@@ -1238,7 +1238,7 @@ def _ncrn_BirdGroups(xwalk_dict:dict) -> dict:
 
     return xwalk_dict
 
-def _ncrn_BirdSpecies(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
+def _ncrn_BirdSpecies(xwalk_dict:dict) -> dict:
     """Crosswalk source.tlu_Species to destination.ncrn.BirdSpecies
 
     Args:
@@ -1301,7 +1301,7 @@ def _ncrn_BirdSpecies(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO
     ]
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['ncrn']['BirdSpecies']['xwalk']['destination'].isin(calculated_fields))
-    xwalk_dict['ncrn']['BirdSpecies']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn']['BirdSpecies']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['ncrn']['BirdSpecies']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn']['BirdSpecies']['xwalk']['source']) 
     xwalk_dict['ncrn']['BirdSpecies']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn']['BirdSpecies']['xwalk']['calculation'])
     # Comments
     mask = (xwalk_dict['ncrn']['BirdSpecies']['xwalk']['destination'] == 'Comments')
@@ -1359,7 +1359,7 @@ def _lu_NoiseLevel(xwalk_dict:dict) -> dict:
     ]
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['lu']['NoiseLevel']['xwalk']['destination'].isin(calculated_fields))
-    xwalk_dict['lu']['NoiseLevel']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu']['NoiseLevel']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['lu']['NoiseLevel']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu']['NoiseLevel']['xwalk']['source']) 
     xwalk_dict['lu']['NoiseLevel']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['lu']['NoiseLevel']['xwalk']['calculation'])
 
     # Blanks
@@ -1414,7 +1414,7 @@ def _ncrn_AuditLog(xwalk_dict:dict) -> dict:
     ]
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['ncrn']['AuditLog']['xwalk']['destination'].isin(calculated_fields))
-    xwalk_dict['ncrn']['AuditLog']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn']['AuditLog']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['ncrn']['AuditLog']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn']['AuditLog']['xwalk']['source']) 
     xwalk_dict['ncrn']['AuditLog']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn']['AuditLog']['xwalk']['calculation'])
     # LogDate
     mask = (xwalk_dict['ncrn']['AuditLog']['xwalk']['destination'] == 'LogDate')
@@ -1490,7 +1490,7 @@ def _ncrn_AuditLogDetail(xwalk_dict:dict) -> dict:
     ]
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['destination'].isin(calculated_fields))
-    xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['source']) 
     xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['calculation'])
     # RecordLocatorPath VARCHAR (200) matching format '<Protocol = Region 1 landbird monitoring protocol><DetectionEvent = Jul  9 2020  8:50AM>'
     mask = (xwalk_dict['ncrn']['AuditLogDetail']['xwalk']['destination'] == 'RecordLocatorPath')
@@ -1512,7 +1512,7 @@ def _ncrn_AuditLogDetail(xwalk_dict:dict) -> dict:
 
     return xwalk_dict
 
-def _lu_SamplingMethod(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
+def _lu_SamplingMethod(xwalk_dict:dict) -> dict:
     """Crosswalk source.tbl_Protocol to destination.lu.SamplingMethod
 
     Args:
@@ -1550,7 +1550,7 @@ def _lu_SamplingMethod(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TOD
     ]
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['lu']['SamplingMethod']['xwalk']['destination'].isin(calculated_fields))
-    xwalk_dict['lu']['SamplingMethod']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu']['SamplingMethod']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['lu']['SamplingMethod']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu']['SamplingMethod']['xwalk']['source']) 
     xwalk_dict['lu']['SamplingMethod']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['lu']['SamplingMethod']['xwalk']['calculation'])
 
     # Blanks
@@ -1564,7 +1564,7 @@ def _lu_SamplingMethod(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TOD
 
     return xwalk_dict
 
-def _lu_ExperienceLevel(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
+def _lu_ExperienceLevel(xwalk_dict:dict) -> dict:
     """A table NCRN doesn't maintain but values are loosely based on tbl_Contacts.Position_Title
 
     Args:
@@ -1664,7 +1664,7 @@ def _lu_Habitat(xwalk_dict:dict) -> dict:
     ]
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['lu']['Habitat']['xwalk']['destination'].isin(calculated_fields))
-    xwalk_dict['lu']['Habitat']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu']['Habitat']['xwalk']['source']) # TODO: DELETE THIS LINE, FOR TESTING ONLY# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO# TODO
+    xwalk_dict['lu']['Habitat']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu']['Habitat']['xwalk']['source']) 
     xwalk_dict['lu']['Habitat']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['lu']['Habitat']['xwalk']['calculation'])
 
     # Blanks
@@ -1731,7 +1731,7 @@ def _exception_ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
 
 
 
-    # TODO: add additional rows from assets.C_DB to xwalk_dict['ncrn']['DetectionEvent']['source']
+    # add additional rows from assets.C_DB to xwalk_dict['ncrn']['DetectionEvent']['source']
     con = dbc._db_connect('c')
     tbl = 'tbl_Events'
     df = dbc._exec_qry(con=con, qry=f'get_c_{tbl}')
@@ -1744,7 +1744,6 @@ def _exception_ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
 def _exception_ncrn_BirdSpecies(xwalk_dict:dict) -> dict:
     """The source table tlu_Species is missing some required attributes so add them"""
 
-    # TODO: only overwrite when there's a blank
     # If there's a value in xwalk_dict['ncrn']['BirdSpecies']['source'] for an attribute but not in csv for that attribute, keep the one from source
     
     # get the best-available taxonomic info
@@ -1798,10 +1797,9 @@ def _exception_lu_Habitat(xwalk_dict:dict) -> dict:
 
     return xwalk_dict
 
-def _exception_ncrn_BirdSpeciesGroups(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
+def _exception_ncrn_BirdSpeciesGroups(xwalk_dict:dict) -> dict:
     """This table is empty in NETNMIDN but it's a bridge table between ncrn.BirdSpecies and ncrn.BirdGroups"""
     # TODO: create `source` here
-    # TODO: create `source_name` here
 
     # The dataframe below is wide:
     # testdict['ncrn']['BirdSpecies']['source'][testdict['ncrn']['BirdSpecies']['source']['Primary_Habitat'].isna()==False]
@@ -1820,7 +1818,7 @@ def _exception_ncrn_BirdSpeciesGroups(xwalk_dict:dict) -> dict: ##TODO##TODO##TO
 
     return xwalk_dict
 
-def _exception_ncrn_BirdSpeciesPark(xwalk_dict:dict) -> dict: ##TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO####TODO##TODO##TODO##
+def _exception_ncrn_BirdSpeciesPark(xwalk_dict:dict) -> dict:
     """This is a bridge table between ncrn.BirdSpecies and ncrn.Park"""
     # TODO: create `source` here
 
@@ -2545,7 +2543,6 @@ def _exception_ncrn_Location(xwalk_dict:dict) -> dict:
     4. concat all of the remaining attributes into a `ncrn.Location.Notes` field
     """
     # 1. query additional rows from second source db, append to existing source
-    # TODO: add additional rows from assets.C_DB to xwalk_dict['ncrn']['Location']['source']
 
     con = dbc._db_connect('c')
     tbl = 'tbl_Locations'
