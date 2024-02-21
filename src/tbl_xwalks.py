@@ -339,8 +339,6 @@ def _ncrn_Location(xwalk_dict:dict) -> dict:
         dict: dictionary of column names crosswalked between source and destination tables with data updated for this table
     """
 
-    # do we really collect data from >4k sites?!
-
     # 1:1 fields
     one_to_one_fields = [
         'ID'
@@ -391,6 +389,7 @@ def _ncrn_Location(xwalk_dict:dict) -> dict:
         'HabitatID'
         ,'EnteredBy'
         ,'IsActive'
+        ,'IsSensitive'
     ]
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'].isin(calculated_fields))
@@ -406,9 +405,8 @@ def _ncrn_Location(xwalk_dict:dict) -> dict:
     xwalk_dict['ncrn']['Location']['xwalk']['note'] = np.where(mask, "INT NOT NULL map from dict lu.Habitat", xwalk_dict['ncrn']['Location']['xwalk']['note'])
     # IsSensitive  BIT NOT NULL
     mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'IsSensitive')
-    # xwalk_dict['ncrn']['Location']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn']['Location']['tbl_load']['IsSensitive']=0", xwalk_dict['ncrn']['Location']['xwalk']['source'])
-    xwalk_dict['ncrn']['Location']['xwalk']['source'] = np.where(mask, "placeholder", xwalk_dict['ncrn']['Location']['xwalk']['source'])
-    xwalk_dict['ncrn']['Location']['xwalk']['note'] = np.where(mask, "placeholder", xwalk_dict['ncrn']['Location']['xwalk']['note'])
+    xwalk_dict['ncrn']['Location']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn']['Location']['tbl_load']['IsSensitive']=np.where((xwalk_dict['ncrn']['Location']['source']['Plot_Name'].str.contains('CAMP', regex=False)),1,0)", xwalk_dict['ncrn']['Location']['xwalk']['source'])
+    xwalk_dict['ncrn']['Location']['xwalk']['note'] = np.where(mask, "BIT NOT NULL, mapped from source.Plot_Name", xwalk_dict['ncrn']['Location']['xwalk']['note'])
     # IsActive  BIT NOT NULL
     mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'IsActive')
     xwalk_dict['ncrn']['Location']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn']['Location']['tbl_load']['IsActive']=np.where((xwalk_dict['ncrn']['Location']['source']['Active']==True),1,0)", xwalk_dict['ncrn']['Location']['xwalk']['source'])
