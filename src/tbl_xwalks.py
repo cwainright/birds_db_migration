@@ -2739,6 +2739,9 @@ def _exception_ncrn_Location(xwalk_dict:dict) -> dict:
     mymap['20070118125204-842249035.835266']['Long_WGS84'] = 39.478539
     mymap['20070118125204-896642208.099365']['Lat_WGS84'] = -77.728683
     mymap['20070118125204-896642208.099365']['Long_WGS84'] = 39.463336
+
+    c_locs = assets.C_L
+    mymap.update(c_locs)
     
     for k,v in mymap.items():
         mask = (xwalk_dict['ncrn']['Location']['source']['Location_ID']==k)
