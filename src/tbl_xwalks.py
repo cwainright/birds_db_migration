@@ -1122,58 +1122,6 @@ def _ncrn_BirdSpeciesPark(xwalk_dict:dict) -> dict:
 
     return xwalk_dict
 
-def _ncrn_BirdSpeciesGroup(xwalk_dict:dict) -> dict:
-    """Bridge table between ncrn.BirdSpecies and ncrn.BirdGroups
-
-    Args:
-        xwalk_dict (dict): dictionary of column names crosswalked between source and destination tables
-
-    Returns:
-        dict: dictionary of column names crosswalked between source and destination tables with data updated for this table
-    """
-    # ncrn.BirdSpeciesGroups is a species-level grouping variable for species in ncrn.BirdGroups
-    # NCRN doesn't maintains these attributes for a handful of species
-
-    # 1:1 fields
-    one_to_one_fields = [
-        'ID'
-        ,'BirdSpeciesID'
-        ,'BirdGroupID'
-    ]
-    # assign grouping variable `calculation` for the 1:1 fields
-    mask = (xwalk_dict['ncrn']['BirdGroups']['xwalk']['destination'].isin(one_to_one_fields))
-    xwalk_dict['ncrn']['BirdGroups']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['ncrn']['BirdGroups']['xwalk']['calculation'])
-    # ID
-    mask = (xwalk_dict['ncrn']['BirdGroups']['xwalk']['destination'] == 'ID')
-    xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'] =  np.where(mask, 'ID', xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'])
-    # BirdSpeciesID
-    mask = (xwalk_dict['ncrn']['BirdGroups']['xwalk']['destination'] == 'BirdSpeciesID')
-    xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'] =  np.where(mask, 'BirdSpeciesID', xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'])
-    # BirdGroupID
-    mask = (xwalk_dict['ncrn']['BirdGroups']['xwalk']['destination'] == 'BirdGroupID')
-    xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'] =  np.where(mask, 'BirdGroupID', xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'])
-
-
-    # Calculated fields
-    calculated_fields = [
-    ]
-    # assign grouping variable `calculation` for the calculated fields
-    mask = (xwalk_dict['ncrn']['BirdGroups']['xwalk']['destination'].isin(calculated_fields))
-    xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'])
-    xwalk_dict['ncrn']['BirdGroups']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn']['BirdGroups']['xwalk']['calculation'])
-
-    # Blanks
-    blank_fields = [
-        'Rowversion'
-    ]
-    # assign grouping variable `calculation` for the blank fields
-    mask = (xwalk_dict['ncrn']['BirdGroups']['xwalk']['destination'].isin(blank_fields))
-    xwalk_dict['ncrn']['BirdGroups']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn']['BirdGroups']['xwalk']['calculation'])
-    xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'])
-    xwalk_dict['ncrn']['BirdGroups']['xwalk']['note'] =  np.where(mask, 'this field was not collected by NCRN and has no NCRN equivalent', xwalk_dict['ncrn']['BirdGroups']['xwalk']['note'])
-
-    return xwalk_dict
-
 def _ncrn_BirdGroups(xwalk_dict:dict) -> dict:
     """Crosswalk source.dbo_tlu_Guild_Assignment to destination.ncrn.BirdGroups
 
@@ -1802,11 +1750,7 @@ def _exception_lu_Habitat(xwalk_dict:dict) -> dict:
     return xwalk_dict
 
 def _exception_ncrn_BirdSpeciesGroups(xwalk_dict:dict) -> dict:
-    """This table is empty in NETNMIDN but it's a bridge table between ncrn.BirdSpecies and ncrn.BirdGroups"""
-    # TODO: create `source` here
-
-    # The dataframe below is wide:
-    # testdict['ncrn']['BirdSpecies']['source'][testdict['ncrn']['BirdSpecies']['source']['Primary_Habitat'].isna()==False]
+    """This is a bridge table between ncrn.BirdSpecies and ncrn.BirdGroups that lets you assign species to zero, one, or more than one group"""
 
     # If you cast it long-ways on the attributes
     # So a unique combination of AOU_Code and attribute is a row, you'll match the schema for ncrn.BirdSpeciesGroups
@@ -1817,7 +1761,6 @@ def _exception_ncrn_BirdSpeciesGroups(xwalk_dict:dict) -> dict:
     # ID |  BirdSpeciesID |    BirdGroupID                         | Rowversion
     # 1  |       465      |    20080421161312-627642035.484314     | NaN
     # 2  |       465      |    20080421161058-412766814.231873     | NaN
-
 
     species = xwalk_dict['ncrn']['BirdSpecies']['source'].copy()
     groups = xwalk_dict['ncrn']['BirdGroups']['source'].copy()
@@ -1833,15 +1776,92 @@ def _exception_ncrn_BirdSpeciesGroups(xwalk_dict:dict) -> dict:
         ,'Primary_Habitat'
         ,'Number_Broods'
     ]
-
     species = species[targets]
-    species = species.melt(id_vars=['AOU_Code'])
+    species = species.melt(id_vars=['AOU_Code'], var_name='Guild_Name')
 
-    # next step is make `groups` into a lookup table
-    # need a column in `species` that's a unique combination of `species.variable` and `species.value`
-    # need a column in `groups` that's a unique combination of `groups.Guild_Assignment_Code` and `groups.Guild_Name`
+    myvals = species[species['value'].isna()==False].copy()
+    myvals.loc[:, 'dummy'] = myvals['Guild_Name'].str.upper() + myvals['value'].str.upper()
+    myvals = myvals[['AOU_Code', 'dummy']]
+    myvals['dummy'] = myvals['dummy'].str.strip()
+    myvals['dummy'] = np.where(myvals['dummy']=='NESTING_PLACEMENTGN', 'NESTING_PLACEMENTOGN', myvals['dummy'])
+    myvals['dummy'] = np.where(myvals['dummy']=='FORAGING_BEHAVIOR', np.NaN, myvals['dummy'])
+    myvals['dummy'] = np.where(myvals['dummy']=='TROPHIC_LEVELTROPHIC LEVEL', np.NaN, myvals['dummy'])
 
-    # note: groups.Guild_Name has spaces while species.variable has underscores
+    lookup = {guild:guild.replace(' ', '_') for guild in groups.Guild_Name.unique()}
+    seen = []
+    for k,v in lookup.items():
+        xkeys = k.split(' ')
+        for key in xkeys:
+            for g in species.Guild_Name.unique():
+                if key in g and key not in seen:
+                    seen.append(g)
+                    lookup[k] = g
+    lookup['Nest Predator/Brood Parasite'] = 'Nest Predator/Brood Parasite'.replace(' ','_').replace('/','_')
+
+    myxwalk = {
+        'Guild_Name':[]
+        ,'newguild':[]
+    }
+    for k,v in lookup.items():
+        myxwalk['Guild_Name'].append(k)
+        myxwalk['newguild'].append(v)
+    myxwalk = pd.DataFrame(myxwalk)
+    groups = groups.merge(myxwalk, on='Guild_Name', how='left')
+    groups.loc[:, 'dummy'] = groups['newguild'].str.upper() + groups['Guild_Assignment_Code'].str.upper()
+
+    df = myvals.merge(groups[['dummy', 'Guild_Assignment_ID']], on='dummy', how='left')
+    df[df['Guild_Assignment_ID'].isna()].dummy.unique()
+    df = df[['AOU_Code', 'Guild_Assignment_ID']]
+    df.rename(columns={
+        'AOU_Code':'BirdSpeciesID'
+        ,'Guild_Assignment_ID':'BirdGroupID'
+    }, inplace=True)
+    df['ID'] = df.index+1
+    df['Rowversion'] = np.NaN
+
+    xwalk_dict['ncrn']['BirdSpeciesGroups']['source'] = df.copy()
+
+    return xwalk_dict
+
+def _ncrn_BirdSpeciesGroups(xwalk_dict:dict) -> dict:
+    """This is a bridge table between ncrn.BirdSpecies and ncrn.Park"""
+
+        # 1:1 fields
+    one_to_one_fields = [
+        'ID'
+        ,'BirdSpeciesID'
+        ,'Description'
+    ]
+    # assign grouping variable `calculation` for the 1:1 fields
+    mask = (xwalk_dict['ncrn']['BirdSpeciesGroups']['xwalk']['destination'].isin(one_to_one_fields))
+    xwalk_dict['ncrn']['BirdSpeciesGroups']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['ncrn']['BirdSpeciesGroups']['xwalk']['calculation'])
+    # ID
+    mask = (xwalk_dict['ncrn']['BirdSpeciesGroups']['xwalk']['destination'] == 'ID')
+    xwalk_dict['ncrn']['BirdSpeciesGroups']['xwalk']['source'] =  np.where(mask, 'ID', xwalk_dict['ncrn']['BirdSpeciesGroups']['xwalk']['source'])
+    # BirdSpeciesID
+    mask = (xwalk_dict['ncrn']['BirdSpeciesGroups']['xwalk']['destination'] == 'BirdSpeciesID')
+    xwalk_dict['ncrn']['BirdSpeciesGroups']['xwalk']['source'] =  np.where(mask, 'BirdSpeciesID', xwalk_dict['ncrn']['BirdSpeciesGroups']['xwalk']['source'])
+    # BirdGroupID
+    mask = (xwalk_dict['ncrn']['BirdSpeciesGroups']['xwalk']['destination'] == 'BirdGroupID')
+    xwalk_dict['ncrn']['BirdSpeciesGroups']['xwalk']['source'] =  np.where(mask, 'BirdGroupID', xwalk_dict['ncrn']['BirdSpeciesGroups']['xwalk']['source'])
+
+    # Calculated fields
+    calculated_fields = [
+    ]
+    # assign grouping variable `calculation` for the calculated fields
+    mask = (xwalk_dict['ncrn']['BirdSpeciesGroups']['xwalk']['destination'].isin(calculated_fields))
+    xwalk_dict['ncrn']['BirdSpeciesGroups']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn']['BirdSpeciesGroups']['xwalk']['source'])
+    xwalk_dict['ncrn']['BirdSpeciesGroups']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn']['BirdSpeciesGroups']['xwalk']['calculation'])
+
+    # Blanks
+    blank_fields = [
+        'Rowversion'
+    ]
+    # assign grouping variable `calculation` for the blank fields
+    mask = (xwalk_dict['ncrn']['BirdSpeciesGroups']['xwalk']['destination'].isin(blank_fields))
+    xwalk_dict['ncrn']['BirdSpeciesGroups']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn']['BirdSpeciesGroups']['xwalk']['calculation'])
+    xwalk_dict['ncrn']['BirdSpeciesGroups']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['ncrn']['BirdSpeciesGroups']['xwalk']['source'])
+    xwalk_dict['ncrn']['BirdSpeciesGroups']['xwalk']['note'] =  np.where(mask, 'this field was not collected by NCRN and has no NCRN equivalent', xwalk_dict['ncrn']['BirdSpeciesGroups']['xwalk']['note'])
 
     return xwalk_dict
 
@@ -1884,7 +1904,7 @@ def _exception_ncrn_ScannedFile(xwalk_dict:dict) -> dict:
     return xwalk_dict
 
 def _ncrn_ScannedFile(xwalk_dict:dict) -> dict:
-    """This is a bridge table between ncrn.BirdSpecies and ncrn.Park"""
+    """This is an empty table that holds scanned files"""
 
         # 1:1 fields
     one_to_one_fields = [

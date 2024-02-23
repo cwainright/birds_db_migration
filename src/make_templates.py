@@ -157,6 +157,7 @@ def _create_xwalks(xwalk_dict:dict) -> dict:
     xwalk_dict = tx._ncrn_ProtocolDistanceClass(xwalk_dict)
     xwalk_dict = tx._dbo_User(xwalk_dict)
     xwalk_dict = tx._dbo_UserRole(xwalk_dict)
+    xwalk_dict = tx._ncrn_BirdSpeciesGroups(xwalk_dict)
 
     return xwalk_dict
 
