@@ -86,20 +86,11 @@ def make_birds(dest:str='') -> dict:
     # execute exception-handling
     xwalk_dict = _execute_xwalk_exceptions(xwalk_dict)
 
-    # validate
-    xwalk_dict = c._validate_xwalks(xwalk_dict)
-
     # execute xwalk to generate load
     xwalk_dict = _execute_xwalks(xwalk_dict)
 
-    # validate
-    xwalk_dict = c._validate_tbl_loads(xwalk_dict)
-
     # generate payload
     xwalk_dict = _generate_payload(xwalk_dict)
-
-    # validate payload
-    xwalk_dict = c._validate_payload(xwalk_dict)
 
     # generate t-sql
     xwalk_dict = _generate_tsql(xwalk_dict)
@@ -236,8 +227,19 @@ def _execute_xwalks(xwalk_dict:dict) -> dict:
     return xwalk_dict
 
 def _generate_payload(xwalk_dict:dict) -> dict:
-    # TODO: this function should take `tbl_load` and make final changes before loading
+    """Make `payload` from `tbl_load`
+    
+    The `payload` is the exact dataframe to be INSERTed into the destination table
+    """
     # e.g., `tbl_load` is allowed to hold NCRN's GUIDs but `payload` should either replace the GUIDs with INTs or leave out that column altogether
+    for schema in xwalk_dict.keys():
+        for tbl in xwalk_dict[schema].keys():
+            payload = xwalk_dict[schema][tbl]['tbl_load'].copy()
+            payload_cols = list(payload.columns)
+            payload_cols = [x for x in payload_cols if x!='ID' and x!='rowid']
+            payload = payload[payload_cols]
+            xwalk_dict[schema][tbl]['payload'] = payload.copy()
+
     return xwalk_dict
 
 def _generate_tsql(xwalk_dict:dict) -> dict:
