@@ -15,12 +15,13 @@ def check_birds(xwalk_dict:dict) -> None:
     print(f'Validating dictionary against db schema...')
     _check_schema(xwalk_dict=xwalk_dict)
     print('')
+    print('Checking the dimensions of each table...')
+    _validate_tbl_loads(xwalk_dict=xwalk_dict)
+    print('')
     print('Checking each table for required attributes...')
     _validate_xwalks(xwalk_dict=xwalk_dict)
     _check_blanks(xwalk_dict=xwalk_dict)
     print('')
-    print('Checking the dimensions of each table...')
-    _validate_tbl_loads(xwalk_dict=xwalk_dict)
 
     return None
 
@@ -71,29 +72,20 @@ def _validate_payload(xwalk_dict:dict) -> dict:
     return xwalk_dict
 
 def _validate_tbl_loads(xwalk_dict:dict) -> None:
-    # TODO: this function should check that the `tbl_load` attr produced from each `source` and `xwalk` is valid
+    """Check that the `tbl_load` attr produced from each `source` and `xwalk` is valid"""
     mykeys = _traverse(xwalk_dict, EXCLUSIONS)
 
-    # check that dims of `tbl_load` == dims of `source` (same number of rows and columns)
-    # check that each column in `tbl_load` exists in `destination`
-    # check that the column order in `tbl_load` matches that of `destination`
-    xwalk_dict = _validate_dims(xwalk_dict, mykeys)
-    # check constraints? may be more work than simply letting sqlserver do the checks
-    xwalk_dict = _validate_referential_integrity(xwalk_dict)
+    _validate_dims(xwalk_dict, mykeys)
+    # _validate_referential_integrity(xwalk_dict)
 
     return None
 
 def _validate_dims(xwalk_dict:dict, mykeys:list) -> None:
-    # TODO: check that dims of `tbl_load` == dims of `source` (same number of rows and columns)
+    """Check the dimensions of each `tbl_load`"""
 
-    # validate rows
-    # `exception` handling ensured that there's a `source` table for every `tbl_load` so we check that they have the same count of rows
     _validate_rows(xwalk_dict, mykeys)
-    # _validate_cols(xwalk_dict, mykeys)
-    
-    # validate columns
+    _validate_cols(xwalk_dict, mykeys)
 
-    
     return None
 
 def _validate_rows(xwalk_dict:dict, mykeys:list) -> None:
@@ -137,13 +129,12 @@ def _validate_rows(xwalk_dict:dict, mykeys:list) -> None:
             successes.append(k)
     if len(successes)==len(mykeys):
         print('SUCCESS: The count of rows for each `tbl_load` matches its `source`!')
-    print('')
 
     return None
 
 def _validate_cols(xwalk_dict:dict, mykeys:list) -> None:
-    # TODO: check that each column in `tbl_load` exists in `destination`
-
+    """Check that the `tbl_load` has the correct columns"""
+    # check that each column in `tbl_load` exists in `destination`
     missing = {}
     for k in mykeys:
         missing[k] = {
@@ -178,17 +169,15 @@ def _validate_cols(xwalk_dict:dict, mykeys:list) -> None:
     successes = []
     for k in missing:
         if missing[k]['counter'] >0:
-            print(f"WARNING: The count of rows is wrong in {missing[k]['counter']} tables!")
+            print(f"WARNING: The count of columns is wrong in {missing[k]['counter']} tables!")
             for v in missing[k]['mylist']:
                 print(f'    {v}')
         else:
             successes.append(k)
     if len(successes)==len(mykeys):
-        print('SUCCESS: The count of rows for each `tbl_load` matches its `source`!')
-    print('')
+        print('SUCCESS: The count of columns for each `tbl_load` matches its `destination`!')
     
-    # TODO: check that the column order in `tbl_load` matches that of `destination`
-
+    # check that the column order in `tbl_load` matches that of `destination`
     missing = {}
     for k in mykeys:
         missing[k] = {
@@ -203,11 +192,16 @@ def _validate_cols(xwalk_dict:dict, mykeys:list) -> None:
             for k in xwalk_dict[schema][tbl].keys():
                 if k not in EXCLUSIONS:
                     if k == 'destination':
-                        for col in xwalk_dict[schema][tbl]['tbl_load'].columns:
-                            if col != 'rowid' and col not in xwalk_dict[schema][tbl]['destination'].columns:
-                                missing[k]['counter'] +=1
-                                missing[k]['mylist'].append(f"dict['{schema}']['{tbl}']['{k}']")
-                                missing_vals[schema][tbl].append(f"dict['{schema}']['{tbl}']['{k}']")
+                        dest_cols = list(xwalk_dict[schema][tbl]['destination'].columns)
+                        tbl_load_cols = xwalk_dict[schema][tbl]['tbl_load'].columns
+                        tbl_load_cols = [x for x in tbl_load_cols if x != 'rowid']
+                        checks = []
+                        for i in range(len(dest_cols)):
+                            checks.append(dest_cols[i] == tbl_load_cols[i])
+                        if all(checks)==False:
+                            missing[k]['counter'] +=1
+                            missing[k]['mylist'].append(f"dict['{schema}']['{tbl}']['{k}']")
+                            missing_vals[schema][tbl].append(f"dict['{schema}']['{tbl}']['{k}']")
     tbls_missing = {
         'tbl_missing':[]
         ,'tables':{}
@@ -223,34 +217,29 @@ def _validate_cols(xwalk_dict:dict, mykeys:list) -> None:
     successes = []
     for k in missing:
         if missing[k]['counter'] >0:
-            print(f"WARNING: The count of rows is wrong in {missing[k]['counter']} tables!")
+            print(f"WARNING: The column-order in `tbl_load` does not match that of `destination` in {missing[k]['counter']} tables!")
             for v in missing[k]['mylist']:
                 print(f'    {v}')
         else:
             successes.append(k)
     if len(successes)==len(mykeys):
-        print('SUCCESS: The count of rows for each `tbl_load` matches its `source`!')
-    print('')
+        print('SUCCESS: The column-order in `tbl_load` matches that of `destination`!')
 
     return None
 
-def _validate_referential_integrity(xwalk_dict:dict) -> dict:
+def _validate_referential_integrity(xwalk_dict:dict) -> None:
     # TODO: check that the INT id for each GUID lines up among related tables
-    return xwalk_dict
+    return None
 
 def _validate_xwalks(xwalk_dict:dict) -> None:
-    # TODO: this function should check that the `xwalk` attr produced for each `tbl_load` is valid
-
-    print('')
+    """Check that the `xwalk` attr produced for each `tbl_load` is valid"""
     mykeys = ['xwalk']
-
     missing = {}
     for k in mykeys:
         missing[k] = {
             'counter':0
             ,'mylist':[]
         }
-
     missing_vals = {}
     for schema in xwalk_dict.keys():
         missing_vals[schema] = {}
@@ -264,7 +253,6 @@ def _validate_xwalks(xwalk_dict:dict) -> None:
                 if len(mysub) >0 or len(xwalk_dict[schema][tbl]['xwalk'])==0:
                     missing[k]['counter'] +=1
                     missing[k]['mylist'].append(f"dict['{schema}']['{tbl}']['{k}']")
-
     tbls_missing = {
         'tbl_missing':[]
         ,'tables':{}
@@ -276,7 +264,6 @@ def _validate_xwalks(xwalk_dict:dict) -> None:
                 counter += 1
                 for attr in missing_vals[schema][tbl]:
                     tbls_missing['tbl_missing'].append(attr)
-    
     # summarize output by attribute
     successes = []
     for k in missing:
@@ -288,9 +275,6 @@ def _validate_xwalks(xwalk_dict:dict) -> None:
             successes.append(k)
     if len(successes)==len(mykeys):
         print('SUCCESS: All `xwalks` are complete!')
-
-    print('')
-    
 
     return None
 
@@ -323,8 +307,6 @@ def _check_blanks(xwalk_dict:dict) -> None:
             'counter':0
             ,'mylist':[]
         }
-
-
     missing_vals = {}
     for schema in xwalk_dict.keys():
         missing_vals[schema] = {}
@@ -354,7 +336,6 @@ def _check_blanks(xwalk_dict:dict) -> None:
                 counter += 1
                 for attr in missing_vals[schema][tbl]:
                     tbls_missing['tbl_missing'].append(attr)
-    
     # summarize output by attribute
     successes = []
     for k in missing:
@@ -383,6 +364,5 @@ def _check_blanks(xwalk_dict:dict) -> None:
     #                     print(f'        {attr}')
     # else:
     #     print('SUCCESS: All tables have all required attributes!')
-    print('')
 
     return None
