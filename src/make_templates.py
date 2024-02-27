@@ -230,6 +230,8 @@ def _generate_payload(xwalk_dict:dict) -> dict:
     """Make `payload` from `tbl_load`
     
     The `payload` is the exact dataframe to be INSERTed into the destination table
+
+    The idea is that, if you write `payload`s to file, you have CSVs to seed the db from scratch
     """
     # e.g., `tbl_load` is allowed to hold NCRN's GUIDs but `payload` should either replace the GUIDs with INTs or leave out that column altogether
     for schema in xwalk_dict.keys():
@@ -243,11 +245,23 @@ def _generate_payload(xwalk_dict:dict) -> dict:
     return xwalk_dict
 
 def _generate_tsql(xwalk_dict:dict) -> dict:
-    # TODO: generate the INSERT INTO sql for each `payload`
+    """Make `tsql` from `payload`
+    
+    The `tsql` is a string of transact SQL INSERT statements that, if executed against the db, would insert the rows from `payload` into the table of the db
+
+    The idea is that, if you write `tsql`s to file, you have the TSQL to seed the db from scratch
+    """
     # e.g.,
     # INSERT INTO [NCRN_Landbirds].[lu].[ExperienceLevel] ([ID],[Code],[Label],[Description],[SortOrder]) VALUES (2,'EXP','Expert','An expert',2)
-
-    # review db_loader.load_db.load_option_b() for details
+    for schema in xwalk_dict.keys():
+        for tbl in xwalk_dict[schema].keys():
+            df = xwalk_dict[schema][tbl]['payload'].copy()
+            df = df.fillna('')
+            target = f'[NCRN_Landbirds].[{schema}].[{tbl}]'
+            sql_texts = []
+            for index, row in df.iterrows():       
+                sql_texts.append('INSERT INTO '+target+' ('+ str(', '.join(df.columns))+ ') VALUES '+ str(tuple(row.values)))
+            xwalk_dict[schema][tbl]['tsql'] = '\n'.join(sql_texts)
 
     return xwalk_dict
 
