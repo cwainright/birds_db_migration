@@ -4,6 +4,7 @@ SELECT
     ,tbl_Events.Event_Group_ID as event_group_id
     ,tbl_Events.Location_Group_ID as location_group_id
     ,tbl_Events.Protocol_ID as protocol_id
+    ,tbl_Events.Date as activity_start_datetime
     ,tbl_Events.Start_Time as start_time
     ,tbl_Events.End_Time as end_time
     ,tbl_Events.Visit as visit
