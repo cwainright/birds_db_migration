@@ -2879,6 +2879,7 @@ def _exception_ncrn_BirdDetection(xwalk_dict:dict) -> dict:
     con.close()
 
     xwalk_dict['ncrn']['BirdDetection']['source'] = pd.concat([xwalk_dict['ncrn']['BirdDetection']['source'], df])
+    xwalk_dict['ncrn']['BirdDetection']['source'].reset_index(drop=True, inplace=True)
 
     return xwalk_dict
 
