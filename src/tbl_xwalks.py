@@ -1491,7 +1491,7 @@ def _lu_SamplingMethod(xwalk_dict:dict) -> dict:
     xwalk_dict['lu']['SamplingMethod']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['lu']['SamplingMethod']['xwalk']['calculation'])
     # ID
     mask = (xwalk_dict['lu']['SamplingMethod']['xwalk']['destination'] == 'ID')
-    xwalk_dict['lu']['SamplingMethod']['xwalk']['source'] =  np.where(mask, 'Protocol_ID', xwalk_dict['lu']['SamplingMethod']['xwalk']['source'])
+    xwalk_dict['lu']['SamplingMethod']['xwalk']['source'] =  np.where(mask, 'Protocol_Name', xwalk_dict['lu']['SamplingMethod']['xwalk']['source'])
     # Code
     mask = (xwalk_dict['lu']['SamplingMethod']['xwalk']['destination'] == 'Code')
     xwalk_dict['lu']['SamplingMethod']['xwalk']['source'] =  np.where(mask, 'Protocol_ID', xwalk_dict['lu']['SamplingMethod']['xwalk']['source'])
