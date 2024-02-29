@@ -62,6 +62,7 @@ def make_birds(dest:str='') -> dict:
                 ,'source': pd.DataFrame() # source data
                 ,'destination': dest_dict[tbl] # destination data (mostly just for its column names and order)
                 ,'tbl_load': pd.DataFrame() # `source` data crosswalked to the destination schema
+                ,'pk_fk_lookup': pd.DataFrame() # a lookup table to crosswalk all key-fields: two columns from `tbl_load`: tbl_load.ID, tbl_load.rowid
                 ,'k_load': pd.DataFrame() # `source` data crosswalked to the destination schema with guid pf/fk relationships replaced by int pk/fk relationships
                 ,'payload_cols': [] # the columns to extract from `tbl_load` and load into `payload`
                 ,'payload': pd.DataFrame() # `tbl_load` transformed for loading to destination database
@@ -80,6 +81,7 @@ def make_birds(dest:str='') -> dict:
                 ,'source': pd.DataFrame(columns=dest_dict[tbl].columns) # source data
                 ,'destination': dest_dict[tbl] # destination data (mostly just for its column names and order)
                 ,'tbl_load': pd.DataFrame() # `source` data crosswalked to the destination schema
+                ,'pk_fk_lookup': pd.DataFrame() # a lookup table to crosswalk all key-fields: two columns from `tbl_load`: tbl_load.ID, tbl_load.rowid
                 ,'k_load': pd.DataFrame() # `source` data crosswalked to the destination schema with guid pf/fk relationships replaced by int pk/fk relationships
                 ,'payload_cols': [] # the columns to extract from `tbl_load` and load into `payload`
                 ,'payload': pd.DataFrame() # `tbl_load` transformed for loading to destination database
@@ -240,6 +242,7 @@ def _execute_xwalks(xwalk_dict:dict) -> dict:
 
 
         xwalk_dict = tx._add_row_id(xwalk_dict)
+        xwalk_dict = tx._make_pk_fk_lookup(xwalk_dict)
     
     return xwalk_dict
 
@@ -261,6 +264,7 @@ def _generate_k_load(xwalk_dict:dict) -> dict:
             # k_load['ID'] = k_load['rowid']
             # del k_load['rowid']
             # replace foreign key(s)
+            f_keys = [x for x in k_load.columns if x.endswith('ID') and x != 'ID']
             xwalk_dict[schema][tbl]['k_load'] = k_load
 
     return xwalk_dict
