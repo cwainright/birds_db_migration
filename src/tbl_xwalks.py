@@ -1756,6 +1756,7 @@ def _exception_ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
     del xwalk_dict['ncrn']['DetectionEvent']['source']['source_val']
     del xwalk_dict['ncrn']['DetectionEvent']['source']['target_val']
 
+    xwalk_dict['ncrn']['DetectionEvent']['source'] = xwalk_dict['ncrn']['DetectionEvent']['source'].drop_duplicates('event_id')
     xwalk_dict['ncrn']['DetectionEvent']['source'].reset_index(drop=True, inplace=True)
 
     return xwalk_dict
@@ -2893,5 +2894,16 @@ def _exception_ncrn_Site(xwalk_dict:dict) -> dict:
     if len(df) != len(df.Site_ID.unique()):
         print('Bug in `_exception_ncrn_Site()`. Review')
     xwalk_dict['ncrn']['Site']['source'] = xwalk_dict['ncrn']['Site']['source'].merge(df, on='Site_ID', how='left')
+
+    return xwalk_dict
+
+def _make_pk_fk_lookup(xwalk_dict:dict) -> dict:
+    for schema in xwalk_dict.keys():
+        for tbl in xwalk_dict[schema].keys():
+            try:
+                xwalk_dict[schema][tbl]['pk_fk_lookup'] = xwalk_dict[schema][tbl]['tbl_load'][['ID','rowid']]
+            except:
+                # print(f"dict['{schema}']['{tbl}']")
+                pass
 
     return xwalk_dict
