@@ -1693,8 +1693,8 @@ def _exception_ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
     con.close()
     xwalk_dict['ncrn']['DetectionEvent']['source'] = pd.concat([xwalk_dict['ncrn']['DetectionEvent']['source'], df])
     
-    # EXCEPTION 4: make lookup table for `entered_by`
-    # ncrn.DetectionEvent.EnteredBy is VARCHAR (100)L, not a pk-fk relationship, so we need to look the names up from source.tbl_Contacts and replace their guids
+    # EXCEPTION 5: make lookup table for `entered_by`
+    # ncrn.DetectionEvent.EnteredBy is VARCHAR (100), not a pk-fk relationship, so we need to look the names up from source.tbl_Contacts and replace their guids
     lookup = xwalk_dict['ncrn']['Contact']['source'][['Contact_ID','Last_Name','First_Name']].copy()
     lookup['person_name'] = lookup['First_Name'] + ' ' + lookup['Last_Name']
     lookup = lookup[['Contact_ID','person_name']]
@@ -1703,8 +1703,40 @@ def _exception_ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
     del xwalk_dict['ncrn']['DetectionEvent']['source']['person_name']
     del xwalk_dict['ncrn']['DetectionEvent']['source']['Contact_ID']
 
-    # EXCEPTION 5: ncrn.DetectionEvent.EnteredBy, ncrn.DetectionEvent.Observer_ContactID, AND ncrn.DetectionEvent.Observer_ContactID are NOT NULL, so we need to fill something in for None or np.NaN values
-
+    # EXCEPTION 4: ncrn.DetectionEvent.EnteredBy, ncrn.DetectionEvent.Observer_ContactID, AND ncrn.DetectionEvent.Recorder_ContactID are NOT NULL, so we need to fill something in for None or np.NaN values
+    # xwalk_dict['ncrn']['DetectionEvent']['source'] = xwalk_dict['ncrn']['DetectionEvent']['source'].copy(deep=True)
+    # ncrn.DetectionEvent.EnteredBy
+    mask = (xwalk_dict['ncrn']['DetectionEvent']['source']['entered_by'].isna()==True) & (xwalk_dict['ncrn']['DetectionEvent']['source']['recorder'].isna()==False)
+    xwalk_dict['ncrn']['DetectionEvent']['source']['entered_by'] = np.where(mask, xwalk_dict['ncrn']['DetectionEvent']['source']['recorder'], xwalk_dict['ncrn']['DetectionEvent']['source']['entered_by'])
+    mask = (xwalk_dict['ncrn']['DetectionEvent']['source']['entered_by'].isna()==True) & (xwalk_dict['ncrn']['DetectionEvent']['source']['recorder'].isna()==True) & (xwalk_dict['ncrn']['DetectionEvent']['source']['observer'].isna()==False)
+    xwalk_dict['ncrn']['DetectionEvent']['source']['entered_by'] = np.where(mask, xwalk_dict['ncrn']['DetectionEvent']['source']['observer'], xwalk_dict['ncrn']['DetectionEvent']['source']['entered_by'])
+    mask = (xwalk_dict['ncrn']['DetectionEvent']['source']['entered_by'].isna()==True) & (xwalk_dict['ncrn']['DetectionEvent']['source']['recorder'].isna()==True) & (xwalk_dict['ncrn']['DetectionEvent']['source']['observer'].isna()==True)
+    xwalk_dict['ncrn']['DetectionEvent']['source']['entered_by'] = np.where(mask, '20230614154645-14017641.544342', xwalk_dict['ncrn']['DetectionEvent']['source']['entered_by'])
+    # ncrn.DetectionEvent.Observer_ContactID
+    mask = (xwalk_dict['ncrn']['DetectionEvent']['source']['observer'].isna()==True) & (xwalk_dict['ncrn']['DetectionEvent']['source']['recorder'].isna()==False)
+    xwalk_dict['ncrn']['DetectionEvent']['source']['observer'] = np.where(mask, xwalk_dict['ncrn']['DetectionEvent']['source']['recorder'], xwalk_dict['ncrn']['DetectionEvent']['source']['observer'])
+    mask = (xwalk_dict['ncrn']['DetectionEvent']['source']['observer'].isna()==True) & (xwalk_dict['ncrn']['DetectionEvent']['source']['recorder'].isna()==True) & (xwalk_dict['ncrn']['DetectionEvent']['source']['observer'].isna()==False)
+    xwalk_dict['ncrn']['DetectionEvent']['source']['observer'] = np.where(mask, xwalk_dict['ncrn']['DetectionEvent']['source']['observer'], xwalk_dict['ncrn']['DetectionEvent']['source']['observer'])
+    mask = (xwalk_dict['ncrn']['DetectionEvent']['source']['observer'].isna()==True) & (xwalk_dict['ncrn']['DetectionEvent']['source']['recorder'].isna()==True) & (xwalk_dict['ncrn']['DetectionEvent']['source']['observer'].isna()==True)
+    xwalk_dict['ncrn']['DetectionEvent']['source']['observer'] = np.where(mask, '20230614154645-14017641.544342', xwalk_dict['ncrn']['DetectionEvent']['source']['observer'])
+    # ncrn.DetectionEvent.Recorder_ContactID
+    mask = (xwalk_dict['ncrn']['DetectionEvent']['source']['recorder'].isna()==True) & (xwalk_dict['ncrn']['DetectionEvent']['source']['recorder'].isna()==False)
+    xwalk_dict['ncrn']['DetectionEvent']['source']['recorder'] = np.where(mask, xwalk_dict['ncrn']['DetectionEvent']['source']['recorder'], xwalk_dict['ncrn']['DetectionEvent']['source']['recorder'])
+    mask = (xwalk_dict['ncrn']['DetectionEvent']['source']['recorder'].isna()==True) & (xwalk_dict['ncrn']['DetectionEvent']['source']['recorder'].isna()==True) & (xwalk_dict['ncrn']['DetectionEvent']['source']['observer'].isna()==False)
+    xwalk_dict['ncrn']['DetectionEvent']['source']['recorder'] = np.where(mask, xwalk_dict['ncrn']['DetectionEvent']['source']['observer'], xwalk_dict['ncrn']['DetectionEvent']['source']['recorder'])
+    mask = (xwalk_dict['ncrn']['DetectionEvent']['source']['recorder'].isna()==True) & (xwalk_dict['ncrn']['DetectionEvent']['source']['recorder'].isna()==True) & (xwalk_dict['ncrn']['DetectionEvent']['source']['observer'].isna()==True)
+    xwalk_dict['ncrn']['DetectionEvent']['source']['recorder'] = np.where(mask, '20230614154645-14017641.544342', xwalk_dict['ncrn']['DetectionEvent']['source']['recorder'])
+    # the lookup table adds NaNs, so we overwrite here
+    entrants = list(xwalk_dict['ncrn']['DetectionEvent']['source'].entered_by.unique())
+    entrants = [x for x in entrants if '2023' in x or '{' in x or '-' in x]
+    lookup = xwalk_dict['ncrn']['Contact']['source'][['Contact_ID','Last_Name','First_Name']].copy()
+    lookup['person_name'] = lookup['First_Name'] + ' ' + lookup['Last_Name']
+    lookup = lookup[['Contact_ID','person_name']]
+    lookup = lookup[lookup['Contact_ID'].isin(entrants)]
+    xwalk_dict['ncrn']['DetectionEvent']['source'] = xwalk_dict['ncrn']['DetectionEvent']['source'].merge(lookup, left_on='entered_by', right_on='Contact_ID', how='left')
+    xwalk_dict['ncrn']['DetectionEvent']['source']['entered_by'] = np.where(xwalk_dict['ncrn']['DetectionEvent']['source']['person_name'].isna()==False, xwalk_dict['ncrn']['DetectionEvent']['source']['person_name'],xwalk_dict['ncrn']['DetectionEvent']['source']['entered_by'])
+    del xwalk_dict['ncrn']['DetectionEvent']['source']['person_name']
+    del xwalk_dict['ncrn']['DetectionEvent']['source']['Contact_ID']
 
     xwalk_dict['ncrn']['DetectionEvent']['source'].reset_index(drop=True, inplace=True)
 
