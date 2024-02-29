@@ -1,4 +1,16 @@
-"""make the templates to which we crosswalk access tables"""
+"""Make the templates to which we crosswalk access tables
+
+main data structure, attributes, attribute type, attribute description
+-xwalk: pd.DataFrame, a dataframe that describes how where every `destination` column comes from in a `source` table
+-source_name: str, the name of the `source` table from which the `destination` table came
+-source: pd.DataFrame, the table in the source database (the result of executing a SELECT query against the db)
+-destination: pd.DataFrame, a dataframe matching the schema of the sql server table to which `source` should be tranformed
+-tbl_load: pd.DataFrame, a dataframe of `source` records transformed to `destination` schema with primary-key/foreign-key relationships from `source` ID fields (guids, concatenations, abbreviations, logical keys, etc.) intact
+-k_load pd.DataFrame, a dataframe of `source` records transformed to `destination` schema with `source` ID fields replaced by INT keys
+-payload_cols: list, a subset of `k_load` columns that should be included in `payload`
+-payload: pd.DataFrame, the exact sql server table-input format (excludes auto-generated fields, like IDs, rowversion, etc. that are present in `k_load`)
+-tsql: str, a long string of Transact SQL generated from breaking `payload` into row-wise tuples (i.e., a collection of INSERT statements that, if executed against the db, would load `payload` to the db)
+"""
 import assets.assets as assets
 import pandas as pd
 import pickle
@@ -50,6 +62,7 @@ def make_birds(dest:str='') -> dict:
                 ,'source': pd.DataFrame() # source data
                 ,'destination': dest_dict[tbl] # destination data (mostly just for its column names and order)
                 ,'tbl_load': pd.DataFrame() # `source` data crosswalked to the destination schema
+                ,'k_load': pd.DataFrame() # `source` data crosswalked to the destination schema with guid pf/fk relationships replaced by int pk/fk relationships
                 ,'payload_cols': [] # the columns to extract from `tbl_load` and load into `payload`
                 ,'payload': pd.DataFrame() # `tbl_load` transformed for loading to destination database
                 ,'tsql': '' # the t-sql to load the `payload` to the destination table
@@ -67,6 +80,7 @@ def make_birds(dest:str='') -> dict:
                 ,'source': pd.DataFrame(columns=dest_dict[tbl].columns) # source data
                 ,'destination': dest_dict[tbl] # destination data (mostly just for its column names and order)
                 ,'tbl_load': pd.DataFrame() # `source` data crosswalked to the destination schema
+                ,'k_load': pd.DataFrame() # `source` data crosswalked to the destination schema with guid pf/fk relationships replaced by int pk/fk relationships
                 ,'payload_cols': [] # the columns to extract from `tbl_load` and load into `payload`
                 ,'payload': pd.DataFrame() # `tbl_load` transformed for loading to destination database
                 ,'tsql': '' # the t-sql to load the `payload` to the destination table
@@ -88,6 +102,9 @@ def make_birds(dest:str='') -> dict:
 
     # execute xwalk to generate load
     xwalk_dict = _execute_xwalks(xwalk_dict)
+
+    # generate k_load
+    xwalk_dict = _generate_k_load(xwalk_dict)
 
     # generate payload
     xwalk_dict = _generate_payload(xwalk_dict)
@@ -226,8 +243,30 @@ def _execute_xwalks(xwalk_dict:dict) -> dict:
     
     return xwalk_dict
 
+def _generate_k_load(xwalk_dict:dict) -> dict:
+    """Update the primary key/foreign key relationships from guids or whatever the source used to INT keys to match destination format
+
+    The `source` attribute for each table has one of three types of key-field conventions:
+    1. globally-unique identifiers (GUIDs) e.g., ncrn.Contact.source.ContactID
+    2. logical keys concatenated or abbreviated from one-or-more fields e.g., ncrn.Park.source.PARKCODE
+    3. if there was no source table, the ID may be INT e.g., lu.ExperienceLevel.source.ID
+
+    SQL server will auto-generate INT keys for all tables.
+    `k_load` will replace all instances of non-INT keys with INT keys, so we can back-check referential integrity
+    """
+    for schema in xwalk_dict.keys():
+        for tbl in xwalk_dict[schema].keys():
+            k_load = xwalk_dict[schema][tbl]['tbl_load'].copy()
+            # replace primary key
+            # k_load['ID'] = k_load['rowid']
+            # del k_load['rowid']
+            # replace foreign key(s)
+            xwalk_dict[schema][tbl]['k_load'] = k_load
+
+    return xwalk_dict
+
 def _generate_payload(xwalk_dict:dict) -> dict:
-    """Make `payload` from `tbl_load`
+    """Make `payload` from `k_load`
     
     The `payload` is the exact dataframe to be INSERTed into the destination table
 
@@ -236,7 +275,7 @@ def _generate_payload(xwalk_dict:dict) -> dict:
     # e.g., `tbl_load` is allowed to hold NCRN's GUIDs but `payload` should either replace the GUIDs with INTs or leave out that column altogether
     for schema in xwalk_dict.keys():
         for tbl in xwalk_dict[schema].keys():
-            payload = xwalk_dict[schema][tbl]['tbl_load'].copy()
+            payload = xwalk_dict[schema][tbl]['k_load'].copy()
             payload_cols = list(payload.columns)
             payload_cols = [x for x in payload_cols if x!='ID' and x!='rowid']
             payload = payload[payload_cols]
