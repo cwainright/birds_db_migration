@@ -1681,15 +1681,14 @@ def _exception_ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
     xwalk_dict['ncrn']['DetectionEvent']['source']['Date'] = np.where((xwalk_dict['ncrn']['DetectionEvent']['source']['Date'].isna()), datetime.date(1900, 1, 1),xwalk_dict['ncrn']['DetectionEvent']['source']['Date'] )
     xwalk_dict['ncrn']['DetectionEvent']['source'].loc[:,'activity_start_datetime'] = pd.to_datetime(xwalk_dict['ncrn']['DetectionEvent']['source'].Date.astype(str)+' '+xwalk_dict['ncrn']['DetectionEvent']['source'].start_time.astype(str))
 
-
-
     # add additional rows from assets.C_DB to xwalk_dict['ncrn']['DetectionEvent']['source']
     con = dbc._db_connect('c')
     tbl = 'tbl_Events'
     df = dbc._exec_qry(con=con, qry=f'get_c_{tbl}')
     con.close()
     xwalk_dict['ncrn']['DetectionEvent']['source'] = pd.concat([xwalk_dict['ncrn']['DetectionEvent']['source'], df])
-
+    
+    xwalk_dict['ncrn']['DetectionEvent']['source'].reset_index(drop=True, inplace=True)
 
     return xwalk_dict
 
