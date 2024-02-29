@@ -53,7 +53,7 @@ def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
         ,'DataProcessingLevelID'
         ,'DataProcessingLevelDate'
         ,'RelativeHumidity'
-        ,'SamplingMethodID'
+        # ,'SamplingMethodID'
         ,'Observer_ContactID'
         ,'Recorder_ContactID'
         ,'ProtocolNoiseLevelID'
@@ -97,8 +97,8 @@ def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
     mask = (xwalk_dict['ncrn']['DetectionEvent']['xwalk']['destination'] == 'RelativeHumidity')
     xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'] =  np.where(mask, 'humidity', xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'])
     # `SamplingMethodID`
-    mask = (xwalk_dict['ncrn']['DetectionEvent']['xwalk']['destination'] == 'SamplingMethodID')
-    xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'] =  np.where(mask, 'protocol_name', xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'])
+    # mask = (xwalk_dict['ncrn']['DetectionEvent']['xwalk']['destination'] == 'SamplingMethodID')
+    # xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'] =  np.where(mask, 'protocol_name', xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'])
     # `Observer_ContactID`
     mask = (xwalk_dict['ncrn']['DetectionEvent']['xwalk']['destination'] == 'Observer_ContactID')
     xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'] =  np.where(mask, 'observer', xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'])
@@ -129,6 +129,7 @@ def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
         ,'TemperatureUnitCode'
         ,'ExcludeNote'
         ,'ExcludeEvent'
+        ,'SamplingMethodID'
     ]
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['ncrn']['DetectionEvent']['xwalk']['destination'].isin(calculated_fields))
@@ -150,6 +151,10 @@ def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
     # `ExcludeEvent`: this is a 1 or 0 depending on `ExcludeNote`
     mask = (xwalk_dict['ncrn']['DetectionEvent']['xwalk']['destination'] == 'ExcludeEvent')
     xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'] =  np.where(mask, "xwalk_dict['ncrn']['DetectionEvent']['tbl_load']['ExcludeEvent'] = np.where((xwalk_dict['ncrn']['DetectionEvent']['source']['label'].isna()), 0, 1)", xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'])
+    # `SamplingMethodID`: this is 'Grassland Bird Monitoring' or 'Forest Bird Monitoring', depending on whether ncrn.DetectionEvent.ProtocolID is 1 or 2
+    mask = (xwalk_dict['ncrn']['DetectionEvent']['xwalk']['destination'] == 'SamplingMethodID')
+    xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'] =  np.where(mask, "xwalk_dict['ncrn']['DetectionEvent']['tbl_load']['SamplingMethodID'] = np.where((xwalk_dict['ncrn']['DetectionEvent']['source']['protocol_id']==1), 'Forest Bird Monitoring', 'Grassland Bird Monitoring')", xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'])
+    xwalk_dict['ncrn']['DetectionEvent']['xwalk']['note'] =  np.where(mask, "In some cases, SamplingMethodID was left NULL in source so we need to calculate. This is either 'Grassland Bird Monitoring' or 'Forest Bird Monitoring', depending on whether ncrn.DetectionEvent.ProtocolID is 1 or 2", xwalk_dict['ncrn']['DetectionEvent']['xwalk']['note'])
 
     # Blanks
     blank_fields = [
