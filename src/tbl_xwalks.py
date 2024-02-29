@@ -1693,7 +1693,7 @@ def _exception_ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
     con.close()
     xwalk_dict['ncrn']['DetectionEvent']['source'] = pd.concat([xwalk_dict['ncrn']['DetectionEvent']['source'], df])
     
-    # EXCEPTION 5: make lookup table for `entered_by`
+    # EXCEPTION 4: make lookup table for `entered_by`
     # ncrn.DetectionEvent.EnteredBy is VARCHAR (100), not a pk-fk relationship, so we need to look the names up from source.tbl_Contacts and replace their guids
     lookup = xwalk_dict['ncrn']['Contact']['source'][['Contact_ID','Last_Name','First_Name']].copy()
     lookup['person_name'] = lookup['First_Name'] + ' ' + lookup['Last_Name']
@@ -1703,7 +1703,7 @@ def _exception_ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
     del xwalk_dict['ncrn']['DetectionEvent']['source']['person_name']
     del xwalk_dict['ncrn']['DetectionEvent']['source']['Contact_ID']
 
-    # EXCEPTION 4: ncrn.DetectionEvent.EnteredBy, ncrn.DetectionEvent.Observer_ContactID, AND ncrn.DetectionEvent.Recorder_ContactID are NOT NULL, so we need to fill something in for None or np.NaN values
+    # EXCEPTION 5: ncrn.DetectionEvent.EnteredBy, ncrn.DetectionEvent.Observer_ContactID, AND ncrn.DetectionEvent.Recorder_ContactID are NOT NULL, so we need to fill something in for None or np.NaN values
     # xwalk_dict['ncrn']['DetectionEvent']['source'] = xwalk_dict['ncrn']['DetectionEvent']['source'].copy(deep=True)
     # ncrn.DetectionEvent.EnteredBy
     mask = (xwalk_dict['ncrn']['DetectionEvent']['source']['entered_by'].isna()==True) & (xwalk_dict['ncrn']['DetectionEvent']['source']['recorder'].isna()==False)
@@ -1737,6 +1737,24 @@ def _exception_ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
     xwalk_dict['ncrn']['DetectionEvent']['source']['entered_by'] = np.where(xwalk_dict['ncrn']['DetectionEvent']['source']['person_name'].isna()==False, xwalk_dict['ncrn']['DetectionEvent']['source']['person_name'],xwalk_dict['ncrn']['DetectionEvent']['source']['entered_by'])
     del xwalk_dict['ncrn']['DetectionEvent']['source']['person_name']
     del xwalk_dict['ncrn']['DetectionEvent']['source']['Contact_ID']
+
+    # EXCEPTION 6: testdict['ncrn']['DetectionEvent']['source'].Position_Title has values that don't match lu.ExperienceLevel.ID
+    pos_titles = xwalk_dict['ncrn']['DetectionEvent']['source'].Position_Title.unique()
+    lookup = {
+        'source_val':pos_titles
+    }
+    lookup = pd.DataFrame(lookup)
+    lookup['target_val'] = np.NaN
+    lookup['target_val'] = np.where(lookup['source_val']=='Field Technician', 2, lookup['target_val'])
+    lookup['target_val'] = np.where(lookup['source_val'].isna(), 1, lookup['target_val'])
+    lookup['target_val'] = np.where(lookup['source_val']=='None', 1, lookup['target_val'])
+    lookup['target_val'] = np.where(lookup['source_val']=='Crew Leader', 3, lookup['target_val'])
+    lookup['target_val'] = np.where(lookup['source_val']=='Top Dog', 3, lookup['target_val'])
+    assert len(lookup[lookup['target_val'].isna()])==0, print('Exception 6, _exception_ncrn_DetectionEvent failed; revise the lookup table')
+    xwalk_dict['ncrn']['DetectionEvent']['source'] = xwalk_dict['ncrn']['DetectionEvent']['source'].merge(lookup, left_on='Position_Title', right_on='source_val')
+    xwalk_dict['ncrn']['DetectionEvent']['source']['Position_Title'] = xwalk_dict['ncrn']['DetectionEvent']['source']['target_val']
+    del xwalk_dict['ncrn']['DetectionEvent']['source']['source_val']
+    del xwalk_dict['ncrn']['DetectionEvent']['source']['target_val']
 
     xwalk_dict['ncrn']['DetectionEvent']['source'].reset_index(drop=True, inplace=True)
 
