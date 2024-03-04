@@ -105,6 +105,9 @@ def make_birds(dest:str='') -> dict:
     # execute xwalk to generate load
     xwalk_dict = _execute_xwalks(xwalk_dict)
 
+    # add t-sql constraints to xwalks
+    xwalk_dict = tx._add_sql_constraints(xwalk_dict)
+
     # generate k_load
     xwalk_dict = _generate_k_load(xwalk_dict)
 

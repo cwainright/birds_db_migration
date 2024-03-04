@@ -28,6 +28,7 @@ import datetime
 import assets.assets as assets
 import warnings
 warnings.simplefilter(action='ignore', category=UserWarning)
+import re
 
 TBL_XWALK = assets.TBL_XWALK
 
@@ -2912,5 +2913,117 @@ def _make_pk_fk_lookup(xwalk_dict:dict) -> dict:
             except:
                 # print(f"dict['{schema}']['{tbl}']")
                 pass
+
+    return xwalk_dict
+
+def _add_sql_constraints(xwalk_dict:dict) -> dict:
+    """Extract constraints and params from the CREATE TABLE SQL and add to xwalk dataframe for each table"""
+    
+    f = open(assets.CREATE_SQL, "r")
+    lines:str = f.read()
+    f.close()
+
+    tbls:list = lines.split('CREATE TABLE')
+    find:re.Pattern = re.compile(r"^([^;]*).*")
+    clean_tbls:list = []
+    for tbl in tbls:
+        clean_tbl:str = re.search(find, tbl).group(0)
+        clean_tbl:str = clean_tbl.strip().split(';', 1)[0]
+        if 'IF CREATING NEW DATABASE, START HERE' not in clean_tbl:
+            clean_tbls.append(clean_tbl)
+        
+    constraints:dict = {}
+    colnames:list = ['destination','fieldtype','can_be_null','maxlen','default']
+    for schema in assets.TBL_XWALK.keys():
+        constraints[schema] = {}
+        for tbl in assets.TBL_XWALK[schema].keys():
+            constraints[schema][tbl] = {
+                'all_constraints':''
+                ,'fieldwise':''
+                ,'tablewise':''
+                ,'constraint_df':pd.DataFrame(columns=colnames)
+            }
+    for schema in assets.TBL_ADDITIONS.keys():
+        if schema not in constraints.keys():
+            constraints[schema] = {}
+        for tbl in assets.TBL_ADDITIONS[schema]:
+            constraints[schema][tbl] = {
+                'all_constraints':''
+                ,'fieldwise':''
+                ,'tablewise':''
+                ,'constraint_df':pd.DataFrame(columns=colnames)
+            }
+
+    for tbl in clean_tbls:
+        splits = tbl.split('.',1)
+        schema = splits[0].replace('[','').replace(']','').strip()
+        remaining = splits[1].split(' ',1)
+        tbl_name = remaining[0].replace('[','').replace(']','').strip()
+        all_constraints = remaining[1]
+        try:
+            constraints[schema][tbl_name]['all_constraints'] = all_constraints
+        except:
+            print(f"FAIL: constraints['{schema}']['{tbl_name}']")
+
+    for schema in constraints.keys():
+        for tbl in constraints[schema].keys():
+            lines = constraints[schema][tbl]['all_constraints'].split('\n')
+            lines = [x.strip() for x in lines if x.startswith('(')==False and x.startswith(')')==False]
+            lines = [x for x in lines if x.startswith('(')==False and x.startswith(')')==False]
+            field_lines = [x for x in lines if x.startswith('CONSTRAINT')==False]
+            table_lines = [x for x in lines if x.startswith('CONSTRAINT')==True]
+            constraints[schema][tbl]['fieldwise'] = field_lines
+            constraints[schema][tbl]['tablewise'] = table_lines
+            fieldnames = []
+            fieldtypes = []
+            maxlens = []
+            nullbools = []
+            defaults = []
+            for field_line in field_lines:
+                fieldname = field_line.split(' ',1)[0].strip().replace('[','').replace(']','').strip()
+                fieldtype = field_line.split(' ',1)[1].strip().split(' ',1)[0].strip()
+                if 'NOT NULL' in field_line:
+                    nullbool=False
+                else:
+                    nullbool=True
+                if fieldtype == 'VARCHAR' or fieldtype == 'CHAR':
+                    try:
+                        maxlen = re.findall(r'\(.*?\)', field_line.split(' ',1)[1].strip().split(' ',1)[1].strip())[0].replace('(','').replace(')','')
+                        if maxlen == 'MAX':
+                            maxlen = np.NaN
+                        else:
+                            maxlen = int(maxlen)
+                    except:
+                        print(field_line)
+                elif fieldtype == 'DECIMAL':
+                    tmp_chars = re.findall(r'\(.*?\)', field_line)[0].strip()
+                    maxlen = tmp_chars
+                else:
+                    maxlen = np.NaN
+                if 'DEFAULT' in field_line:
+                    try:
+                        default = re.findall(r'DEFAULT.*?,', field_line)[0].strip().rsplit(',',1)[0]
+                    except:
+                        print(f'ERROR: {field_line}')
+                else:
+                    default = np.NaN
+                fieldnames.append(fieldname)
+                nullbools.append(nullbool)
+                fieldtypes.append(fieldtype)
+                maxlens.append(maxlen)
+                defaults.append(default)
+                
+            constraints[schema][tbl]['constraint_df']['destination']=fieldnames
+            constraints[schema][tbl]['constraint_df']['fieldtype']=fieldtypes
+            constraints[schema][tbl]['constraint_df']['maxlen']=maxlens
+            constraints[schema][tbl]['constraint_df']['can_be_null']=nullbools
+            constraints[schema][tbl]['constraint_df']['default']=defaults
+                
+    for schema in constraints.keys():
+        for tbl in constraints[schema].keys():
+            try:
+                xwalk_dict[schema][tbl]['xwalk'] = xwalk_dict[schema][tbl]['xwalk'].merge(constraints[schema][tbl]['constraint_df'], on='destination', how='left')
+            except:
+                print(f"FAIL CONSTRAINT MERGE: birds['{schema}']['{tbl_name}']")
 
     return xwalk_dict
