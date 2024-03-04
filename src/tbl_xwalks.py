@@ -348,13 +348,13 @@ def _ncrn_Location(xwalk_dict:dict) -> dict:
     one_to_one_fields = [
         'ID'
         ,'SiteID'
-        ,'Label'
         ,'X_Coord_DD_NAD83'
         ,'Y_Coord_DD_NAD83'
         ,'GeodeticDatumID'
         ,'EnteredDate'
         ,'Code'
         ,'Notes'
+
     ]
     # assign grouping variable `calculation` for the 1:1 fields
     mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'].isin(one_to_one_fields))
@@ -365,9 +365,6 @@ def _ncrn_Location(xwalk_dict:dict) -> dict:
     # SiteID
     mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'SiteID')
     xwalk_dict['ncrn']['Location']['xwalk']['source'] =  np.where(mask, 'Site_ID', xwalk_dict['ncrn']['Location']['xwalk']['source'])
-    # Label
-    mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'Label')
-    xwalk_dict['ncrn']['Location']['xwalk']['source'] =  np.where(mask, 'Plot_Name', xwalk_dict['ncrn']['Location']['xwalk']['source'])
     # X_Coord_DD_NAD83
     mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'X_Coord_DD_NAD83')
     xwalk_dict['ncrn']['Location']['xwalk']['source'] =  np.where(mask, 'Long_WGS84', xwalk_dict['ncrn']['Location']['xwalk']['source'])
@@ -388,13 +385,14 @@ def _ncrn_Location(xwalk_dict:dict) -> dict:
     xwalk_dict['ncrn']['Location']['xwalk']['source'] =  np.where(mask, 'Notes', xwalk_dict['ncrn']['Location']['xwalk']['source'])
     xwalk_dict['ncrn']['Location']['xwalk']['note'] = np.where(mask, "VARCHAR (1000) NULL concatenation of attributes present in source and absent from db schema", xwalk_dict['ncrn']['Location']['xwalk']['note'])
 
-
     # Calculated fields
     calculated_fields = [
         'HabitatID'
         ,'EnteredBy'
         ,'IsActive'
         ,'IsSensitive'
+        ,'Label'
+        ,'OldCode'
     ]
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'].isin(calculated_fields))
@@ -414,13 +412,20 @@ def _ncrn_Location(xwalk_dict:dict) -> dict:
     xwalk_dict['ncrn']['Location']['xwalk']['note'] = np.where(mask, "BIT NOT NULL, mapped from source.Plot_Name", xwalk_dict['ncrn']['Location']['xwalk']['note'])
     # IsActive  BIT NOT NULL
     mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'IsActive')
-    xwalk_dict['ncrn']['Location']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn']['Location']['tbl_load']['IsActive']=np.where((xwalk_dict['ncrn']['Location']['source']['Active']==True),1,0)", xwalk_dict['ncrn']['Location']['xwalk']['source'])
+    xwalk_dict['ncrn']['Location']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn']['Location']['tbl_load']['IsActive']=np.where((xwalk_dict['ncrn']['Location']['source']['Active']==True)|(xwalk_dict['ncrn']['Location']['source']['Plot_Name'].str.contains('CAMP', regex=False)),1,0)", xwalk_dict['ncrn']['Location']['xwalk']['source'])
     xwalk_dict['ncrn']['Location']['xwalk']['note'] = np.where(mask, "BIT NOT NULL map from dict['ncrn']['Location']['xwalk']['source']['Active']", xwalk_dict['ncrn']['Location']['xwalk']['note'])
+    # Label  VARCHAR (255)  NULL,
+    mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'Label')
+    xwalk_dict['ncrn']['Location']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn']['Location']['tbl_load']['Label']=np.where((xwalk_dict['ncrn']['Location']['source']['Plot_Name'].str.contains('CAMP', regex=False)),xwalk_dict['ncrn']['Location']['source']['Plot_Name'],xwalk_dict['ncrn']['Location']['source']['GRTS_Order'].astype(int).astype(str))", xwalk_dict['ncrn']['Location']['xwalk']['source'])
+    xwalk_dict['ncrn']['Location']['xwalk']['note'] = np.where(mask, "VARCHAR (255) NULL, if CAMP site: show plot name, else: show grts number", xwalk_dict['ncrn']['Location']['xwalk']['note'])
+    # OldCode  VARCHAR (255)  NULL,
+    mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'OldCode')
+    xwalk_dict['ncrn']['Location']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn']['Location']['tbl_load']['OldCode']=xwalk_dict['ncrn']['Location']['source']['GRTS_Order'].astype(int).astype(str)", xwalk_dict['ncrn']['Location']['xwalk']['source'])
+    xwalk_dict['ncrn']['Location']['xwalk']['note'] = np.where(mask, "VARCHAR (100) NULL, grts code cast to str", xwalk_dict['ncrn']['Location']['xwalk']['note'])
 
     # Blanks
     blank_fields = [
         'Rowversion'
-        ,'OldCode'
         ,'LegacyCode'
     ]
     # assign grouping variable `calculation` for the blank fields
@@ -2849,6 +2854,7 @@ def _exception_ncrn_Location(xwalk_dict:dict) -> dict:
         ,'Plot_Name'
         ,'Location_Type'
         ,'Active'
+        ,'GRTS_Order'
     ]
     remaining_cols = [x for x in xwalk_dict['ncrn']['Location']['source'].columns if x not in used_cols]
 
