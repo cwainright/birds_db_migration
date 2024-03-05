@@ -4,6 +4,16 @@ import re
 
 # EXCLUSIONS = ['tsql', 'payload'] # remove each element once we add modules to populate
 EXCLUSIONS = ['unique_vals'] # remove each element once we add modules to populate
+KNOWN_EMPTY = {
+    'ncrn':[
+        'ScannedFile'
+    ]
+    ,'dbo':[
+        'ParkUser'
+    ],'lu':[
+
+    ]
+}
 
 def check_birds(xwalk_dict:dict) -> None:
     """Validate a dictionary of birds data
@@ -18,12 +28,12 @@ def check_birds(xwalk_dict:dict) -> None:
     print(f'Validating dictionary against db schema...')
     _check_schema(xwalk_dict=xwalk_dict)
     print('')
-    print('Checking the dimensions of each table...')
-    _validate_tbl_loads(xwalk_dict=xwalk_dict)
-    print('')
     print('Checking each table for required attributes...')
     _validate_xwalks(xwalk_dict=xwalk_dict)
     _check_blanks(xwalk_dict=xwalk_dict)
+    print('')
+    print('Checking the dimensions of each table...')
+    _validate_loads(xwalk_dict=xwalk_dict)
     print('')
     print('Checking each table for unique values...')
     _validate_unique_vals(xwalk_dict=xwalk_dict)
@@ -77,24 +87,25 @@ def _validate_payload(xwalk_dict:dict) -> dict:
     # TODO: All `payload`s should have >0 columns; if there are no columns, payload-generation failed.
     return xwalk_dict
 
-def _validate_tbl_loads(xwalk_dict:dict) -> None:
-    """Check that the `tbl_load` attr produced from each `source` and `xwalk` is valid"""
+def _validate_loads(xwalk_dict:dict) -> None:
+    """Check that the load attrs produced from each `source` and `xwalk` is valid"""
     mykeys = _traverse(xwalk_dict, EXCLUSIONS)
 
-    _validate_dims(xwalk_dict, mykeys)
+    _validate_dims(xwalk_dict, mykeys, 'tbl_load')
+    _validate_dims(xwalk_dict, mykeys, 'k_load')
     # _validate_referential_integrity(xwalk_dict)
 
     return None
 
-def _validate_dims(xwalk_dict:dict, mykeys:list) -> None:
+def _validate_dims(xwalk_dict:dict, mykeys:list, target:str) -> None:
     """Check the dimensions of each `tbl_load`"""
 
-    _validate_rows(xwalk_dict, mykeys)
-    _validate_cols(xwalk_dict, mykeys)
+    _validate_rows(xwalk_dict, mykeys, target)
+    _validate_cols(xwalk_dict, mykeys, target)
 
     return None
 
-def _validate_rows(xwalk_dict:dict, mykeys:list) -> None:
+def _validate_rows(xwalk_dict:dict, mykeys:list, target:str) -> None:
     """Check that the `tbl_load` has the correct number of rows"""
     missing = {}
     for k in mykeys:
@@ -110,7 +121,7 @@ def _validate_rows(xwalk_dict:dict, mykeys:list) -> None:
             for k in xwalk_dict[schema][tbl].keys():
                 if k not in EXCLUSIONS:
                     if k == 'destination':
-                        if len(xwalk_dict[schema][tbl]['source']) != len(xwalk_dict[schema][tbl]['tbl_load']):
+                        if len(xwalk_dict[schema][tbl]['source']) != len(xwalk_dict[schema][tbl][target]):
                             missing[k]['counter'] +=1
                             missing[k]['mylist'].append(f"dict['{schema}']['{tbl}']['{k}']")
                             missing_vals[schema][tbl].append(f"dict['{schema}']['{tbl}']['{k}']")
@@ -134,11 +145,11 @@ def _validate_rows(xwalk_dict:dict, mykeys:list) -> None:
         else:
             successes.append(k)
     if len(successes)==len(mykeys):
-        print('SUCCESS: The count of rows for each `tbl_load` matches its `source`!')
+        print(f'SUCCESS: The count of rows for each `{target}` matches its `source`!')
 
     return None
 
-def _validate_cols(xwalk_dict:dict, mykeys:list) -> None:
+def _validate_cols(xwalk_dict:dict, mykeys:list, target:str) -> None:
     """Check that the `tbl_load` has the correct columns"""
     # check that each column in `tbl_load` exists in `destination`
     missing = {}
@@ -155,7 +166,7 @@ def _validate_cols(xwalk_dict:dict, mykeys:list) -> None:
             for k in xwalk_dict[schema][tbl].keys():
                 if k not in EXCLUSIONS:
                     if k == 'destination':
-                        for col in xwalk_dict[schema][tbl]['tbl_load'].columns:
+                        for col in xwalk_dict[schema][tbl][target].columns:
                             if col != 'rowid' and col not in xwalk_dict[schema][tbl]['destination'].columns:
                                 missing[k]['counter'] +=1
                                 missing[k]['mylist'].append(f"dict['{schema}']['{tbl}']['{k}']")
@@ -181,7 +192,7 @@ def _validate_cols(xwalk_dict:dict, mykeys:list) -> None:
         else:
             successes.append(k)
     if len(successes)==len(mykeys):
-        print('SUCCESS: The count of columns for each `tbl_load` matches its `destination`!')
+        print(f'SUCCESS: The count of columns for each `{target}` matches its `destination`!')
     
     # check that the column order in `tbl_load` matches that of `destination`
     missing = {}
@@ -223,13 +234,13 @@ def _validate_cols(xwalk_dict:dict, mykeys:list) -> None:
     successes = []
     for k in missing:
         if missing[k]['counter'] >0:
-            print(f"WARNING: The column-order in `tbl_load` does not match that of `destination` in {missing[k]['counter']} tables!")
+            print(f"WARNING: The column-order in `{target}` does not match that of `destination` in {missing[k]['counter']} tables!")
             for v in missing[k]['mylist']:
                 print(f'    {v}')
         else:
             successes.append(k)
     if len(successes)==len(mykeys):
-        print('SUCCESS: The column-order in `tbl_load` matches that of `destination`!')
+        print(f'SUCCESS: The column-order in `{target}` matches that of `destination`!')
 
     return None
 
@@ -288,12 +299,12 @@ def _validate_xwalks(xwalk_dict:dict) -> None:
             missing_vals[schema][tbl] = {}
             for k in mykeys:
                 missing_vals[schema][tbl][k] = {}
-
                 mask = (xwalk_dict[schema][tbl]['xwalk'].source.isna()) | (xwalk_dict[schema][tbl]['xwalk'].source == 'tbd') | (xwalk_dict[schema][tbl]['xwalk'].source == 'placeholder')
                 mysub = xwalk_dict[schema][tbl]['xwalk'][mask]
                 if len(mysub) >0 or len(xwalk_dict[schema][tbl]['xwalk'])==0:
-                    missing[k]['counter'] +=1
-                    missing[k]['mylist'].append(f"dict['{schema}']['{tbl}']['{k}']")
+                    if tbl not in KNOWN_EMPTY[schema].keys():
+                        missing[k]['counter'] +=1
+                        missing[k]['mylist'].append(f"dict['{schema}']['{tbl}']['{k}']")
     tbls_missing = {
         'tbl_missing':[]
         ,'tables':{}
@@ -357,14 +368,16 @@ def _check_blanks(xwalk_dict:dict) -> None:
                 if k not in EXCLUSIONS:
                     if k == 'destination':
                         if len(xwalk_dict[schema][tbl][k].columns) == 0:
-                            missing[k]['counter'] +=1
-                            missing[k]['mylist'].append(f"dict['{schema}']['{tbl}']['{k}']")
-                            missing_vals[schema][tbl].append(f"dict['{schema}']['{tbl}']['{k}']")
+                            if tbl not in KNOWN_EMPTY[schema]:
+                                missing[k]['counter'] +=1
+                                missing[k]['mylist'].append(f"dict['{schema}']['{tbl}']['{k}']")
+                                missing_vals[schema][tbl].append(f"dict['{schema}']['{tbl}']['{k}']")
                     else:
                         if len(xwalk_dict[schema][tbl][k]) == 0:
-                            missing[k]['counter'] +=1
-                            missing[k]['mylist'].append(f"dict['{schema}']['{tbl}']['{k}']")
-                            missing_vals[schema][tbl].append(f"dict['{schema}']['{tbl}']['{k}']")
+                            if tbl not in KNOWN_EMPTY[schema]:
+                                missing[k]['counter'] +=1
+                                missing[k]['mylist'].append(f"dict['{schema}']['{tbl}']['{k}']")
+                                missing_vals[schema][tbl].append(f"dict['{schema}']['{tbl}']['{k}']")
 
     tbls_missing = {
         'tbl_missing':[]
