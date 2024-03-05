@@ -108,6 +108,8 @@ def make_birds(dest:str='') -> dict:
     xwalk_dict = _execute_xwalks(xwalk_dict)
 
     # add t-sql constraints to xwalks
+    xwalk_dict = tx._add_row_id(xwalk_dict)
+    xwalk_dict = tx._make_pk_fk_lookup(xwalk_dict)
     xwalk_dict = tx._add_sql_constraints(xwalk_dict)
 
     # generate k_load
@@ -245,10 +247,6 @@ def _execute_xwalks(xwalk_dict:dict) -> dict:
                 src_col = xwalk[xwalk['destination']==dest_col].source.values[0]
                 xwalk_dict[schema][tbl]['tbl_load'][dest_col] = np.NaN
 
-
-        xwalk_dict = tx._add_row_id(xwalk_dict)
-        xwalk_dict = tx._make_pk_fk_lookup(xwalk_dict)
-    
     return xwalk_dict
 
 def _generate_k_load(xwalk_dict:dict) -> dict:

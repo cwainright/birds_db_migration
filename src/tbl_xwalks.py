@@ -1790,11 +1790,16 @@ def _exception_ncrn_BirdSpecies(xwalk_dict:dict) -> dict:
 
 def _add_row_id(xwalk_dict:dict) -> dict:
     # 1-index row-id for all tables
+    rowid_colname = 'rowid'
 
     for schema in xwalk_dict.keys():
         for tbl in xwalk_dict[schema].keys():
             if len(xwalk_dict[schema][tbl]['tbl_load'])>0:
-                xwalk_dict[schema][tbl]['tbl_load']['rowid'] = xwalk_dict[schema][tbl]['tbl_load'].index+1
+                xwalk_dict[schema][tbl]['tbl_load'][rowid_colname] = xwalk_dict[schema][tbl]['tbl_load'].index+1
+            else:
+                orig_cols = list(xwalk_dict[schema][tbl]['tbl_load'].columns)
+                orig_cols.append(rowid_colname)
+                xwalk_dict[schema][tbl]['tbl_load'] = pd.DataFrame(columns=orig_cols)
 
     return xwalk_dict
 
@@ -2908,11 +2913,11 @@ def _exception_ncrn_Site(xwalk_dict:dict) -> dict:
 def _make_pk_fk_lookup(xwalk_dict:dict) -> dict:
     for schema in xwalk_dict.keys():
         for tbl in xwalk_dict[schema].keys():
+            key_field = 'ID'
             try:
-                xwalk_dict[schema][tbl]['pk_fk_lookup'] = xwalk_dict[schema][tbl]['tbl_load'][['ID','rowid']]
+                xwalk_dict[schema][tbl]['pk_fk_lookup'] = xwalk_dict[schema][tbl]['tbl_load'][[key_field,'rowid']]
             except:
-                # print(f"dict['{schema}']['{tbl}']")
-                pass
+                print(f"FAIL: assign pk-fk relationships: birds['{schema}']['{tbl}']['pk_fk_lookup']")
 
     return xwalk_dict
 
