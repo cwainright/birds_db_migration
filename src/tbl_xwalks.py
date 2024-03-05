@@ -2913,11 +2913,12 @@ def _exception_ncrn_Site(xwalk_dict:dict) -> dict:
 def _make_pk_fk_lookup(xwalk_dict:dict) -> dict:
     for schema in xwalk_dict.keys():
         for tbl in xwalk_dict[schema].keys():
-            key_field = 'ID'
+            key_field = xwalk_dict[schema][tbl]['xwalk'][xwalk_dict[schema][tbl]['xwalk']['pk']==True].destination.values[0]
             try:
                 xwalk_dict[schema][tbl]['pk_fk_lookup'] = xwalk_dict[schema][tbl]['tbl_load'][[key_field,'rowid']]
             except:
                 print(f"FAIL: assign pk-fk relationships: birds['{schema}']['{tbl}']['pk_fk_lookup']")
+                print(key_field)
 
     return xwalk_dict
 

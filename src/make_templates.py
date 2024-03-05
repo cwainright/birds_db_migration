@@ -109,8 +109,8 @@ def make_birds(dest:str='') -> dict:
 
     # add t-sql constraints to xwalks
     xwalk_dict = tx._add_row_id(xwalk_dict)
-    xwalk_dict = tx._make_pk_fk_lookup(xwalk_dict)
     xwalk_dict = tx._add_sql_constraints(xwalk_dict)
+    xwalk_dict = tx._make_pk_fk_lookup(xwalk_dict)
 
     # generate k_load
     xwalk_dict = _generate_k_load(xwalk_dict)
