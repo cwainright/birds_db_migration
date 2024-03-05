@@ -2918,7 +2918,23 @@ def _make_pk_fk_lookup(xwalk_dict:dict) -> dict:
 
 def _add_sql_constraints(xwalk_dict:dict) -> dict:
     """Extract constraints and params from the CREATE TABLE SQL and add to xwalk dataframe for each table"""
-    
+
+    constraints = _preprocess_sql()
+    constraints = _field_sql_constraints(constraints)
+    # constraints = _table_sql_constraints(constraints)
+
+    for schema in constraints.keys():
+        for tbl in constraints[schema].keys():
+            try:
+                xwalk_dict[schema][tbl]['xwalk'] = xwalk_dict[schema][tbl]['xwalk'].merge(constraints[schema][tbl]['constraint_df'], on='destination', how='left')
+            except:
+                print(f"FAIL CONSTRAINT MERGE: birds['{schema}']['{tbl}']")
+
+    return xwalk_dict
+
+def _preprocess_sql() -> dict:
+    """Read SQL file, break into lines, clean lines, assign lines into dictionary of tables for further processing"""
+
     f = open(assets.CREATE_SQL, "r")
     lines:str = f.read()
     f.close()
@@ -2974,6 +2990,15 @@ def _add_sql_constraints(xwalk_dict:dict) -> dict:
             table_lines = [x for x in lines if x.startswith('CONSTRAINT')==True]
             constraints[schema][tbl]['fieldwise'] = field_lines
             constraints[schema][tbl]['tablewise'] = table_lines
+
+    return constraints
+
+def _field_sql_constraints(constraints:dict) -> dict:
+    """Parse CREATE TABLE SQL into a dataframe of constraints for each field"""
+            
+    for schema in constraints.keys():
+        for tbl in constraints[schema].keys():
+            field_lines = constraints[schema][tbl]['fieldwise']
             fieldnames = []
             fieldtypes = []
             maxlens = []
@@ -3018,12 +3043,9 @@ def _add_sql_constraints(xwalk_dict:dict) -> dict:
             constraints[schema][tbl]['constraint_df']['maxlen']=maxlens
             constraints[schema][tbl]['constraint_df']['can_be_null']=nullbools
             constraints[schema][tbl]['constraint_df']['default']=defaults
-                
-    for schema in constraints.keys():
-        for tbl in constraints[schema].keys():
-            try:
-                xwalk_dict[schema][tbl]['xwalk'] = xwalk_dict[schema][tbl]['xwalk'].merge(constraints[schema][tbl]['constraint_df'], on='destination', how='left')
-            except:
-                print(f"FAIL CONSTRAINT MERGE: birds['{schema}']['{tbl_name}']")
 
-    return xwalk_dict
+    return constraints
+
+def _table_sql_constraints(constraints:dict) -> dict:
+
+    return constraints
