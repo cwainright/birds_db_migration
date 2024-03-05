@@ -40,6 +40,9 @@ def check_birds(xwalk_dict:dict) -> None:
     print('Checking each table for nulls in non-nullable fields...')
     _validate_nulls(xwalk_dict=xwalk_dict)
     print('')
+    # print('Checking referential integrity...')
+    # _validate_referential_integrity(xwalk_dict=xwalk_dict)
+    # print('')
 
     return None
 
@@ -248,6 +251,52 @@ def _validate_cols(xwalk_dict:dict, mykeys:list, target:str) -> None:
 
 def _validate_referential_integrity(xwalk_dict:dict) -> None:
     # TODO: check that the INT id for each GUID lines up among related tables
+    """Check for null values in non-nullable fields"""
+    loads_to_check:list = ['tbl_load','k_load']
+    missing = {
+    'counter':0
+    ,'mylist':[]
+    }
+    for schema in xwalk_dict.keys():
+        for tbl in xwalk_dict[schema].keys():
+            mask = (xwalk_dict[schema][tbl]['xwalk']['fk']==True) & (xwalk_dict[schema][tbl]['xwalk']['calculation']!='blank_field')
+            fks = xwalk_dict[schema][tbl]['xwalk'][mask].destination.unique()
+            if len(fks) >0:
+                for fk in fks:
+                    for load in loads_to_check:
+                        try:
+                            constrained_by = xwalk_dict[schema][tbl]['xwalk'][xwalk_dict[schema][tbl]['xwalk']['destination']==fk].references.values[0]
+                            lookup = constrained_by.split('.')
+                            lookup = [f"['{x}']" for x in lookup]
+                            lookup = ''.join(lookup)
+                            if lookup == "['']":
+                                print(f"WARNING: check referential integrity: birds['{schema}']['{tbl}']['{load}']['{fk}']")
+                            else:
+                                lookup = 'xwalk_dict'+lookup
+                                present_load_absent_lookup = []
+                                for val in xwalk_dict[schema][tbl][load][fk].unique():
+                                    if val not in lookup:
+                                        present_load_absent_lookup.append(val)
+                        except:
+                            print(f"FAIL: check referential integrity: birds['{schema}']['{tbl}']['{load}']['{fk}']")
+
+                    # for load in loads_to_check:
+                    #     present_load_absent_lookup = []
+                    #     for val in xwalk_dict[schema][tbl][load][fk].unique():
+                    #         pass
+                    #     if len(present_load_absent_lookup) >0:
+                    #         missing['counter'] +=1
+                    #         missing['mylist'].append(f"birds['{schema}']['{tbl}']['{load}']['{fk}']: {len(present_load_absent_lookup)} broken references")
+                    #     else:
+                    #         pass
+    # summarize output by table
+    if missing['counter'] >0:
+        print(f"WARNING: null values present in non-nullable fields in {missing['counter']} tables!")
+        for v in missing['mylist']:
+            print(f'    {v}')
+    else:
+        for load in loads_to_check:
+            print(f'SUCCESS: All non-nullable fields have values in `{load}`!')
     
     return None
 
