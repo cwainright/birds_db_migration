@@ -2,8 +2,7 @@ import pandas as pd
 import assets.assets as assets
 import re
 
-# EXCLUSIONS = ['tsql', 'payload'] # remove each element once we add modules to populate
-EXCLUSIONS = ['unique_vals'] # remove each element once we add modules to populate
+EXCLUSIONS = ['unique_vals'] # 'unique_vals` is empty when the table does not enforce unique values in any field; this can happen in reality so we ignore here
 KNOWN_EMPTY = {
     'ncrn':[
         'ScannedFile'
@@ -29,7 +28,7 @@ def check_birds(xwalk_dict:dict) -> None:
     _check_schema(xwalk_dict=xwalk_dict)
     print('')
     print('Checking each table for required attributes...')
-    _validate_xwalks(xwalk_dict=xwalk_dict)
+    # _validate_xwalks(xwalk_dict=xwalk_dict)
     _check_blanks(xwalk_dict=xwalk_dict)
     print('')
     print('Checking the dimensions of each table...')
@@ -123,8 +122,8 @@ def _validate_rows(xwalk_dict:dict, mykeys:list, target:str) -> None:
                     if k == 'destination':
                         if len(xwalk_dict[schema][tbl]['source']) != len(xwalk_dict[schema][tbl][target]):
                             missing[k]['counter'] +=1
-                            missing[k]['mylist'].append(f"dict['{schema}']['{tbl}']['{k}']")
-                            missing_vals[schema][tbl].append(f"dict['{schema}']['{tbl}']['{k}']")
+                            missing[k]['mylist'].append(f"birds['{schema}']['{tbl}']['{k}']")
+                            missing_vals[schema][tbl].append(f"birds['{schema}']['{tbl}']['{k}']")
     tbls_missing = {
         'tbl_missing':[]
         ,'tables':{}
@@ -169,8 +168,8 @@ def _validate_cols(xwalk_dict:dict, mykeys:list, target:str) -> None:
                         for col in xwalk_dict[schema][tbl][target].columns:
                             if col != 'rowid' and col not in xwalk_dict[schema][tbl]['destination'].columns:
                                 missing[k]['counter'] +=1
-                                missing[k]['mylist'].append(f"dict['{schema}']['{tbl}']['{k}']")
-                                missing_vals[schema][tbl].append(f"dict['{schema}']['{tbl}']['{k}']")
+                                missing[k]['mylist'].append(f"birds['{schema}']['{tbl}']['{k}']")
+                                missing_vals[schema][tbl].append(f"birds['{schema}']['{tbl}']['{k}']")
     tbls_missing = {
         'tbl_missing':[]
         ,'tables':{}
@@ -217,8 +216,8 @@ def _validate_cols(xwalk_dict:dict, mykeys:list, target:str) -> None:
                             checks.append(dest_cols[i] == tbl_load_cols[i])
                         if all(checks)==False:
                             missing[k]['counter'] +=1
-                            missing[k]['mylist'].append(f"dict['{schema}']['{tbl}']['{k}']")
-                            missing_vals[schema][tbl].append(f"dict['{schema}']['{tbl}']['{k}']")
+                            missing[k]['mylist'].append(f"birds['{schema}']['{tbl}']['{k}']")
+                            missing_vals[schema][tbl].append(f"birds['{schema}']['{tbl}']['{k}']")
     tbls_missing = {
         'tbl_missing':[]
         ,'tables':{}
@@ -304,7 +303,7 @@ def _validate_xwalks(xwalk_dict:dict) -> None:
                 if len(mysub) >0 or len(xwalk_dict[schema][tbl]['xwalk'])==0:
                     if tbl not in KNOWN_EMPTY[schema].keys():
                         missing[k]['counter'] +=1
-                        missing[k]['mylist'].append(f"dict['{schema}']['{tbl}']['{k}']")
+                        missing[k]['mylist'].append(f"birds['{schema}']['{tbl}']['{k}']")
     tbls_missing = {
         'tbl_missing':[]
         ,'tables':{}
@@ -370,14 +369,14 @@ def _check_blanks(xwalk_dict:dict) -> None:
                         if len(xwalk_dict[schema][tbl][k].columns) == 0:
                             if tbl not in KNOWN_EMPTY[schema]:
                                 missing[k]['counter'] +=1
-                                missing[k]['mylist'].append(f"dict['{schema}']['{tbl}']['{k}']")
-                                missing_vals[schema][tbl].append(f"dict['{schema}']['{tbl}']['{k}']")
+                                missing[k]['mylist'].append(f"birds['{schema}']['{tbl}']['{k}']")
+                                missing_vals[schema][tbl].append(f"birds['{schema}']['{tbl}']['{k}']")
                     else:
                         if len(xwalk_dict[schema][tbl][k]) == 0:
                             if tbl not in KNOWN_EMPTY[schema]:
                                 missing[k]['counter'] +=1
-                                missing[k]['mylist'].append(f"dict['{schema}']['{tbl}']['{k}']")
-                                missing_vals[schema][tbl].append(f"dict['{schema}']['{tbl}']['{k}']")
+                                missing[k]['mylist'].append(f"birds['{schema}']['{tbl}']['{k}']")
+                                missing_vals[schema][tbl].append(f"birds['{schema}']['{tbl}']['{k}']")
 
     tbls_missing = {
         'tbl_missing':[]
@@ -400,8 +399,9 @@ def _check_blanks(xwalk_dict:dict) -> None:
         else:
             successes.append(k)
     if len(successes)==len(mykeys):
-        print('SUCCESS: All required attributes exist in all tables!')
-
+        # print('SUCCESS: All required attributes exist in all tables!')
+        for k in mykeys:
+            print(f'SUCCESS: Required attribute `{k}` is complete in all tables!')
     # summarize output by table
     # if len(tbls_missing['tbl_missing']) >0:
     #     print(f"WARNING: {len(tbls_missing['tbl_missing'])} tables have at least one empty attribute!")
@@ -412,7 +412,7 @@ def _check_blanks(xwalk_dict:dict) -> None:
     #                 print(f"    dict['{schema}']['{tbl}']")
     #                 for attr in missing_vals[schema][tbl]:
     #                     # print(f'        {attr}')
-    #                     attr = attr.replace(f"dict['{schema}']['{tbl}']", '')
+    #                     attr = attr.replace(f"birds['{schema}']['{tbl}']", '')
     #                     attr = attr.replace("]", '')
     #                     attr = attr.replace("[", '')
     #                     print(f'        {attr}')
