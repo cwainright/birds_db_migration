@@ -2921,7 +2921,7 @@ def _add_sql_constraints(xwalk_dict:dict) -> dict:
 
     constraints = _preprocess_sql()
     constraints = _field_sql_constraints(constraints)
-    # constraints = _table_sql_constraints(constraints)
+    constraints,xwalk_dict = _table_sql_constraints(constraints, xwalk_dict)
 
     for schema in constraints.keys():
         for tbl in constraints[schema].keys():
@@ -2949,7 +2949,7 @@ def _preprocess_sql() -> dict:
             clean_tbls.append(clean_tbl)
         
     constraints:dict = {}
-    colnames:list = ['destination','fieldtype','can_be_null','maxlen','default']
+    colnames:list = ['destination','fieldtype','can_be_null','maxlen','default','pk','fk','references','maxval','minval']
     for schema in assets.TBL_XWALK.keys():
         constraints[schema] = {}
         for tbl in assets.TBL_XWALK[schema].keys():
@@ -2994,7 +2994,14 @@ def _preprocess_sql() -> dict:
     return constraints
 
 def _field_sql_constraints(constraints:dict) -> dict:
-    """Parse CREATE TABLE SQL into a dataframe of constraints for each field"""
+    """Parse CREATE TABLE SQL into a dataframe of constraints for each field
+    
+    Field-constraints include:
+    field type
+    nullable
+    maximum length
+    default value
+    """
             
     for schema in constraints.keys():
         for tbl in constraints[schema].keys():
@@ -3046,6 +3053,80 @@ def _field_sql_constraints(constraints:dict) -> dict:
 
     return constraints
 
-def _table_sql_constraints(constraints:dict) -> dict:
+def _table_sql_constraints(constraints:dict, xwalk_dict:dict) -> tuple:
+    """Parse CREATE TABLE SQL into a dataframe of constraints for each table
+    
+    Table constraints include:
+    primary-key/foreign-key relationships
+    unique values within and among fields
+    logical keys that are unique combinations of fields (based on business logic)
+    """
 
-    return constraints
+    for schema in constraints.keys():
+        for tbl in constraints[schema].keys():
+            table_lines = constraints[schema][tbl]['tablewise']
+            # base cases
+            constraints[schema][tbl]['constraint_df']['pk'] = False
+            constraints[schema][tbl]['constraint_df']['fk'] = False
+            constraints[schema][tbl]['constraint_df']['references'] = None
+            constraints[schema][tbl]['constraint_df']['maxval'] = np.NaN
+            constraints[schema][tbl]['constraint_df']['minval'] = np.NaN
+            # exceptions to base cases
+            for table_line in table_lines:
+                if 'PRIMARY KEY' in table_line:
+                    pk = True
+                    try:
+                        fieldname = re.findall(r'\(.*?\)',re.findall(r'PRIMARY KEY.*?$', table_line)[0].strip())[0].split(' ',1)[0].replace('[','').replace(']','').replace('(','').replace(')','')
+                        constraints[schema][tbl]['constraint_df']['pk']=np.where((constraints[schema][tbl]['constraint_df']['destination']==fieldname),pk,constraints[schema][tbl]['constraint_df']['pk'])
+                    except:
+                        print(f"FAIL PK EXTRACT: constraints['{schema}']['{tbl}']")
+                        print(table_line)
+                if 'FOREIGN KEY' in table_line:
+                    fk = True
+                    try:
+                        fieldname = re.findall(r'FOREIGN KEY.*?REFERENCES', table_line)[0].replace('FOREIGN KEY','').replace('REFERENCES','').replace('(','').replace(')','').replace('[','').replace(']','').strip()
+                    except:
+                        print(f"FAIL FK EXTRACT: constraints['{schema}']['{tbl}']")
+                        print(table_line)
+                    try:
+                        constraints[schema][tbl]['constraint_df']['fk']=np.where((constraints[schema][tbl]['constraint_df']['destination']==fieldname),fk,constraints[schema][tbl]['constraint_df']['fk'])
+                    except:
+                        print(f"FAIL FK assign: constraints['{schema}']['{tbl}']")
+                        print(table_line)
+                    try:
+                        refers_to = '.'.join(re.findall(r'\[.*?\]', re.findall(r'REFERENCES.*?$', table_line)[0].replace('REFERENCES','').strip().rsplit(',',1)[0])).replace('[','').replace(']','')
+                        if refers_to == 'Role.ID':
+                            refers_to = 'dbo.' + refers_to # original SQL left 'dbo' out of foreign key reference and that inconsistency msses up downstream logic: FOREIGN KEY ([RoleID]) REFERENCES [Role]([ID])
+                    except:
+                        print(f"FAIL REFERENCES EXTRACT: constraints['{schema}']['{tbl}']")
+                        print(table_line)
+                    try:
+                        constraints[schema][tbl]['constraint_df']['references']=np.where((constraints[schema][tbl]['constraint_df']['destination']==fieldname),refers_to,constraints[schema][tbl]['constraint_df']['references'])
+                    except:
+                        print(f"FAIL REFERENCES assign: constraints['{schema}']['{tbl}']")
+                        print(table_line)
+                if 'UNIQUE' in table_line:
+                    try:
+                        step1 = re.findall(r'UNIQUE.*?$', table_line)[0]
+                    except:
+                        print(f"FAIL UNIQUE parse step1: constraints['{schema}']['{tbl}']")
+                        print(table_line)
+                    try:
+                        step2 = re.findall(r'\(.*?\)',step1)[0]
+                        if step2.endswith(','):
+                            step2 = step2.rsplit(',',1)[0]
+                    except:
+                        print(f"FAIL UNIQUE parse step2: constraints['{schema}']['{tbl}']")
+                        print(table_line)
+                    try:
+                        step3 = step2.strip().replace('(','').replace(')','').strip().replace(' ','').replace('ASC','').replace('[','').replace(']','')
+                    except:
+                        print(f"FAIL UNIQUE parse step3: constraints['{schema}']['{tbl}']")
+                        print(table_line)
+                    try:
+                        xwalk_dict[schema][tbl]['unique_vals'].append(step3)
+                    except:
+                        print(f"FAIL UNIQUE append step3: constraints['{schema}']['{tbl}']")
+                        print(table_line)
+
+    return constraints,xwalk_dict

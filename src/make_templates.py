@@ -62,6 +62,7 @@ def make_birds(dest:str='') -> dict:
                 ,'source': pd.DataFrame() # source data
                 ,'destination': dest_dict[tbl] # destination data (mostly just for its column names and order)
                 ,'tbl_load': pd.DataFrame() # `source` data crosswalked to the destination schema
+                ,'unique_vals': [] # a list of zero or more lists of one-or-more fields that, when combined into a `dummy` variable, should be unique in the table
                 ,'pk_fk_lookup': pd.DataFrame() # a lookup table to crosswalk all key-fields: two columns from `tbl_load`: tbl_load.ID, tbl_load.rowid
                 ,'k_load': pd.DataFrame() # `source` data crosswalked to the destination schema with guid pf/fk relationships replaced by int pk/fk relationships
                 ,'payload_cols': [] # the columns to extract from `tbl_load` and load into `payload`
@@ -81,6 +82,7 @@ def make_birds(dest:str='') -> dict:
                 ,'source': pd.DataFrame(columns=dest_dict[tbl].columns) # source data
                 ,'destination': dest_dict[tbl] # destination data (mostly just for its column names and order)
                 ,'tbl_load': pd.DataFrame() # `source` data crosswalked to the destination schema
+                ,'unique_vals': [] # a list of zero or more lists of one-or-more fields that, when combined into a `dummy` variable, should be unique in the table
                 ,'pk_fk_lookup': pd.DataFrame() # a lookup table to crosswalk all key-fields: two columns from `tbl_load`: tbl_load.ID, tbl_load.rowid
                 ,'k_load': pd.DataFrame() # `source` data crosswalked to the destination schema with guid pf/fk relationships replaced by int pk/fk relationships
                 ,'payload_cols': [] # the columns to extract from `tbl_load` and load into `payload`
