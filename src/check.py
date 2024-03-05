@@ -29,13 +29,16 @@ def check_birds(xwalk_dict:dict) -> None:
     print('')
     print('Checking each table for required attributes...')
     # _validate_xwalks(xwalk_dict=xwalk_dict)
-    _check_blanks(xwalk_dict=xwalk_dict)
+    _check_attrs(xwalk_dict=xwalk_dict)
     print('')
     print('Checking the dimensions of each table...')
     _validate_loads(xwalk_dict=xwalk_dict)
     print('')
     print('Checking each table for unique values...')
     _validate_unique_vals(xwalk_dict=xwalk_dict)
+    print('')
+    print('Checking each table for nulls in non-nullable fields...')
+    _validate_nulls(xwalk_dict=xwalk_dict)
     print('')
 
     return None
@@ -249,6 +252,7 @@ def _validate_referential_integrity(xwalk_dict:dict) -> None:
     return None
 
 def _validate_unique_vals(xwalk_dict:dict) -> None:
+    """Check for duplicate values in required-unique fields"""
     loads_to_check:list = ['tbl_load','k_load']
     missing = {
     'counter':0
@@ -262,7 +266,6 @@ def _validate_unique_vals(xwalk_dict:dict) -> None:
                     for val in xwalk_dict[schema][tbl]['unique_vals']:
                         unique_vals =val.split(',')
                         unique_vals = [f"tmp['{x}'].astype(str).str.lower()" for x in unique_vals]
-                        # unique_vals = [f"tmp['{x}'].str.lower" for x in unique_vals]
                         unique_vals = '+'.join(unique_vals)
                         mycode = "tmp['dummy'] = " + unique_vals
                         try:
@@ -279,7 +282,8 @@ def _validate_unique_vals(xwalk_dict:dict) -> None:
         for v in missing['mylist']:
             print(f'    {v}')
     else:
-        print('SUCCESS: All required-unique fields contain only unique values in {loads_to_check}!')
+        for load in loads_to_check:
+            print(f'SUCCESS: All required-unique fields have only unique values in {load}!')
 
     return None
 
@@ -349,7 +353,7 @@ def _traverse(myd:dict, EXCLUSIONS:list) -> list:
 
     return mykeys
 
-def _check_blanks(xwalk_dict:dict) -> None:
+def _check_attrs(xwalk_dict:dict) -> None:
 
     mykeys = _traverse(xwalk_dict, EXCLUSIONS)
 
@@ -421,3 +425,35 @@ def _check_blanks(xwalk_dict:dict) -> None:
     #     print('SUCCESS: All tables have all required attributes!')
 
     return None
+
+def _validate_nulls(xwalk_dict:dict) -> None:
+    """Check for null values in non-nullable fields"""
+    loads_to_check:list = ['tbl_load','k_load']
+    missing = {
+    'counter':0
+    ,'mylist':[]
+    }
+    for schema in xwalk_dict.keys():
+        for tbl in xwalk_dict[schema].keys():
+            mask = (xwalk_dict[schema][tbl]['xwalk']['can_be_null']==False) & (xwalk_dict[schema][tbl]['xwalk']['calculation']!='blank_field')
+            non_nullables = xwalk_dict[schema][tbl]['xwalk'][mask].destination.unique()
+            for col in non_nullables:
+                for load in loads_to_check:
+                    if len(xwalk_dict[schema][tbl][load]) >0:
+                        tmp = xwalk_dict[schema][tbl][load][xwalk_dict[schema][tbl][load][col].isna()]
+                        if len(tmp) >0:
+                            missing['counter'] +=1
+                            missing['mylist'].append(f"birds['{schema}']['{tbl}']['{load}']['{col}']: {len(tmp)} NULLs")
+                    else:
+                        pass
+    # summarize output by table
+    if missing['counter'] >0:
+        print(f"WARNING: null values present in non-nullable fields in {missing['counter']} tables!")
+        for v in missing['mylist']:
+            print(f'    {v}')
+    else:
+        for load in loads_to_check:
+            print(f'SUCCESS: All non-nullable fields have values in {load}!')
+
+    return None
+
