@@ -261,7 +261,8 @@ def _validate_unique_vals(xwalk_dict:dict) -> None:
                     tmp = xwalk_dict[schema][tbl][load].copy()
                     for val in xwalk_dict[schema][tbl]['unique_vals']:
                         unique_vals =val.split(',')
-                        unique_vals = [f"tmp['{x}'].astype(str)" for x in unique_vals]
+                        unique_vals = [f"tmp['{x}'].astype(str).str.lower()" for x in unique_vals]
+                        # unique_vals = [f"tmp['{x}'].str.lower" for x in unique_vals]
                         unique_vals = '+'.join(unique_vals)
                         mycode = "tmp['dummy'] = " + unique_vals
                         try:
