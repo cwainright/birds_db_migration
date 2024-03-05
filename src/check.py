@@ -1,6 +1,9 @@
 import pandas as pd
+import assets.assets as assets
+import re
 
-EXCLUSIONS = ['tsql', 'payload'] # remove each element once we add modules to populate
+# EXCLUSIONS = ['tsql', 'payload'] # remove each element once we add modules to populate
+EXCLUSIONS = ['unique_vals'] # remove each element once we add modules to populate
 
 def check_birds(xwalk_dict:dict) -> None:
     """Validate a dictionary of birds data
@@ -21,6 +24,9 @@ def check_birds(xwalk_dict:dict) -> None:
     print('Checking each table for required attributes...')
     _validate_xwalks(xwalk_dict=xwalk_dict)
     _check_blanks(xwalk_dict=xwalk_dict)
+    print('')
+    print('Checking each table for unique values...')
+    _validate_unique_vals(xwalk_dict=xwalk_dict)
     print('')
 
     return None
@@ -229,6 +235,41 @@ def _validate_cols(xwalk_dict:dict, mykeys:list) -> None:
 
 def _validate_referential_integrity(xwalk_dict:dict) -> None:
     # TODO: check that the INT id for each GUID lines up among related tables
+    
+    return None
+
+def _validate_unique_vals(xwalk_dict:dict) -> None:
+    loads_to_check:list = ['tbl_load','k_load']
+    missing = {
+    'counter':0
+    ,'mylist':[]
+    }
+    for schema in xwalk_dict.keys():
+        for tbl in xwalk_dict[schema].keys():
+            if len(xwalk_dict[schema][tbl]['unique_vals']) > 0:
+                for load in loads_to_check:
+                    tmp = xwalk_dict[schema][tbl][load].copy()
+                    for val in xwalk_dict[schema][tbl]['unique_vals']:
+                        unique_vals =val.split(',')
+                        unique_vals = [f"tmp['{x}'].astype(str)" for x in unique_vals]
+                        unique_vals = '+'.join(unique_vals)
+                        mycode = "tmp['dummy'] = " + unique_vals
+                        try:
+                            exec(mycode)
+                        except:
+                            print(f'FAIL: {mycode}')
+                            print(f"FAIL: birds['{schema}']['{tbl}']['{load}']")
+                        if len(tmp.dummy.unique()) != len(tmp):
+                            missing['counter'] +=1
+                            missing['mylist'].append(f"birds['{schema}']['{tbl}']['{load}']: {mycode}")
+    # summarize output by table
+    if missing['counter'] >0:
+        print(f"WARNING: required-unique fields contain duplicate values in {missing['counter']} tables!")
+        for v in missing['mylist']:
+            print(f'    {v}')
+    else:
+        print('SUCCESS: All required-unique fields contain only unique values in {loads_to_check}!')
+
     return None
 
 def _validate_xwalks(xwalk_dict:dict) -> None:
