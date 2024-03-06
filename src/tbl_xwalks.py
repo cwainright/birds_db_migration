@@ -1765,6 +1765,29 @@ def _exception_ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
     xwalk_dict['ncrn']['DetectionEvent']['source'] = xwalk_dict['ncrn']['DetectionEvent']['source'].drop_duplicates('event_id')
     xwalk_dict['ncrn']['DetectionEvent']['source'].reset_index(drop=True, inplace=True)
 
+    # EXCEPTION 7: "ghost" events that field crews tried to delete
+    deletes = [
+        '{07F0317A-DFF8-4452-A05C-CAD6DA2F3093}'
+        ,'{3C6B6DCC-EEB1-4B44-A741-28419325A3E4}'
+        ,'{007E84F5-1C4B-43DB-953C-244E682C052D}'
+        ,'{E156714A-CBB4-4F7D-B5B6-4B16098B6A9F}'
+        ,'{841030D9-D6BD-4EF7-83A3-419B8BE4AB78}'
+        ,'{AF43C76D-5DD8-4B68-8F86-528DC5FA6AEB}'
+        ,'{C46FAC54-D688-4067-9EDB-10118134A713}'
+        ,'{075B51AF-FDC0-4C4E-A113-79A5E55198AC}'
+        ,'{31A066F2-16F6-4692-A405-FAB41A8B3E98}'
+        ,'{3B0E94BB-EC6F-4E26-B526-91655C4B708E}'
+        ,'{4D7E0DC5-C916-42BC-96BF-A6F4E3EF4173}'
+        ,'{58FBF328-CAA9-4161-88CC-3D841D3F22E8}'
+        ,'{5B76A83E-2FD1-429E-9BEC-0301105D9894}'
+        ,'{7F9DC4B7-9DFA-4255-98D8-2C73ABE3E38C}'
+        ,'{5ECB448A-A52C-4355-AF7D-3BE48A17485C}'
+        ,'{CF4AA70E-5D15-42F7-81DA-2E006A7297AC}'
+        ,'{D891963E-1DA3-486A-9C7E-1BB56A6DEA8F}'
+        ,'{DE978845-837A-444C-9979-A227A3917B89}'
+    ]
+    xwalk_dict['ncrn']['DetectionEvent']['source'] = xwalk_dict['ncrn']['DetectionEvent']['source'][xwalk_dict['ncrn']['DetectionEvent']['source']['event_id'].isin(deletes)==False]
+
     return xwalk_dict
 
 def _exception_ncrn_BirdSpecies(xwalk_dict:dict) -> dict:
@@ -2892,6 +2915,29 @@ def _exception_ncrn_BirdDetection(xwalk_dict:dict) -> dict:
 
     xwalk_dict['ncrn']['BirdDetection']['source'] = pd.concat([xwalk_dict['ncrn']['BirdDetection']['source'], df])
     xwalk_dict['ncrn']['BirdDetection']['source'].reset_index(drop=True, inplace=True)
+
+    deletes = [
+    '{07F0317A-DFF8-4452-A05C-CAD6DA2F3093}'
+    ,'{3C6B6DCC-EEB1-4B44-A741-28419325A3E4}'
+    ,'{007E84F5-1C4B-43DB-953C-244E682C052D}'
+    ,'{E156714A-CBB4-4F7D-B5B6-4B16098B6A9F}'
+    ,'{841030D9-D6BD-4EF7-83A3-419B8BE4AB78}'
+    ,'{AF43C76D-5DD8-4B68-8F86-528DC5FA6AEB}'
+    ,'{C46FAC54-D688-4067-9EDB-10118134A713}'
+    ,'{075B51AF-FDC0-4C4E-A113-79A5E55198AC}'
+    ,'{31A066F2-16F6-4692-A405-FAB41A8B3E98}'
+    ,'{3B0E94BB-EC6F-4E26-B526-91655C4B708E}'
+    ,'{4D7E0DC5-C916-42BC-96BF-A6F4E3EF4173}'
+    ,'{58FBF328-CAA9-4161-88CC-3D841D3F22E8}'
+    ,'{5B76A83E-2FD1-429E-9BEC-0301105D9894}'
+    ,'{7F9DC4B7-9DFA-4255-98D8-2C73ABE3E38C}'
+    ,'{5ECB448A-A52C-4355-AF7D-3BE48A17485C}'
+    ,'{CF4AA70E-5D15-42F7-81DA-2E006A7297AC}'
+    ,'{D891963E-1DA3-486A-9C7E-1BB56A6DEA8F}'
+    ,'{DE978845-837A-444C-9979-A227A3917B89}'
+    ]
+
+    xwalk_dict['ncrn']['BirdDetection']['source'] = xwalk_dict['ncrn']['BirdDetection']['source'][xwalk_dict['ncrn']['BirdDetection']['source']['Event_ID'].isin(deletes)==False]
 
     return xwalk_dict
 
