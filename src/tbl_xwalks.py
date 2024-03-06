@@ -3100,9 +3100,34 @@ def _table_sql_constraints(constraints:dict, xwalk_dict:dict) -> tuple:
                         print(f"FAIL FK assign: constraints['{schema}']['{tbl}']")
                         print(table_line)
                     try:
-                        refers_to = '.'.join(re.findall(r'\[.*?\]', re.findall(r'REFERENCES.*?$', table_line)[0].replace('REFERENCES','').strip().rsplit(',',1)[0])).replace('[','').replace(']','')
-                        if refers_to == 'Role.ID':
-                            refers_to = 'dbo.' + refers_to # original SQL left 'dbo' out of foreign key reference and that inconsistency msses up downstream logic: FOREIGN KEY ([RoleID]) REFERENCES [Role]([ID])
+                        step1 = re.findall(r'REFERENCES.*?\)', table_line)[0]
+                        if step1.endswith(','):
+                            step1 = step1.rsplit(',',1)[0]
+                        step1 = step1.split('REFERENCES',1)[-1].strip().replace('[','').replace(']','').replace(' ','')
+                        step2 = step1.split('.')
+                        if len(step2) <3:
+                            for i in range(len(step2)):
+                                if '(' in step2[i]:
+                                    w = step2[i].split('(')
+                                    step2.pop(i)
+                                    for x in w:
+                                        step2.append(x.replace(')',''))
+                        if len(step2) == 2 and step2[0]=='Role' and step2[1]=='ID':
+                            tmp = ['dbo']
+                            for x in step2:
+                                tmp.append(x)
+                            step2 = tmp
+                            refers_to = '.'.join(step2)
+                        elif len(step2) == 2 and step2[0]=='User' and step2[1]=='ID':
+                            tmp = ['dbo']
+                            for x in step2:
+                                tmp.append(x)
+                            step2 = tmp
+                            refers_to = '.'.join(step2)
+                        elif len(step2) <3:
+                            print(f"FAIL REFERENCES EXTRACT: constraints['{schema}']['{tbl}']")
+                        else:
+                            refers_to = '.'.join(step2)
                     except:
                         print(f"FAIL REFERENCES EXTRACT: constraints['{schema}']['{tbl}']")
                         print(table_line)
