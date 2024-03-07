@@ -31,6 +31,7 @@ warnings.simplefilter(action='ignore', category=UserWarning)
 import re
 
 TBL_XWALK = assets.TBL_XWALK
+deletes = assets.DELETES
 
 def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
     """Make the crosswalk for source.tbl_Events to destination.ncrn.DetectionEvent
@@ -1643,7 +1644,7 @@ def _lu_Habitat(xwalk_dict:dict) -> dict:
     return xwalk_dict
 
 
-def _exception_ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
+def _exception_ncrn_DetectionEvent(xwalk_dict:dict, deletes:list) -> dict:
     """Exceptions associated with the generation of destination table ncrn.DetectionEvent"""
 
     #  EXCEPTION 1: exceptions from storing observers/recorders in long-format instead of wide-format
@@ -1762,35 +1763,9 @@ def _exception_ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
     del xwalk_dict['ncrn']['DetectionEvent']['source']['source_val']
     del xwalk_dict['ncrn']['DetectionEvent']['source']['target_val']
 
-    xwalk_dict['ncrn']['DetectionEvent']['source'] = xwalk_dict['ncrn']['DetectionEvent']['source'].drop_duplicates('event_id')
-
     # EXCEPTION 7: remove "ghost" events that field crews tried to delete and duplicate events
-    deletes = [ # ghost events
-        '{07F0317A-DFF8-4452-A05C-CAD6DA2F3093}'
-        ,'{3C6B6DCC-EEB1-4B44-A741-28419325A3E4}'
-        ,'{007E84F5-1C4B-43DB-953C-244E682C052D}'
-        ,'{E156714A-CBB4-4F7D-B5B6-4B16098B6A9F}'
-        ,'{841030D9-D6BD-4EF7-83A3-419B8BE4AB78}'
-        ,'{AF43C76D-5DD8-4B68-8F86-528DC5FA6AEB}'
-        ,'{C46FAC54-D688-4067-9EDB-10118134A713}'
-        ,'{075B51AF-FDC0-4C4E-A113-79A5E55198AC}'
-        ,'{31A066F2-16F6-4692-A405-FAB41A8B3E98}'
-        ,'{3B0E94BB-EC6F-4E26-B526-91655C4B708E}'
-        ,'{4D7E0DC5-C916-42BC-96BF-A6F4E3EF4173}'
-        ,'{58FBF328-CAA9-4161-88CC-3D841D3F22E8}'
-        ,'{5B76A83E-2FD1-429E-9BEC-0301105D9894}'
-        ,'{7F9DC4B7-9DFA-4255-98D8-2C73ABE3E38C}'
-        ,'{5ECB448A-A52C-4355-AF7D-3BE48A17485C}'
-        ,'{CF4AA70E-5D15-42F7-81DA-2E006A7297AC}'
-        ,'{D891963E-1DA3-486A-9C7E-1BB56A6DEA8F}'
-        ,'{DE978845-837A-444C-9979-A227A3917B89}'
-    ]
-
-    dupes = _find_dupe_site_visits(xwalk_dict)
-    for x in dupes['delete']:
-        deletes.append(x)
     xwalk_dict['ncrn']['DetectionEvent']['source'] = xwalk_dict['ncrn']['DetectionEvent']['source'][xwalk_dict['ncrn']['DetectionEvent']['source']['event_id'].isin(deletes)==False]
-
+    xwalk_dict['ncrn']['DetectionEvent']['source'] = xwalk_dict['ncrn']['DetectionEvent']['source'].drop_duplicates('event_id')
     xwalk_dict['ncrn']['DetectionEvent']['source'].reset_index(drop=True, inplace=True)
     
     return xwalk_dict
@@ -2908,7 +2883,7 @@ def _exception_ncrn_Location(xwalk_dict:dict) -> dict:
 
     return xwalk_dict
 
-def _exception_ncrn_BirdDetection(xwalk_dict:dict) -> dict:
+def _exception_ncrn_BirdDetection(xwalk_dict:dict, deletes:list) -> dict:
     """Clean up source.tbl_Field_Data
 
     1. Add additional rows from second source.tbl_Field_Data to ncrn.BirdDetection
@@ -2920,32 +2895,7 @@ def _exception_ncrn_BirdDetection(xwalk_dict:dict) -> dict:
 
     xwalk_dict['ncrn']['BirdDetection']['source'] = pd.concat([xwalk_dict['ncrn']['BirdDetection']['source'], df])
 
-    deletes = [ # ghost events
-        '{07F0317A-DFF8-4452-A05C-CAD6DA2F3093}'
-        ,'{3C6B6DCC-EEB1-4B44-A741-28419325A3E4}'
-        ,'{007E84F5-1C4B-43DB-953C-244E682C052D}'
-        ,'{E156714A-CBB4-4F7D-B5B6-4B16098B6A9F}'
-        ,'{841030D9-D6BD-4EF7-83A3-419B8BE4AB78}'
-        ,'{AF43C76D-5DD8-4B68-8F86-528DC5FA6AEB}'
-        ,'{C46FAC54-D688-4067-9EDB-10118134A713}'
-        ,'{075B51AF-FDC0-4C4E-A113-79A5E55198AC}'
-        ,'{31A066F2-16F6-4692-A405-FAB41A8B3E98}'
-        ,'{3B0E94BB-EC6F-4E26-B526-91655C4B708E}'
-        ,'{4D7E0DC5-C916-42BC-96BF-A6F4E3EF4173}'
-        ,'{58FBF328-CAA9-4161-88CC-3D841D3F22E8}'
-        ,'{5B76A83E-2FD1-429E-9BEC-0301105D9894}'
-        ,'{7F9DC4B7-9DFA-4255-98D8-2C73ABE3E38C}'
-        ,'{5ECB448A-A52C-4355-AF7D-3BE48A17485C}'
-        ,'{CF4AA70E-5D15-42F7-81DA-2E006A7297AC}'
-        ,'{D891963E-1DA3-486A-9C7E-1BB56A6DEA8F}'
-        ,'{DE978845-837A-444C-9979-A227A3917B89}'
-    ]
-
-    dupes = _find_dupe_site_visits(xwalk_dict)
-    for x in dupes['delete']:
-        deletes.append(x)
     xwalk_dict['ncrn']['BirdDetection']['source'] = xwalk_dict['ncrn']['BirdDetection']['source'][xwalk_dict['ncrn']['BirdDetection']['source']['Event_ID'].isin(deletes)==False]
-
     xwalk_dict['ncrn']['BirdDetection']['source'].reset_index(drop=True, inplace=True)
     return xwalk_dict
 
@@ -3224,6 +3174,40 @@ def _find_dupe_site_visits(xwalk_dict:dict) -> dict:
     This aligns with sql:
     CONSTRAINT [UniqueLocationDate] UNIQUE NONCLUSTERED ([LocationID] ASC, [StartDateTime] ASC, [ProtocolID] ASC)
     """
+    # DetectionEvent = xwalk_dict['ncrn']['DetectionEvent']['source'].copy()
+    # BirdDetection = xwalk_dict['ncrn']['BirdDetection']['source'].copy()
+    # DetectionEvent['dummy'] = DetectionEvent['location_id'].astype(str)+DetectionEvent['Date'].astype(str)+DetectionEvent['protocol_id'].astype(str)
+    # DetectionEvent = DetectionEvent[['event_id','dummy']]
+    # BirdDetection = BirdDetection[['Event_ID']]
+
+    # tmp =DetectionEvent.groupby(['dummy']).size().reset_index(name='count').sort_values(['count'], ascending=True)
+    # tmp = tmp[tmp['count']>1]
+    # lookup = DetectionEvent[DetectionEvent['dummy'].isin(tmp.dummy.unique())]
+    # BirdDetection = BirdDetection[BirdDetection['Event_ID'].isin(lookup.event_id.unique())]
+    # BirdDetection = BirdDetection.merge(lookup, left_on='Event_ID', right_on='event_id')[['Event_ID','dummy']]
+
+    # len(BirdDetection.dummy.unique())
+    # len(lookup.dummy.unique())
+
+    # outcomes = {
+    #     'delete':[]
+    #     ,'review':{}
+    # }
+    # for d in BirdDetection.dummy.unique():
+    #     mysub = BirdDetection[BirdDetection['dummy']==d]
+    #     visits = list(mysub.Event_ID.unique())
+    #     n_visits = len(mysub.Event_ID.unique())
+    #     if n_visits == 1:
+    #         del_this = list(lookup[lookup['dummy']==d].event_id.unique())
+    #         del_this = [x for x in del_this if x not in visits]
+    #         for y in del_this:
+    #             outcomes['delete'].append(y)
+    #     elif n_visits >1:
+    #         outcomes['review'][d] = {
+    #             'counter': n_visits
+    #             ,'DetectionEventID':visits
+    #         }
+
     DetectionEvent = xwalk_dict['ncrn']['DetectionEvent']['source'].copy()
     BirdDetection = xwalk_dict['ncrn']['BirdDetection']['source'].copy()
     DetectionEvent['dummy'] = DetectionEvent['location_id'].astype(str)+DetectionEvent['Date'].astype(str)+DetectionEvent['protocol_id'].astype(str)
@@ -3239,6 +3223,7 @@ def _find_dupe_site_visits(xwalk_dict:dict) -> dict:
     len(BirdDetection.dummy.unique())
     len(lookup.dummy.unique())
 
+    counter=0
     outcomes = {
         'delete':[]
         ,'review':{}
@@ -3248,14 +3233,81 @@ def _find_dupe_site_visits(xwalk_dict:dict) -> dict:
         visits = list(mysub.Event_ID.unique())
         n_visits = len(mysub.Event_ID.unique())
         if n_visits == 1:
+            # go find the other event id
             del_this = list(lookup[lookup['dummy']==d].event_id.unique())
             del_this = [x for x in del_this if x not in visits]
             for y in del_this:
                 outcomes['delete'].append(y)
         elif n_visits >1:
+            counter+=1
             outcomes['review'][d] = {
                 'counter': n_visits
                 ,'DetectionEventID':visits
             }
 
-    return outcomes
+
+
+    DetectionEvent = xwalk_dict['ncrn']['DetectionEvent']['source'].copy()
+    BirdDetection = xwalk_dict['ncrn']['BirdDetection']['source'].copy()
+    DetectionEvent['dummy'] = DetectionEvent['location_id'].astype(str)+DetectionEvent['Date'].astype(str)+DetectionEvent['protocol_id'].astype(str)
+    DetectionEvent = DetectionEvent[['event_id','dummy']]
+    BirdDetection = BirdDetection[['Event_ID','AOU_Code']]
+
+    tmp =DetectionEvent.groupby(['dummy']).size().reset_index(name='count').sort_values(['count'], ascending=True)
+    tmp = tmp[tmp['count']>1]
+    lookup = DetectionEvent[DetectionEvent['dummy'].isin(tmp.dummy.unique())]
+    BirdDetection = BirdDetection[BirdDetection['Event_ID'].isin(lookup.event_id.unique())]
+    BirdDetection = BirdDetection.merge(lookup, left_on='Event_ID', right_on='event_id')[['Event_ID','AOU_Code','dummy']]
+
+    lookup = lookup[lookup['event_id'].isin(outcomes['delete'])==False]
+    BirdDetection = BirdDetection[BirdDetection['Event_ID'].isin(outcomes['delete'])==False]
+    DetectionEvent = DetectionEvent[(DetectionEvent['event_id'].isin(outcomes['delete'])==False)&(DetectionEvent['dummy'].isin(lookup['dummy']))]
+
+    # len(outcomes['review'].keys())
+    # len(outcomes['delete'])
+    assert len(DetectionEvent.dummy.unique())==len(lookup.dummy.unique()), print("FAIL: _find_dupe_site_visits()")
+    outcomes_backup = outcomes.copy()
+    try:
+        # for dummy in lookup.dummy.unique():
+        #     n_records = []
+        #     n_unique_sp = []
+        #     species = []
+        #     dummy_subset = BirdDetection[BirdDetection['dummy']==dummy]
+        #     for visit in dummy_subset.Event_ID.unique():
+        #         visit_subset = dummy_subset[dummy_subset['Event_ID']==visit]
+        #         n_row = len(visit_subset) # how many rows are in the `visit`?
+        #         n_sp = len(visit_subset.AOU_Code.unique()) # how many unique species are in the `visit`?
+        #         sp = visit_subset.AOU_Code.values.tolist() # how many of each species were observed in the `visit`?
+        #         sp.sort()
+        #         n_records.append(n_row)
+        #         n_unique_sp.append(n_sp)
+        #         species.append(sp)
+        #     n_records = set(n_records)
+        #     n_unique_sp = set(n_unique_sp)
+        #     species = set(tuple(i) for i in species)
+        #     # print(dummy)
+        #     # print(n_records)
+        #     # print(n_unique_sp)
+        #     # print(species)
+        #     if len(n_records) == 1 and len(n_unique_sp) == 1 and len(species) == 1:
+        #         try:
+        #             delete = outcomes['review'][dummy]['DetectionEventID'][1:]
+        #             for d in delete:
+        #                 outcomes['delete'].append(d)
+        #             outcomes['review'].pop(dummy)
+        #         except:
+        #             print(f"FAIL: _find_dupe_site_visits(): {dummy}")
+        #             print(dummy in outcomes['review'].keys())
+        return outcomes
+    except:
+        print('warning: returned `outcome_backup')
+        return outcomes_backup
+
+
+def _concat_deletes(xwalk_dict:dict, deletes:list=assets.DELETES) -> list:
+    xwalk_dict = _find_dupe_site_visits(xwalk_dict)
+    dupes = _find_dupe_site_visits(xwalk_dict)
+    for x in dupes['delete']:
+        deletes.append(x)
+
+    return deletes
