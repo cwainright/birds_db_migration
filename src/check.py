@@ -1,6 +1,7 @@
 import pandas as pd
 import assets.assets as assets
 import re
+import src.tbl_xwalks as tx
 
 EXCLUSIONS = ['unique_vals'] # 'unique_vals` is empty when the table does not enforce unique values in any field; this can happen in reality so we ignore here
 KNOWN_EMPTY = {
@@ -323,6 +324,10 @@ def _validate_unique_vals(xwalk_dict:dict) -> None:
         print(f"WARNING: required-unique fields contain duplicate values! (n): {missing['counter']}")
         for v in missing['mylist']:
             print(f'    {v}')
+            if v == "birds['ncrn']['DetectionEvent']['tbl_load']: tmp['dummy'] = tmp['LocationID'].astype(str).str.lower()+tmp['StartDateTime'].astype(str).str.lower()+tmp['ProtocolID'].astype(str).str.lower()":
+                outcomes = tx._find_dupe_site_visits(xwalk_dict)
+                for k in outcomes['review'].keys():
+                    print(f"        DUPLICATE EVENT: {outcomes['review'][k]}")
     else:
         for load in loads_to_check:
             print(f'SUCCESS: All required-unique fields have only unique values in {load}!')
