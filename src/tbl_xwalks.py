@@ -1699,6 +1699,8 @@ def _exception_ncrn_DetectionEvent(xwalk_dict:dict, deletes:list) -> dict:
     df = dbc._exec_qry(con=con, qry=f'get_c_{tbl}')
     con.close()
     xwalk_dict['ncrn']['DetectionEvent']['source'] = pd.concat([xwalk_dict['ncrn']['DetectionEvent']['source'], df])
+    mask = (xwalk_dict['ncrn']['DetectionEvent']['source']['Date'].isna()) & (xwalk_dict['ncrn']['DetectionEvent']['source'].activity_start_datetime.isna()==False)
+    xwalk_dict['ncrn']['DetectionEvent']['source']['Date'] = np.where(mask, xwalk_dict['ncrn']['DetectionEvent']['source'].activity_start_datetime.dt.date, xwalk_dict['ncrn']['DetectionEvent']['source']['Date'])
     
     # EXCEPTION 4: make lookup table for `entered_by`
     # ncrn.DetectionEvent.EnteredBy is VARCHAR (100), not a pk-fk relationship, so we need to look the names up from source.tbl_Contacts and replace their guids
@@ -1767,7 +1769,7 @@ def _exception_ncrn_DetectionEvent(xwalk_dict:dict, deletes:list) -> dict:
     xwalk_dict['ncrn']['DetectionEvent']['source'] = xwalk_dict['ncrn']['DetectionEvent']['source'][xwalk_dict['ncrn']['DetectionEvent']['source']['event_id'].isin(deletes)==False]
     xwalk_dict['ncrn']['DetectionEvent']['source'] = xwalk_dict['ncrn']['DetectionEvent']['source'].drop_duplicates('event_id')
     xwalk_dict['ncrn']['DetectionEvent']['source'].reset_index(drop=True, inplace=True)
-    
+
     return xwalk_dict
 
 def _exception_ncrn_BirdSpecies(xwalk_dict:dict) -> dict:
@@ -3178,6 +3180,7 @@ def _find_dupe_site_visits(xwalk_dict:dict) -> dict:
     DetectionEvent = xwalk_dict['ncrn']['DetectionEvent']['source'].copy()
     BirdDetection = xwalk_dict['ncrn']['BirdDetection']['source'].copy()
     DetectionEvent['dummy'] = DetectionEvent['location_id'].astype(str)+DetectionEvent['Date'].astype(str)+DetectionEvent['protocol_id'].astype(str)
+    # DetectionEvent['dummy'] = DetectionEvent['location_id'].astype(str)+DetectionEvent['activity_start_datetime'].dt.date.astype(str)+DetectionEvent['protocol_id'].astype(str)
     DetectionEvent = DetectionEvent[['event_id','dummy']]
     BirdDetection = BirdDetection[['Event_ID']]
 
@@ -3221,6 +3224,7 @@ def _find_dupe_site_visits(xwalk_dict:dict) -> dict:
     DetectionEvent = DetectionEvent[DetectionEvent['event_id'].isin(outcomes['delete'])==False] # update original dataset to "look like" we already deleted the `delete`s identified in step 1, so we are reviewing the dataset at the correct "stage"
     BirdDetection = BirdDetection[BirdDetection['Event_ID'].isin(outcomes['delete'])==False] # update original dataset to "look like" we already deleted the `delete`s identified in step 1, so we are reviewing the dataset at the correct "stage"
     DetectionEvent['dummy'] = DetectionEvent['location_id'].astype(str)+DetectionEvent['Date'].astype(str)+DetectionEvent['protocol_id'].astype(str)
+    # DetectionEvent['dummy'] = DetectionEvent['location_id'].astype(str)+DetectionEvent['activity_start_datetime'].dt.date.astype(str)+DetectionEvent['protocol_id'].astype(str)
     DetectionEvent = DetectionEvent[['event_id','dummy']]
     BirdDetection = BirdDetection[['Event_ID','AOU_Code']]
 
