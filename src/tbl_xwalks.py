@@ -3174,39 +3174,6 @@ def _find_dupe_site_visits(xwalk_dict:dict) -> dict:
     This aligns with sql:
     CONSTRAINT [UniqueLocationDate] UNIQUE NONCLUSTERED ([LocationID] ASC, [StartDateTime] ASC, [ProtocolID] ASC)
     """
-    # DetectionEvent = xwalk_dict['ncrn']['DetectionEvent']['source'].copy()
-    # BirdDetection = xwalk_dict['ncrn']['BirdDetection']['source'].copy()
-    # DetectionEvent['dummy'] = DetectionEvent['location_id'].astype(str)+DetectionEvent['Date'].astype(str)+DetectionEvent['protocol_id'].astype(str)
-    # DetectionEvent = DetectionEvent[['event_id','dummy']]
-    # BirdDetection = BirdDetection[['Event_ID']]
-
-    # tmp =DetectionEvent.groupby(['dummy']).size().reset_index(name='count').sort_values(['count'], ascending=True)
-    # tmp = tmp[tmp['count']>1]
-    # lookup = DetectionEvent[DetectionEvent['dummy'].isin(tmp.dummy.unique())]
-    # BirdDetection = BirdDetection[BirdDetection['Event_ID'].isin(lookup.event_id.unique())]
-    # BirdDetection = BirdDetection.merge(lookup, left_on='Event_ID', right_on='event_id')[['Event_ID','dummy']]
-
-    # len(BirdDetection.dummy.unique())
-    # len(lookup.dummy.unique())
-
-    # outcomes = {
-    #     'delete':[]
-    #     ,'review':{}
-    # }
-    # for d in BirdDetection.dummy.unique():
-    #     mysub = BirdDetection[BirdDetection['dummy']==d]
-    #     visits = list(mysub.Event_ID.unique())
-    #     n_visits = len(mysub.Event_ID.unique())
-    #     if n_visits == 1:
-    #         del_this = list(lookup[lookup['dummy']==d].event_id.unique())
-    #         del_this = [x for x in del_this if x not in visits]
-    #         for y in del_this:
-    #             outcomes['delete'].append(y)
-    #     elif n_visits >1:
-    #         outcomes['review'][d] = {
-    #             'counter': n_visits
-    #             ,'DetectionEventID':visits
-    #         }
 
     DetectionEvent = xwalk_dict['ncrn']['DetectionEvent']['source'].copy()
     BirdDetection = xwalk_dict['ncrn']['BirdDetection']['source'].copy()
@@ -3216,45 +3183,50 @@ def _find_dupe_site_visits(xwalk_dict:dict) -> dict:
 
     tmp =DetectionEvent.groupby(['dummy']).size().reset_index(name='count').sort_values(['count'], ascending=True)
     tmp = tmp[tmp['count']>1]
+    ghosts = ['NoneNaT2','NoneNaT1']
+    tmp = tmp[tmp['dummy'].isin(ghosts)==False]
     lookup = DetectionEvent[DetectionEvent['dummy'].isin(tmp.dummy.unique())]
     BirdDetection = BirdDetection[BirdDetection['Event_ID'].isin(lookup.event_id.unique())]
     BirdDetection = BirdDetection.merge(lookup, left_on='Event_ID', right_on='event_id')[['Event_ID','dummy']]
-
-    len(BirdDetection.dummy.unique())
-    len(lookup.dummy.unique())
 
     counter=0
     outcomes = {
         'delete':[]
         ,'review':{}
     }
+    # CASE 1: one `DetectionEvent.dummy` has >1 `DetectionEvent.Event_ID` but we CAN determine which `DetectionEvent.Event_ID` to keep based on whether the `DetectionEvent.Event_ID` was present as a `BirdDetection.Event_ID`
     for d in BirdDetection.dummy.unique():
         mysub = BirdDetection[BirdDetection['dummy']==d]
         visits = list(mysub.Event_ID.unique())
         n_visits = len(mysub.Event_ID.unique())
-        if n_visits == 1:
-            # go find the other event id
+        if n_visits == 0: # if a dummy has >1 Event_ID and none of the Event_IDs recorded any bird detections, it doesn't matter which Event_ID we keep, so delete all but the [0]th
+            del_this = list(lookup[lookup['dummy']==d].event_id.unique())
+            del_this = del_this[1:]
+            for y in del_this:
+                outcomes['delete'].append(y)
+        elif n_visits == 1: # if a dummy has >1 Event_ID and only one of the Event_IDs recorded any bird detections, keep the Event_ID that logged birds and delete all others
             del_this = list(lookup[lookup['dummy']==d].event_id.unique())
             del_this = [x for x in del_this if x not in visits]
             for y in del_this:
                 outcomes['delete'].append(y)
-        elif n_visits >1:
+        elif n_visits >1: # if a dummy has >1 Event_ID and each of the Event_IDs recorded bird detections, store for processing in CASE 2
             counter+=1
             outcomes['review'][d] = {
                 'counter': n_visits
                 ,'DetectionEventID':visits
             }
 
-
-
     DetectionEvent = xwalk_dict['ncrn']['DetectionEvent']['source'].copy()
     BirdDetection = xwalk_dict['ncrn']['BirdDetection']['source'].copy()
+    DetectionEvent = DetectionEvent[DetectionEvent['event_id'].isin(outcomes['delete'])==False] # update original dataset to "look like" we already deleted the `delete`s identified in step 1, so we are reviewing the dataset at the correct "stage"
+    BirdDetection = BirdDetection[BirdDetection['Event_ID'].isin(outcomes['delete'])==False] # update original dataset to "look like" we already deleted the `delete`s identified in step 1, so we are reviewing the dataset at the correct "stage"
     DetectionEvent['dummy'] = DetectionEvent['location_id'].astype(str)+DetectionEvent['Date'].astype(str)+DetectionEvent['protocol_id'].astype(str)
     DetectionEvent = DetectionEvent[['event_id','dummy']]
     BirdDetection = BirdDetection[['Event_ID','AOU_Code']]
 
     tmp =DetectionEvent.groupby(['dummy']).size().reset_index(name='count').sort_values(['count'], ascending=True)
     tmp = tmp[tmp['count']>1]
+    tmp = tmp[tmp['dummy'].isin(ghosts)==False]
     lookup = DetectionEvent[DetectionEvent['dummy'].isin(tmp.dummy.unique())]
     BirdDetection = BirdDetection[BirdDetection['Event_ID'].isin(lookup.event_id.unique())]
     BirdDetection = BirdDetection.merge(lookup, left_on='Event_ID', right_on='event_id')[['Event_ID','AOU_Code','dummy']]
@@ -3263,50 +3235,40 @@ def _find_dupe_site_visits(xwalk_dict:dict) -> dict:
     BirdDetection = BirdDetection[BirdDetection['Event_ID'].isin(outcomes['delete'])==False]
     DetectionEvent = DetectionEvent[(DetectionEvent['event_id'].isin(outcomes['delete'])==False)&(DetectionEvent['dummy'].isin(lookup['dummy']))]
 
-    # len(outcomes['review'].keys())
-    # len(outcomes['delete'])
-    assert len(DetectionEvent.dummy.unique())==len(lookup.dummy.unique()), print("FAIL: _find_dupe_site_visits()")
-    outcomes_backup = outcomes.copy()
-    try:
-        # for dummy in lookup.dummy.unique():
-        #     n_records = []
-        #     n_unique_sp = []
-        #     species = []
-        #     dummy_subset = BirdDetection[BirdDetection['dummy']==dummy]
-        #     for visit in dummy_subset.Event_ID.unique():
-        #         visit_subset = dummy_subset[dummy_subset['Event_ID']==visit]
-        #         n_row = len(visit_subset) # how many rows are in the `visit`?
-        #         n_sp = len(visit_subset.AOU_Code.unique()) # how many unique species are in the `visit`?
-        #         sp = visit_subset.AOU_Code.values.tolist() # how many of each species were observed in the `visit`?
-        #         sp.sort()
-        #         n_records.append(n_row)
-        #         n_unique_sp.append(n_sp)
-        #         species.append(sp)
-        #     n_records = set(n_records)
-        #     n_unique_sp = set(n_unique_sp)
-        #     species = set(tuple(i) for i in species)
-        #     # print(dummy)
-        #     # print(n_records)
-        #     # print(n_unique_sp)
-        #     # print(species)
-        #     if len(n_records) == 1 and len(n_unique_sp) == 1 and len(species) == 1:
-        #         try:
-        #             delete = outcomes['review'][dummy]['DetectionEventID'][1:]
-        #             for d in delete:
-        #                 outcomes['delete'].append(d)
-        #             outcomes['review'].pop(dummy)
-        #         except:
-        #             print(f"FAIL: _find_dupe_site_visits(): {dummy}")
-        #             print(dummy in outcomes['review'].keys())
-        return outcomes
-    except:
-        print('warning: returned `outcome_backup')
-        return outcomes_backup
+    # CASE 2: one `DetectionEvent.dummy` has >1 `DetectionEvent.Event_ID` but we CANNOT determine which `DetectionEvent.Event_ID` to keep based on whether the `DetectionEvent.Event_ID` was present as a `BirdDetection.Event_ID`
+    # If we can't determine which `DetectionEvent.Event_ID` to keep based on its presence/absence as a `BirdDetection.Event_ID`, subset `BirdDetection` by each `Event_ID` and compare
+    # If the subsets are identical, it doesn't matter which `Event_ID` we keep, so just keep the [0]th
+    # if the subsets are different, we have no choice but review the paper datasheet
+    for dummy in BirdDetection.dummy.unique():
+        n_records = []
+        n_unique_sp = []
+        species = []
+        dummy_subset = BirdDetection[BirdDetection['dummy']==dummy]
+        for visit in dummy_subset.Event_ID.unique():
+            visit_subset = dummy_subset[dummy_subset['Event_ID']==visit]
+            n_row = len(visit_subset) # how many rows are in the `visit`?
+            n_sp = len(visit_subset.AOU_Code.unique()) # how many unique species are in the `visit`?
+            sp = visit_subset.AOU_Code.values.tolist() # how many of each species were observed in the `visit`?
+            sp.sort()
+            n_records.append(n_row)
+            n_unique_sp.append(n_sp)
+            species.append(sp)
+        n_records = set(n_records)
+        n_unique_sp = set(n_unique_sp)
+        species = set(tuple(i) for i in species)
+        if len(n_records) == 1 and len(n_unique_sp) == 1 and len(species) == 1: # if these are all == 1, we know the subsets are identical so we just keep the [0]th `Event_ID`
+            delete = outcomes['review'][dummy]['DetectionEventID'][1:]
+            for d in delete:
+                outcomes['delete'].append(d)
+            outcomes['review'].pop(dummy)
+        else: # if any of the above != 1, we know the subsets are different, so we leave the `dummy` and its associated `Event_ID`s in the 'review' category
+            pass
+    
+    return outcomes
 
-
-def _concat_deletes(xwalk_dict:dict, deletes:list=assets.DELETES) -> list:
-    xwalk_dict = _find_dupe_site_visits(xwalk_dict)
+def _concat_deletes(xwalk_dict:dict, ghosts:list=assets.DELETES) -> list:
     dupes = _find_dupe_site_visits(xwalk_dict)
+    deletes = ghosts.copy()
     for x in dupes['delete']:
         deletes.append(x)
 

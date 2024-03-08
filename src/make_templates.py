@@ -180,9 +180,9 @@ def _create_xwalks(xwalk_dict:dict) -> dict:
 
 def _execute_xwalk_exceptions(xwalk_dict:dict) -> dict:
     # tables that require the creation of one-or-more temp tables (e.g., CTE, execution of additional queries, or generation of lookups)
-    # deletes = tx._concat_deletes(xwalk_dict)
-    xwalk_dict = tx._exception_ncrn_DetectionEvent(xwalk_dict, assets.DELETES)
-    xwalk_dict = tx._exception_ncrn_BirdDetection(xwalk_dict, assets.DELETES)
+    deletes = tx._concat_deletes(xwalk_dict)
+    xwalk_dict = tx._exception_ncrn_DetectionEvent(xwalk_dict, deletes)
+    xwalk_dict = tx._exception_ncrn_BirdDetection(xwalk_dict, deletes)
     xwalk_dict = tx._exception_ncrn_BirdSpecies(xwalk_dict)
     xwalk_dict = tx._exception_ncrn_AuditLogDetail(xwalk_dict)
     xwalk_dict = tx._exception_lu_Habitat(xwalk_dict)
