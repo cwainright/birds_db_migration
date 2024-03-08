@@ -2882,6 +2882,7 @@ def _exception_ncrn_Location(xwalk_dict:dict) -> dict:
 
     mymap = pd.DataFrame(mymap)
     xwalk_dict['ncrn']['Location']['source'] = xwalk_dict['ncrn']['Location']['source'].merge(mymap, on='Location_ID', how='left')
+    xwalk_dict['ncrn']['Location']['source']['GRTS_Order'] = xwalk_dict['ncrn']['Location']['source']['GRTS_Order'].astype(int).astype(str)
 
     return xwalk_dict
 
