@@ -2912,21 +2912,53 @@ def _exception_ncrn_BirdDetection(xwalk_dict:dict, deletes:list) -> dict:
 
     1. Add additional rows from second source.tbl_Field_Data to ncrn.BirdDetection
     """
+    # EXCEPTION 1: Add additional rows from second source.tbl_Field_Data to ncrn.BirdDetection
     con = dbc._db_connect('c')
     tbl = 'tbl_Field_Data'
     df = dbc._exec_qry(con=con, qry=f'get_c_{tbl}')
     con.close()
-
     xwalk_dict['ncrn']['BirdDetection']['source'] = pd.concat([xwalk_dict['ncrn']['BirdDetection']['source'], df])
 
+    # EXCPETION 2: cascade delete dupliate site visits
     xwalk_dict['ncrn']['BirdDetection']['source'] = xwalk_dict['ncrn']['BirdDetection']['source'][xwalk_dict['ncrn']['BirdDetection']['source']['Event_ID'].isin(deletes)==False]
+
+    # EXCEPTION 3: update `ncrn.BirdDetection.source.Distance_id` to a by-protocol value
+    # i.e., NCRN used the same 1-5 integer to indicate distance regardless of protocol
+    # the new data model allows you to use different distance increments by-protocol
+    # to accomodate that, you need to use different IDs for each distance increment-protocol combination
+    # step 1, make a lookup table with two columns: `ncrn.DetectionEvent.source.event_id` and `ncrn.DetectionEvent.source.protocol`
+    lookup = xwalk_dict['ncrn']['DetectionEvent']['source'][['event_id','protocol_id']]
+    # step 2, left-join the lookup to `ncrn.BirdDetection.source` to add the protocol column to `BirdDetection`
+    xwalk_dict['ncrn']['BirdDetection']['source'] = xwalk_dict['ncrn']['BirdDetection']['source'].merge(lookup, left_on='Event_ID', right_on='event_id', how='left')
+    # step 3, replace NaNs in `ncrn.BirdDetection.source.Distance_id` it's erroneous to exclude this at data-entry...
+    mask = (xwalk_dict['ncrn']['BirdDetection']['source']['Distance_id'].isna())
+    xwalk_dict['ncrn']['BirdDetection']['source']['Distance_id'] = np.where(mask, 2, xwalk_dict['ncrn']['BirdDetection']['source']['Distance_id']) # `ncrn.BirdDetection.source.Distance_id` cannot be blank
+    # step 4: make a dummy variable in `ncrn.BirdDetection.source`
+    xwalk_dict['ncrn']['BirdDetection']['source']['dummy'] = xwalk_dict['ncrn']['BirdDetection']['source']['Distance_id'].astype(int).astype(str) + '_' + xwalk_dict['ncrn']['BirdDetection']['source']['protocol_id'].astype(str)
+    # step 5, make a lookup of three columns `ncrn.ProtocolDistanceClass.ID`, `ncrn.ProtocolDistanceClass.ProtocolID`, and `ncrn.ProtocolDistanceClass.Distance_id`
+    lookup = pd.read_pickle(r'assets/ProtocolDistanceClass.pkl') # since this is a bridge table, its creation happens after the lookup; my order-of-operations didn't accomodate that so I have to reroute the dataframe
+    # step 6, make a dummy variable in the lookup:
+    lookup['dummy'] = lookup['Distance_id'].astype(str)  + '_' +  lookup['ProtocolID'].astype(str)
+    # step 7: keep only 2 cols: lookup = lookup[['dummy','ID']]
+    lookup = lookup[['dummy','ID']]
+    lookup.rename(columns={'ID':'dummyid'}, inplace=True)
+    # step 8: left-join lookup to `ncrn.BirdDetection.source`
+    xwalk_dict['ncrn']['BirdDetection']['source'] = xwalk_dict['ncrn']['BirdDetection']['source'].merge(lookup, on='dummy', how='left')
+    # step 9: replace the existing `ncrn.BirdDetection.source.Distance_id` values with the corresponding value from the lookup
+    xwalk_dict['ncrn']['BirdDetection']['source']['Distance_id'] = xwalk_dict['ncrn']['BirdDetection']['source']['dummyid']
+    # step 9: get rid of lookup values
+    del xwalk_dict['ncrn']['BirdDetection']['source']['dummy']
+    del xwalk_dict['ncrn']['BirdDetection']['source']['protocol_id']
+    del xwalk_dict['ncrn']['BirdDetection']['source']['event_id']
+    del xwalk_dict['ncrn']['BirdDetection']['source']['dummyid']
+
     xwalk_dict['ncrn']['BirdDetection']['source'].reset_index(drop=True, inplace=True)
     return xwalk_dict
 
 def _exception_ncrn_Site(xwalk_dict:dict) -> dict:
     """Clean up source.tbl_Sites
 
-    1. Add additional rows from second source.tbl_Field_Data to ncrn.BirdDetection
+    1. Add additional rows from second source.tbl_site to ncrn.Site
     """
 
     df = xwalk_dict['ncrn']['Location']['source'][['Site_ID', 'Active']]
