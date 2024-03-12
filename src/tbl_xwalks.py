@@ -2900,10 +2900,10 @@ def _exception_ncrn_Location(xwalk_dict:dict) -> dict:
     # `ncrn.Location.SiteID` cannot be NULL
     # NCRN did not assign every `LocationID` to a `SiteID`, though
     # to solve this problem, we add 'Unknown' rows to `ncrn.Site` and assign blank `ncrn.Location.SiteID`s to that `ncrn.Site.ID`
-    mask = (xwalk_dict['ncrn']['Location']['source']['Site_ID'].isna()) & (xwalk_dict['ncrn']['Location']['source']['Location_Type']=='Grassland')
-    xwalk_dict['ncrn']['Location']['source']['Site_ID'] = np.where(mask, 'Grassland_unknown_site', xwalk_dict['ncrn']['Location']['source']['Site_ID'])
-    mask = (xwalk_dict['ncrn']['Location']['source']['Site_ID'].isna()) & (xwalk_dict['ncrn']['Location']['source']['Location_Type']=='Forest')
-    xwalk_dict['ncrn']['Location']['source']['Site_ID'] = np.where(mask, 'Forest_unknown_site', xwalk_dict['ncrn']['Location']['source']['Site_ID'])
+    for loctype in xwalk_dict['ncrn']['Location']['source']['Location_Type'].unique():
+        for unitcode in xwalk_dict['ncrn']['Location']['source']['Unit_Code'].unique():
+            mask = (xwalk_dict['ncrn']['Location']['source']['Site_ID'].isna()) & (xwalk_dict['ncrn']['Location']['source']['Location_Type']==loctype) & (xwalk_dict['ncrn']['Location']['source']['Unit_Code']==unitcode)
+            xwalk_dict['ncrn']['Location']['source']['Site_ID'] = np.where(mask, 'Grassland_unknown_site_'+unitcode, xwalk_dict['ncrn']['Location']['source']['Site_ID'])
 
     return xwalk_dict
 
@@ -2939,31 +2939,33 @@ def _exception_ncrn_Site(xwalk_dict:dict) -> dict:
     # `ncrn.Location.SiteID` cannot be NULL
     # NCRN did not assign every `LocationID` to a `SiteID`, though
     # to solve this problem, we add 'Unknown' rows to `ncrn.Site` and assign blank `ncrn.Location.SiteID`s to that `ncrn.Site.ID`
-    tmp = {}
-    for col in xwalk_dict['ncrn']['Site']['source'].columns:
-        tmp[col] = [None,None]
-    tmp['Site_ID'] = [
-        'Grassland_unknown_site'
-        ,'Forest_unknown_site'
-    ]
-    tmp['Site_Name'] = [
-        'Grassland_unknown_site'
-        ,'Forest_unknown_site'
-    ]
-    tmp['Route_Type'] = [
-        'Grassland'
-        ,'Forest'
-    ]
-    tmp['Active'] = [
-        True
-        ,True
-    ]
-    xwalk_dict['ncrn']['Site']['source'] = pd.concat([xwalk_dict['ncrn']['Site']['source'],pd.DataFrame(tmp)])
+    mydfs = {
+        'grass': pd.DataFrame(columns=xwalk_dict['ncrn']['Site']['source'].columns)
+        ,'forest': pd.DataFrame(columns=xwalk_dict['ncrn']['Site']['source'].columns)
+    }
+    parkunits = xwalk_dict['ncrn']['Site']['source'][xwalk_dict['ncrn']['Site']['source']['Unit_Code'].isna()==False].Unit_Code.unique()
+    final_df = pd.DataFrame()
+    for df in mydfs.keys():
+        mydfs[df]['Unit_Code'] = parkunits
+        if df == 'grass':
+            mydfs[df]['Site_ID'] = 'Grassland_unknown_site'
+            mydfs[df]['Site_Name'] = 'Grassland_unknown_site'
+            mydfs[df]['Route_Type'] = 'Grassland'
+        elif df == 'forest':
+            mydfs[df]['Site_ID'] = 'Forest_unknown_site'
+            mydfs[df]['Site_Name'] = 'Forest_unknown_site'
+            mydfs[df]['Route_Type'] = 'Forest'
+        else:
+            print(f'error `exception_ncrn_Site` {df=}')
+        mydfs[df]['Active'] = True
+        mydfs[df]['Site_ID'] = mydfs[df]['Site_ID'] + '_' + mydfs[df]['Unit_Code']
+        final_df = pd.concat([final_df,mydfs[df]])
+    xwalk_dict['ncrn']['Site']['source'] = pd.concat([xwalk_dict['ncrn']['Site']['source'],final_df])
     xwalk_dict['ncrn']['Site']['source'].reset_index(inplace=True, drop=True)
 
     # `Site_ID` '{54DDD5AD-5F8A-49D2-B636-C886D4ACCB8D}' is marked `Active` == False but it should be True
     mask = (xwalk_dict['ncrn']['Site']['source']['Site_ID']=='{54DDD5AD-5F8A-49D2-B636-C886D4ACCB8D}')
-    xwalk_dict['ncrn']['Site']['source']['Site_ID'] = np.where(mask, True, xwalk_dict['ncrn']['Site']['source']['Site_ID'])
+    xwalk_dict['ncrn']['Site']['source']['Active'] = np.where(mask, True, xwalk_dict['ncrn']['Site']['source']['Active'])
 
     return xwalk_dict
 
