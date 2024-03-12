@@ -1786,7 +1786,7 @@ def _exception_ncrn_BirdSpecies(xwalk_dict:dict) -> dict:
     csv = pd.read_csv(r'assets\db\official_BirdSpecies.csv')
     df = xwalk_dict['ncrn']['BirdSpecies']['source'].copy()
     df = df[[x for x in df.columns if x == 'AOU_Code' or x not in csv.columns]]
-    df = df.merge(csv, on='AOU_Code', how='left')
+    df = csv.merge(df, on='AOU_Code', how='left')
 
     # get the best-available secondary attributes
     csv = pd.read_csv(r'assets\db\bird_species.csv') # 'integration' [netnmidn].[BirdSpecies]
