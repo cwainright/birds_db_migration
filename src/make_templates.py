@@ -140,6 +140,7 @@ def _create_xwalks(xwalk_dict:dict) -> dict:
     xwalk_dict = tx._ncrn_DetectionEvent(xwalk_dict)
     xwalk_dict = tx._ncrn_BirdDetection(xwalk_dict)
     xwalk_dict = tx._ncrn_Protocol(xwalk_dict)
+    xwalk_dict = tx._ncrn_Site(xwalk_dict)
     xwalk_dict = tx._ncrn_Location(xwalk_dict)
     xwalk_dict = tx._ncrn_Park(xwalk_dict)
     xwalk_dict = tx._lu_TimeInterval(xwalk_dict)
@@ -159,7 +160,6 @@ def _create_xwalks(xwalk_dict:dict) -> dict:
     xwalk_dict = tx._lu_SamplingMethod(xwalk_dict)
     xwalk_dict = tx._lu_Habitat(xwalk_dict)
     xwalk_dict = tx._ncrn_BirdSpecies(xwalk_dict)
-    xwalk_dict = tx._ncrn_Site(xwalk_dict)
     xwalk_dict = tx._ncrn_ScannedFile(xwalk_dict)
     xwalk_dict = tx._lu_TemperatureUnit(xwalk_dict)
     xwalk_dict = tx._lu_ExperienceLevel(xwalk_dict)
@@ -247,6 +247,10 @@ def _execute_xwalks(xwalk_dict:dict) -> dict:
             for dest_col in blanks:
                 src_col = xwalk[xwalk['destination']==dest_col].source.values[0]
                 xwalk_dict[schema][tbl]['tbl_load'][dest_col] = np.NaN
+
+    for schema in xwalk_dict.keys():
+        for tbl in xwalk_dict[schema].keys():
+            xwalk_dict[schema][tbl]['source'].reset_index(inplace=True, drop=True)
 
     return xwalk_dict
 

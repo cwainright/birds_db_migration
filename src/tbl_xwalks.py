@@ -2896,6 +2896,14 @@ def _exception_ncrn_Location(xwalk_dict:dict) -> dict:
     maxdate = max(xwalk_dict['ncrn']['Location']['source'][~mask].Establish_Date.values)
     xwalk_dict['ncrn']['Location']['source']['Establish_Date'] = np.where(mask, maxdate, xwalk_dict['ncrn']['Location']['source']['Establish_Date'])
 
+    # `ncrn.Location.SiteID` cannot be NULL
+    # NCRN did not assign every `LocationID` to a `SiteID`, though
+    # to solve this problem, we add 'Unknown' rows to `ncrn.Site` and assign blank `ncrn.Location.SiteID`s to that `ncrn.Site.ID`
+    mask = (xwalk_dict['ncrn']['Location']['source']['Site_ID'].isna()) & (xwalk_dict['ncrn']['Location']['source']['Location_Type']=='Grassland')
+    xwalk_dict['ncrn']['Location']['source']['Site_ID'] = np.where(mask, 'Grassland_unknown_site', xwalk_dict['ncrn']['Location']['source']['Site_ID'])
+    mask = (xwalk_dict['ncrn']['Location']['source']['Site_ID'].isna()) & (xwalk_dict['ncrn']['Location']['source']['Location_Type']=='Forest')
+    xwalk_dict['ncrn']['Location']['source']['Site_ID'] = np.where(mask, 'Forest_unknown_site', xwalk_dict['ncrn']['Location']['source']['Site_ID'])
+
     return xwalk_dict
 
 def _exception_ncrn_BirdDetection(xwalk_dict:dict, deletes:list) -> dict:
@@ -2926,6 +2934,35 @@ def _exception_ncrn_Site(xwalk_dict:dict) -> dict:
     if len(df) != len(df.Site_ID.unique()):
         print('Bug in `_exception_ncrn_Site()`. Review')
     xwalk_dict['ncrn']['Site']['source'] = xwalk_dict['ncrn']['Site']['source'].merge(df, on='Site_ID', how='left')
+
+    # `ncrn.Location.SiteID` cannot be NULL
+    # NCRN did not assign every `LocationID` to a `SiteID`, though
+    # to solve this problem, we add 'Unknown' rows to `ncrn.Site` and assign blank `ncrn.Location.SiteID`s to that `ncrn.Site.ID`
+    tmp = {}
+    for col in xwalk_dict['ncrn']['Site']['source'].columns:
+        tmp[col] = [None,None]
+    tmp['Site_ID'] = [
+        'Grassland_unknown_site'
+        ,'Forest_unknown_site'
+    ]
+    tmp['Site_Name'] = [
+        'Grassland_unknown_site'
+        ,'Forest_unknown_site'
+    ]
+    tmp['Route_Type'] = [
+        'Grassland'
+        ,'Forest'
+    ]
+    tmp['Active'] = [
+        True
+        ,True
+    ]
+    xwalk_dict['ncrn']['Site']['source'] = pd.concat([xwalk_dict['ncrn']['Site']['source'],pd.DataFrame(tmp)])
+    xwalk_dict['ncrn']['Site']['source'].reset_index(inplace=True, drop=True)
+
+    # `Site_ID` '{54DDD5AD-5F8A-49D2-B636-C886D4ACCB8D}' is marked `Active` == False but it should be True
+    mask = (xwalk_dict['ncrn']['Site']['source']['Site_ID']=='{54DDD5AD-5F8A-49D2-B636-C886D4ACCB8D}')
+    xwalk_dict['ncrn']['Site']['source']['Site_ID'] = np.where(mask, True, xwalk_dict['ncrn']['Site']['source']['Site_ID'])
 
     return xwalk_dict
 
