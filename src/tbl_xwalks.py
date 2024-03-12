@@ -1794,6 +1794,10 @@ def _exception_ncrn_BirdSpecies(xwalk_dict:dict) -> dict:
     csv.rename(columns={'Code':'AOU_Code'}, inplace=True)
     df = df.merge(csv, on='AOU_Code', how='left')
 
+    mask = (df['Order'].isna()) & (df['Family'].isna())
+    df['Family'] = np.where(mask, df['Scientific_Name'], df['Family'])
+    df['Order'] = np.where(mask, df['Scientific_Name'], df['Order'])
+
     xwalk_dict['ncrn']['BirdSpecies']['source'] = df
 
     return xwalk_dict
