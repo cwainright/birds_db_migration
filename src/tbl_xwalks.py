@@ -2889,6 +2889,13 @@ def _exception_ncrn_Location(xwalk_dict:dict) -> dict:
     xwalk_dict['ncrn']['Location']['source'] = xwalk_dict['ncrn']['Location']['source'].merge(mymap, on='Location_ID', how='left')
     xwalk_dict['ncrn']['Location']['source']['GRTS_Order'] = xwalk_dict['ncrn']['Location']['source']['GRTS_Order'].astype(int).astype(str)
 
+    # `ncrn.Location.EnteredDate` cannot be NULL
+    # in 539 of 663 cases, NCRN did not record an `Establish_Date`
+    # we know that all sites were established in 2006, so we assign
+    mask = (xwalk_dict['ncrn']['Location']['source']['Establish_Date'].isna())
+    maxdate = max(xwalk_dict['ncrn']['Location']['source'][~mask].Establish_Date.values)
+    xwalk_dict['ncrn']['Location']['source']['Establish_Date'] = np.where(mask, maxdate, xwalk_dict['ncrn']['Location']['source']['Establish_Date'])
+
     return xwalk_dict
 
 def _exception_ncrn_BirdDetection(xwalk_dict:dict, deletes:list) -> dict:
