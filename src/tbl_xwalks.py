@@ -1770,6 +1770,11 @@ def _exception_ncrn_DetectionEvent(xwalk_dict:dict, deletes:list) -> dict:
     xwalk_dict['ncrn']['DetectionEvent']['source'] = xwalk_dict['ncrn']['DetectionEvent']['source'].drop_duplicates('event_id')
     xwalk_dict['ncrn']['DetectionEvent']['source'].reset_index(drop=True, inplace=True)
 
+    # EXCEPTION 8: `ncrn.DetectionEvent.EnteredDateTime` cannot be NULL
+    # Event_ID == '{31ACD17E-AE57-4DD0-BEDB-C2D9C343418F}' has NULL as its entered date
+    mask = (xwalk_dict['ncrn']['DetectionEvent']['source']['entered_date'].isna()) & (xwalk_dict['ncrn']['DetectionEvent']['source']['activity_start_datetime'].isna()==False)
+    xwalk_dict['ncrn']['DetectionEvent']['source']['entered_date'] = np.where(mask, xwalk_dict['ncrn']['DetectionEvent']['source']['activity_start_datetime'], xwalk_dict['ncrn']['DetectionEvent']['source']['entered_date'])
+
     return xwalk_dict
 
 def _exception_ncrn_BirdSpecies(xwalk_dict:dict) -> dict:
