@@ -1907,6 +1907,7 @@ def _exception_ncrn_BirdSpeciesGroups(xwalk_dict:dict) -> dict:
     }, inplace=True)
     df['ID'] = df.index+1
     df['Rowversion'] = np.NaN
+    df = df[df['BirdGroupID'].isna()==False] # `ncrn.BirdSpeciesGroups.BirdGroupID` cannot be NULL but NCRN did not always assign birds to groups
 
     xwalk_dict['ncrn']['BirdSpeciesGroups']['source'] = df.copy()
 
@@ -1919,7 +1920,7 @@ def _ncrn_BirdSpeciesGroups(xwalk_dict:dict) -> dict:
     one_to_one_fields = [
         'ID'
         ,'BirdSpeciesID'
-        ,'Description'
+        ,'BirdGroupID'
     ]
     # assign grouping variable `calculation` for the 1:1 fields
     mask = (xwalk_dict['ncrn']['BirdSpeciesGroups']['xwalk']['destination'].isin(one_to_one_fields))
