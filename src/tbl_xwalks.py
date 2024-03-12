@@ -3268,6 +3268,26 @@ def _find_dupe_site_visits(xwalk_dict:dict) -> dict:
             outcomes['review'].pop(dummy)
         else: # if any of the above != 1, we know the subsets are different, so we leave the `dummy` and its associated `Event_ID`s in the 'review' category
             pass
+
+    # CASE 3: review the paper datasheet for each dupe identified in CASE 2 and update the dataset accordingly
+    outcomedf = pd.read_excel(assets.BIRDS_RESEARCH, sheet_name='research')
+    deletes = outcomedf[outcomedf['resolution']=='delete']
+
+    findkeys = [] # need to backtrace the key since I used a slightly different key format...
+    for d in outcomes['review'].keys():
+        for e in outcomes['review'][d]['DetectionEventID']:
+            if e in deletes.event_id.unique():
+                findkeys.append(d)
+    findkeys = set(findkeys)
+
+    for dummy in findkeys: # remove the key from the `review`s
+        try: # try-except because in cases where a `dummy` has >1 event to pop, pop will only work for the first attempt
+            outcomes['review'].pop(dummy)
+        except:
+            # print(dummy)
+            continue
+    for e in deletes.event_id.unique(): # add the event to `delete`s
+        outcomes['delete'].append(e)
     
     return outcomes
 
