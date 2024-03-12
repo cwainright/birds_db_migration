@@ -2991,6 +2991,7 @@ def _exception_ncrn_Site(xwalk_dict:dict) -> dict:
             print(f'error `exception_ncrn_Site` {df=}')
         mydfs[df]['Active'] = True
         mydfs[df]['Site_ID'] = mydfs[df]['Site_ID'] + '_' + mydfs[df]['Unit_Code']
+        mydfs[df]['Site_Name'] = mydfs[df]['Site_Name'] + '_' + mydfs[df]['Unit_Code']
         final_df = pd.concat([final_df,mydfs[df]])
     xwalk_dict['ncrn']['Site']['source'] = pd.concat([xwalk_dict['ncrn']['Site']['source'],final_df])
     xwalk_dict['ncrn']['Site']['source'].reset_index(inplace=True, drop=True)
