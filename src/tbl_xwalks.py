@@ -354,7 +354,8 @@ def _ncrn_Location(xwalk_dict:dict) -> dict:
         ,'Y_Coord_DD_NAD83'
         ,'GeodeticDatumID'
         ,'EnteredDate'
-        ,'Code'
+        # ,'Code'
+        ,'Label'
         ,'Notes'
 
     ]
@@ -379,8 +380,8 @@ def _ncrn_Location(xwalk_dict:dict) -> dict:
     # EnteredDate
     mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'EnteredDate')
     xwalk_dict['ncrn']['Location']['xwalk']['source'] =  np.where(mask, 'Establish_Date', xwalk_dict['ncrn']['Location']['xwalk']['source'])
-    # Code
-    mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'Code')
+    # Label - this is the field that shows up in the picklist for users in the web interface
+    mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'Label')
     xwalk_dict['ncrn']['Location']['xwalk']['source'] =  np.where(mask, 'Plot_Name', xwalk_dict['ncrn']['Location']['xwalk']['source'])
     # Notes
     mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'Notes')
@@ -393,7 +394,8 @@ def _ncrn_Location(xwalk_dict:dict) -> dict:
         ,'EnteredBy'
         ,'IsActive'
         ,'IsSensitive'
-        ,'Label'
+        # ,'Label'
+        ,'Code'
         ,'OldCode'
     ]
     # assign grouping variable `calculation` for the calculated fields
@@ -416,9 +418,9 @@ def _ncrn_Location(xwalk_dict:dict) -> dict:
     mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'IsActive')
     xwalk_dict['ncrn']['Location']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn']['Location']['tbl_load']['IsActive']=np.where((xwalk_dict['ncrn']['Location']['source']['Active']==True)|(xwalk_dict['ncrn']['Location']['source']['Plot_Name'].str.contains('CAMP', regex=False)),1,0)", xwalk_dict['ncrn']['Location']['xwalk']['source'])
     xwalk_dict['ncrn']['Location']['xwalk']['note'] = np.where(mask, "BIT NOT NULL map from dict['ncrn']['Location']['xwalk']['source']['Active']", xwalk_dict['ncrn']['Location']['xwalk']['note'])
-    # Label  VARCHAR (255)  NULL,
-    mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'Label')
-    xwalk_dict['ncrn']['Location']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn']['Location']['tbl_load']['Label']=np.where((xwalk_dict['ncrn']['Location']['source']['Plot_Name'].str.contains('CAMP', regex=False)),xwalk_dict['ncrn']['Location']['source']['Plot_Name'],xwalk_dict['ncrn']['Location']['source']['GRTS_Order'].astype(int).astype(str))", xwalk_dict['ncrn']['Location']['xwalk']['source'])
+    # Code  VARCHAR (255)  NULL,
+    mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'Code')
+    xwalk_dict['ncrn']['Location']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn']['Location']['tbl_load']['Code']=np.where((xwalk_dict['ncrn']['Location']['source']['Plot_Name'].str.contains('CAMP', regex=False)),xwalk_dict['ncrn']['Location']['source']['Plot_Name'],xwalk_dict['ncrn']['Location']['source']['GRTS_Order'].astype(int).astype(str))", xwalk_dict['ncrn']['Location']['xwalk']['source'])
     xwalk_dict['ncrn']['Location']['xwalk']['note'] = np.where(mask, "VARCHAR (255) NULL, if CAMP site: show plot name, else: show grts number", xwalk_dict['ncrn']['Location']['xwalk']['note'])
     # OldCode  VARCHAR (255)  NULL,
     mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'OldCode')
