@@ -109,13 +109,13 @@ def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
     xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'] =  np.where(mask, 'recorder', xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'])
     # `ProtocolNoiseLevelID`: [lu.NoiseLevel]([ID]) # does NCRN capture an equivalent to this?
     mask = (xwalk_dict['ncrn']['DetectionEvent']['xwalk']['destination'] == 'ProtocolNoiseLevelID')
-    xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'] =  np.where(mask, 'protocol_id', xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'])
+    xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'] =  np.where(mask, 'disturbance_level', xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'])
     # `ProtocolWindCodeID`: [lu.WindCode]([ID]) # does NCRN capture an equivalent to this?
     mask = (xwalk_dict['ncrn']['DetectionEvent']['xwalk']['destination'] == 'ProtocolWindCodeID')
-    xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'] =  np.where(mask, 'protocol_id', xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'])
+    xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'] =  np.where(mask, 'wind_speed', xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'])
     # `ProtocolPrecipitationTypeID`: [lu.PrecipitationType]([ID]) # does NCRN capture an equivalent to this?
     mask = (xwalk_dict['ncrn']['DetectionEvent']['xwalk']['destination'] == 'ProtocolPrecipitationTypeID')
-    xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'] =  np.where(mask, 'protocol_id', xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'])
+    xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'] =  np.where(mask, 'sky_condition', xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'])
     # `Observer_ExperienceLevelID`: [lu.ExperienceLevel]([ID])
     mask = (xwalk_dict['ncrn']['DetectionEvent']['xwalk']['destination'] == 'Observer_ExperienceLevelID')
     xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'] =  np.where(mask, 'Position_Title', xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'])
@@ -1789,6 +1789,13 @@ def _exception_ncrn_DetectionEvent(xwalk_dict:dict, deletes:list) -> dict:
     mask = (xwalk_dict['ncrn']['DetectionEvent']['source']['entered_date'].isna()) & (xwalk_dict['ncrn']['DetectionEvent']['source']['activity_start_datetime'].isna()==False)
     xwalk_dict['ncrn']['DetectionEvent']['source']['entered_date'] = np.where(mask, xwalk_dict['ncrn']['DetectionEvent']['source']['activity_start_datetime'], xwalk_dict['ncrn']['DetectionEvent']['source']['entered_date'])
 
+    # EXCEPTION 9: update global lookups to by-protocol lookups
+    # `ncrn.DetectionEvent.ProtocolNoiseLevelID` ->
+    # `ncrn.DetectionEvent.ProtocolWindCodeID` ->
+    # `ncrn.DetectionEvent.ProtocolPrecipitationTypeID` -> 
+    # i.e., NCRN used the same integer to indicate match pk-fk regardless of protocol
+    # the new data model requires different keys by-protocol
+
     return xwalk_dict
 
 def _exception_ncrn_BirdSpecies(xwalk_dict:dict) -> dict:
@@ -2288,10 +2295,10 @@ def _exception_ncrn_ProtocolPrecipitationType(xwalk_dict:dict) -> dict:
     for protocol in protocols.Protocol_ID.unique():
         PrecipitationTypes2 = PrecipitationTypes.copy()
         PrecipitationTypes2['ProtocolID'] = protocol
+        PrecipitationTypes2['PrecipitationTypeID'] = PrecipitationTypes2['ID']
         df = pd.concat([df, PrecipitationTypes2])
-    df = df[['ID', 'ProtocolID']]
-    df = df.reset_index()
-    del df['index']
+    df = df[['ID', 'ProtocolID', 'PrecipitationTypeID']]
+    df.reset_index(drop=True, inplace=True)
     df['ID'] = df.index+1
     xwalk_dict['ncrn']['ProtocolPrecipitationType']['source'] = df.copy()
 
