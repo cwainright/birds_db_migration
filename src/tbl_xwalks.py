@@ -1041,22 +1041,26 @@ def _lu_PrecipitationType(xwalk_dict:dict) -> dict:
         ,'Code'
         ,'Label'
         ,'Description'
+        ,'SortOrder'
     ]
     # assign grouping variable `calculation` for the 1:1 fields
     mask = (xwalk_dict['lu']['PrecipitationType']['xwalk']['destination'].isin(one_to_one_fields))
     xwalk_dict['lu']['PrecipitationType']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['lu']['PrecipitationType']['xwalk']['calculation'])
     # ID
     mask = (xwalk_dict['lu']['PrecipitationType']['xwalk']['destination'] == 'ID')
-    xwalk_dict['lu']['PrecipitationType']['xwalk']['source'] =  np.where(mask, 'Sky_Code', xwalk_dict['lu']['PrecipitationType']['xwalk']['source'])
+    xwalk_dict['lu']['PrecipitationType']['xwalk']['source'] =  np.where(mask, 'ID', xwalk_dict['lu']['PrecipitationType']['xwalk']['source'])
     # Code
     mask = (xwalk_dict['lu']['PrecipitationType']['xwalk']['destination'] == 'Code')
-    xwalk_dict['lu']['PrecipitationType']['xwalk']['source'] =  np.where(mask, 'Sky_Code', xwalk_dict['lu']['PrecipitationType']['xwalk']['source'])
+    xwalk_dict['lu']['PrecipitationType']['xwalk']['source'] =  np.where(mask, 'Code', xwalk_dict['lu']['PrecipitationType']['xwalk']['source'])
     # Label
     mask = (xwalk_dict['lu']['PrecipitationType']['xwalk']['destination'] == 'Label')
-    xwalk_dict['lu']['PrecipitationType']['xwalk']['source'] =  np.where(mask, 'Code_Description', xwalk_dict['lu']['PrecipitationType']['xwalk']['source'])
+    xwalk_dict['lu']['PrecipitationType']['xwalk']['source'] =  np.where(mask, 'Label', xwalk_dict['lu']['PrecipitationType']['xwalk']['source'])
     # Description
     mask = (xwalk_dict['lu']['PrecipitationType']['xwalk']['destination'] == 'Description')
-    xwalk_dict['lu']['PrecipitationType']['xwalk']['source'] =  np.where(mask, 'Code_Description', xwalk_dict['lu']['PrecipitationType']['xwalk']['source'])
+    xwalk_dict['lu']['PrecipitationType']['xwalk']['source'] =  np.where(mask, 'Description', xwalk_dict['lu']['PrecipitationType']['xwalk']['source'])
+    # SortOrder
+    mask = (xwalk_dict['lu']['PrecipitationType']['xwalk']['destination'] == 'SortOrder')
+    xwalk_dict['lu']['PrecipitationType']['xwalk']['source'] =  np.where(mask, 'SortOrder', xwalk_dict['lu']['PrecipitationType']['xwalk']['source'])
 
     # Calculated fields
     calculated_fields = [
@@ -1068,14 +1072,22 @@ def _lu_PrecipitationType(xwalk_dict:dict) -> dict:
 
     # Blanks
     blank_fields = [
-        'SortOrder'
-        ,'Rowversion'
+        'Rowversion'
     ]
     # assign grouping variable `calculation` for the blank fields
     mask = (xwalk_dict['lu']['PrecipitationType']['xwalk']['destination'].isin(blank_fields))
     xwalk_dict['lu']['PrecipitationType']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['lu']['PrecipitationType']['xwalk']['calculation'])
     xwalk_dict['lu']['PrecipitationType']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['lu']['PrecipitationType']['xwalk']['source'])
     xwalk_dict['lu']['PrecipitationType']['xwalk']['note'] =  np.where(mask, 'this field was not collected by NCRN and has no NCRN equivalent', xwalk_dict['lu']['PrecipitationType']['xwalk']['note'])
+
+    return xwalk_dict
+
+def _exception_lu_PrecipitationType(xwalk_dict:dict) -> dict:
+    """Add codes that NETNMIDN use but NCRN didn't historically use"""
+
+    df = pd.read_csv(assets.PRECIPTYPE)
+    xwalk_dict['lu']['PrecipitationType']['source'] = df.copy()
+    xwalk_dict['lu']['PrecipitationType']['source_name'] = assets.PRECIPTYPE
 
     return xwalk_dict
 
@@ -2277,7 +2289,7 @@ def _exception_ncrn_ProtocolPrecipitationType(xwalk_dict:dict) -> dict:
         PrecipitationTypes2 = PrecipitationTypes.copy()
         PrecipitationTypes2['ProtocolID'] = protocol
         df = pd.concat([df, PrecipitationTypes2])
-    df = df[['Sky_Code', 'ProtocolID']]
+    df = df[['ID', 'ProtocolID']]
     df = df.reset_index()
     del df['index']
     df['ID'] = df.index+1
@@ -2305,7 +2317,7 @@ def _ncrn_ProtocolPrecipitationType(xwalk_dict:dict) -> dict:
     xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['source'] =  np.where(mask, 'ProtocolID', xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['source'])
     # PrecipitationTypeID
     mask = (xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['destination'] == 'PrecipitationTypeID')
-    xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['source'] =  np.where(mask, 'Sky_Code', xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['source'])
+    xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['source'] =  np.where(mask, 'ID', xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['source'])
 
     # Calculated fields
     calculated_fields = [
