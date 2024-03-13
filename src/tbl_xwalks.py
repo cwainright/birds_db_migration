@@ -1789,12 +1789,76 @@ def _exception_ncrn_DetectionEvent(xwalk_dict:dict, deletes:list) -> dict:
     mask = (xwalk_dict['ncrn']['DetectionEvent']['source']['entered_date'].isna()) & (xwalk_dict['ncrn']['DetectionEvent']['source']['activity_start_datetime'].isna()==False)
     xwalk_dict['ncrn']['DetectionEvent']['source']['entered_date'] = np.where(mask, xwalk_dict['ncrn']['DetectionEvent']['source']['activity_start_datetime'], xwalk_dict['ncrn']['DetectionEvent']['source']['entered_date'])
 
-    # EXCEPTION 9: update global lookups to by-protocol lookups
-    # `ncrn.DetectionEvent.ProtocolNoiseLevelID` ->
-    # `ncrn.DetectionEvent.ProtocolWindCodeID` ->
-    # `ncrn.DetectionEvent.ProtocolPrecipitationTypeID` -> 
+    # EXCEPTION 9: cannot be NULL:
+    # birds['ncrn']['DetectionEvent']['tbl_load']['ProtocolNoiseLevelID']: 146 NULLs
+    mask = (xwalk_dict['ncrn']['DetectionEvent']['source']['disturbance_level'].isna())
+    xwalk_dict['ncrn']['DetectionEvent']['source']['disturbance_level'] = np.where(mask, 0, xwalk_dict['ncrn']['DetectionEvent']['source']['disturbance_level'])
+    # birds['ncrn']['DetectionEvent']['tbl_load']['ProtocolWindCodeID']: 142 NULLs
+    mask = (xwalk_dict['ncrn']['DetectionEvent']['source']['wind_speed'].isna())
+    xwalk_dict['ncrn']['DetectionEvent']['source']['wind_speed'] = np.where(mask, 0, xwalk_dict['ncrn']['DetectionEvent']['source']['wind_speed'])
+    # birds['ncrn']['DetectionEvent']['tbl_load']['ProtocolPrecipitationTypeID']: 138 NULLs
+    mask = (xwalk_dict['ncrn']['DetectionEvent']['source']['sky_condition'].isna())
+    xwalk_dict['ncrn']['DetectionEvent']['source']['sky_condition'] = np.where(mask, 0, xwalk_dict['ncrn']['DetectionEvent']['source']['sky_condition'])
+    
+    # EXCEPTION 10: update global lookups to by-protocol lookups
+    # `ncrn.DetectionEvent.ProtocolNoiseLevelID` -> `ncrn.ProtocolNoiseLevel.ID` -> ncrn.ProtocolNoiseLevel.NoiseLevelID` -> `lu.NoiseLevel.ID`
+    # `ncrn.DetectionEvent.ProtocolWindCodeID` -> `ncrn.ProtocolWindCode.ID` -> ncrn.ProtocolPrecipitationType.WindCodeID` -> `lu.WindCode.ID`
+    # `ncrn.DetectionEvent.ProtocolPrecipitationTypeID` -> `ncrn.ProtocolPrecipitationType.ID` -> ncrn.ProtocolPrecipitationType.PrecipitationTypeID` -> `lu.Precipitation.ID`
     # i.e., NCRN used the same integer to indicate match pk-fk regardless of protocol
     # the new data model requires different keys by-protocol
+    before_colnames = xwalk_dict['ncrn']['DetectionEvent']['source'].columns
+
+    # `ncrn.DetectionEvent.ProtocolNoiseLevelID`
+    xwalk_dict['ncrn']['DetectionEvent']['source']['dummy'] = xwalk_dict['ncrn']['DetectionEvent']['source']['disturbance_level'].astype(int).astype(str) + '_' + xwalk_dict['ncrn']['DetectionEvent']['source']['protocol_id'].astype(str)
+    # with open(r'assets/ProtocolWindCode.pkl', 'wb') as f:
+    #     pickle.dump(birds['ncrn']['ProtocolWindCode']['source'], f)
+    lookup = pd.read_pickle(r'assets/ProtocolNoiseLevel.pkl') # since this is a bridge table, its creation happens after the lookup; my order-of-operations didn't accomodate that so I have to reroute the dataframe
+    # step 6, make a dummy variable in the lookup:
+    lookup['dummy'] = lookup['Disturbance_Code'].astype(str)  + '_' +  lookup['ProtocolID'].astype(str)
+    # step 7: keep only 2 cols: lookup = lookup[['dummy','ID']]
+    lookup = lookup[['dummy','ID']]
+    lookup.rename(columns={'ID':'dummyid'}, inplace=True)
+    # step 8: left-join lookup to `ncrn.BirdDetection.source`
+    xwalk_dict['ncrn']['DetectionEvent']['source'] = xwalk_dict['ncrn']['DetectionEvent']['source'].merge(lookup, on='dummy', how='left')
+    # step 9: replace the existing `ncrn.BirdDetection.source.Distance_id` values with the corresponding value from the lookup
+    xwalk_dict['ncrn']['DetectionEvent']['source']['disturbance_level'] = xwalk_dict['ncrn']['DetectionEvent']['source']['dummyid']
+    # step 9: get rid of lookup values
+    xwalk_dict['ncrn']['DetectionEvent']['source'] = xwalk_dict['ncrn']['DetectionEvent']['source'][before_colnames]
+    
+    # `ncrn.DetectionEvent.ProtocolWindCodeID`
+    xwalk_dict['ncrn']['DetectionEvent']['source']['dummy'] = xwalk_dict['ncrn']['DetectionEvent']['source']['wind_speed'].astype(int).astype(str) + '_' + xwalk_dict['ncrn']['DetectionEvent']['source']['protocol_id'].astype(str)
+    # with open(r'assets/ProtocolWindCode.pkl', 'wb') as f:
+    #     pickle.dump(birds['ncrn']['ProtocolWindCode']['source'], f)
+    lookup = pd.read_pickle(r'assets/ProtocolWindCode.pkl') # since this is a bridge table, its creation happens after the lookup; my order-of-operations didn't accomodate that so I have to reroute the dataframe
+    # step 6, make a dummy variable in the lookup:
+    lookup['dummy'] = lookup['Wind_Code'].astype(str)  + '_' +  lookup['ProtocolID'].astype(str)
+    # step 7: keep only 2 cols: lookup = lookup[['dummy','ID']]
+    lookup = lookup[['dummy','ID']]
+    lookup.rename(columns={'ID':'dummyid'}, inplace=True)
+    # step 8: left-join lookup to `ncrn.BirdDetection.source`
+    xwalk_dict['ncrn']['DetectionEvent']['source'] = xwalk_dict['ncrn']['DetectionEvent']['source'].merge(lookup, on='dummy', how='left')
+    # step 9: replace the existing `ncrn.BirdDetection.source.Distance_id` values with the corresponding value from the lookup
+    xwalk_dict['ncrn']['DetectionEvent']['source']['wind_speed'] = xwalk_dict['ncrn']['DetectionEvent']['source']['dummyid']
+    # step 9: get rid of lookup values
+    xwalk_dict['ncrn']['DetectionEvent']['source'] = xwalk_dict['ncrn']['DetectionEvent']['source'][before_colnames]
+    
+    # `ncrn.DetectionEvent.ProtocolPrecipitationTypeID`
+    xwalk_dict['ncrn']['DetectionEvent']['source']['dummy'] = xwalk_dict['ncrn']['DetectionEvent']['source']['sky_condition'].astype(int).astype(str) + '_' + xwalk_dict['ncrn']['DetectionEvent']['source']['protocol_id'].astype(str)
+    # with open(r'assets/ProtocolWindCode.pkl', 'wb') as f:
+    #     pickle.dump(birds['ncrn']['ProtocolWindCode']['source'], f)
+    lookup = pd.read_pickle(r'assets/ProtocolPrecipitationType.pkl') # since this is a bridge table, its creation happens after the lookup; my order-of-operations didn't accomodate that so I have to reroute the dataframe
+    lookup['PrecipitationTypeID'] = lookup['PrecipitationTypeID']-1 # netnmidn uses 1-index IDs, NCRN used 0-index IDs so we need to accomodate for the presence of 0-index IDs in the `source` data
+    # step 6, make a dummy variable in the lookup:
+    lookup['dummy'] = lookup['PrecipitationTypeID'].astype(str)  + '_' +  lookup['ProtocolID'].astype(str)
+    # step 7: keep only 2 cols: lookup = lookup[['dummy','ID']]
+    lookup = lookup[['dummy','ID']]
+    lookup.rename(columns={'ID':'dummyid'}, inplace=True)
+    # step 8: left-join lookup to `ncrn.BirdDetection.source`
+    xwalk_dict['ncrn']['DetectionEvent']['source'] = xwalk_dict['ncrn']['DetectionEvent']['source'].merge(lookup, on='dummy', how='left')
+    # step 9: replace the existing `ncrn.BirdDetection.source.Distance_id` values with the corresponding value from the lookup
+    xwalk_dict['ncrn']['DetectionEvent']['source']['sky_condition'] = xwalk_dict['ncrn']['DetectionEvent']['source']['dummyid']
+    # step 9: get rid of lookup values
+    xwalk_dict['ncrn']['DetectionEvent']['source'] = xwalk_dict['ncrn']['DetectionEvent']['source'][before_colnames]
 
     return xwalk_dict
 
