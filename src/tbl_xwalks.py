@@ -950,6 +950,16 @@ def _lu_Sex(xwalk_dict:dict) -> dict:
 
     return xwalk_dict
 
+def _exception_lu_Sex(xwalk_dict:dict) -> dict:
+    # EXCEPTION 1: remove deprecated "Fledglings" choice from picklist
+    # Sex_Code == 'J' refers to 'Fledglihgs'
+    # NCRN has never recorded this choice
+    # Further, 'Fledglings' are not a choice on the paper datasheet that field crews take into the field
+    # I have no idea why this is here but we don't use it, never have, and it's inconsistent with NETNMIDN, so I'm retiring it before it propogates further
+    xwalk_dict['lu']['Sex']['xwalk']['source'] = xwalk_dict['lu']['Sex']['xwalk']['source'][xwalk_dict['lu']['Sex']['xwalk']['source']['Sex_Code']!='J']
+
+    return xwalk_dict
+
 def _ncrn_Contact(xwalk_dict:dict) -> dict:
     """Crosswalk source.tlu_Contacts to destination.ncrn.Contact
 
@@ -3045,6 +3055,9 @@ def _exception_ncrn_BirdDetection(xwalk_dict:dict, deletes:list) -> dict:
     del xwalk_dict['ncrn']['BirdDetection']['source']['protocol_id']
     del xwalk_dict['ncrn']['BirdDetection']['source']['event_id']
     del xwalk_dict['ncrn']['BirdDetection']['source']['dummyid']
+
+    # EXCEPTION 4: re-code sex from 
+    # birds['ncrn']['BirdDetection']['tbl_load']['SexID']
 
     xwalk_dict['ncrn']['BirdDetection']['source'].reset_index(drop=True, inplace=True)
     return xwalk_dict

@@ -190,6 +190,7 @@ def _execute_xwalk_exceptions(xwalk_dict:dict) -> dict:
     xwalk_dict = tx._exception_ncrn_Location(xwalk_dict)
     xwalk_dict = tx._exception_ncrn_Site(xwalk_dict)
     xwalk_dict = tx._exception_lu_PrecipitationType(xwalk_dict)
+    xwalk_dict = tx._exception_lu_Sex(xwalk_dict)
 
     # tables that have no equivalent in NCRN's db and require creation
     xwalk_dict = tx._exception_ncrn_BirdSpeciesGroups(xwalk_dict)
