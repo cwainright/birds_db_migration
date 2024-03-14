@@ -276,12 +276,15 @@ def _validate_referential_integrity(xwalk_dict:dict) -> None:
                             else:
                                 ref = xwalk_dict[lookup[0]][lookup[1]][load][lookup[2]]
                                 present_load_absent_lookup = [x for x in xwalk_dict[schema][tbl][load][fk].unique() if x not in ref.unique()]
-                            if len(present_load_absent_lookup) >0:
-                                missing['counter'] +=1
-                                missing['mylist'].append(f"birds['{schema}']['{tbl}']['{load}']['{fk}']: {len(present_load_absent_lookup)} not in {constrained_by}")
-                                missing['mylist'].append(f"    [x for x in birds['{schema}']['{tbl}']['{load}']['{fk}'].unique() if x not in birds['{lookup[0]}']['{lookup[1]}']['{load}']['{lookup[2]}'].unique()]")
-                            else:
-                                continue
+                                if len(present_load_absent_lookup) >0:
+                                    if all(i != i for i in present_load_absent_lookup) and all(xwalk_dict[schema][tbl]['xwalk'][xwalk_dict[schema][tbl]['xwalk']['destination']==fk].can_be_null.unique()): # if NaN is the only value present in the column but absent from the lookup and the field is nullable
+                                        pass
+                                    else:
+                                        missing['counter'] +=1
+                                        missing['mylist'].append(f"birds['{schema}']['{tbl}']['{load}']['{fk}']: {len(present_load_absent_lookup)} not in {constrained_by}")
+                                        missing['mylist'].append(f"    [x for x in birds['{schema}']['{tbl}']['{load}']['{fk}'].unique() if x not in birds['{lookup[0]}']['{lookup[1]}']['{load}']['{lookup[2]}'].unique()]")
+                                else:
+                                    continue
                         except:
                             print(f"FAIL: check referential integrity: birds['{schema}']['{tbl}']['{load}']['{fk}']")
 
