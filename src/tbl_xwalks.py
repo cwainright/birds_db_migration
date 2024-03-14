@@ -352,7 +352,7 @@ def _ncrn_Location(xwalk_dict:dict) -> dict:
         ,'SiteID'
         ,'X_Coord_DD_NAD83'
         ,'Y_Coord_DD_NAD83'
-        ,'GeodeticDatumID'
+        # ,'GeodeticDatumID'
         ,'EnteredDate'
         # ,'Code'
         ,'Label'
@@ -374,9 +374,9 @@ def _ncrn_Location(xwalk_dict:dict) -> dict:
     # Y_Coord_DD_NAD83
     mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'Y_Coord_DD_NAD83')
     xwalk_dict['ncrn']['Location']['xwalk']['source'] =  np.where(mask, 'Lat_WGS84', xwalk_dict['ncrn']['Location']['xwalk']['source'])
-    # GeodeticDatumID
-    mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'GeodeticDatumID')
-    xwalk_dict['ncrn']['Location']['xwalk']['source'] =  np.where(mask, 'Datum', xwalk_dict['ncrn']['Location']['xwalk']['source'])
+    # # GeodeticDatumID
+    # mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'GeodeticDatumID')
+    # xwalk_dict['ncrn']['Location']['xwalk']['source'] =  np.where(mask, 'Datum', xwalk_dict['ncrn']['Location']['xwalk']['source'])
     # EnteredDate
     mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'EnteredDate')
     xwalk_dict['ncrn']['Location']['xwalk']['source'] =  np.where(mask, 'Establish_Date', xwalk_dict['ncrn']['Location']['xwalk']['source'])
@@ -397,6 +397,7 @@ def _ncrn_Location(xwalk_dict:dict) -> dict:
         # ,'Label'
         ,'Code'
         ,'OldCode'
+        ,'GeodeticDatumID'
     ]
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'].isin(calculated_fields))
@@ -426,7 +427,11 @@ def _ncrn_Location(xwalk_dict:dict) -> dict:
     mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'OldCode')
     xwalk_dict['ncrn']['Location']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn']['Location']['tbl_load']['OldCode']=xwalk_dict['ncrn']['Location']['source']['GRTS_Order'].astype(int).astype(str)", xwalk_dict['ncrn']['Location']['xwalk']['source'])
     xwalk_dict['ncrn']['Location']['xwalk']['note'] = np.where(mask, "VARCHAR (100) NULL, grts code cast to str", xwalk_dict['ncrn']['Location']['xwalk']['note'])
-
+    # GeodeticDatumID  INT
+    mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'GeodeticDatumID')
+    xwalk_dict['ncrn']['Location']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn']['Location']['tbl_load']['GeodeticDatumID']=2", xwalk_dict['ncrn']['Location']['xwalk']['source']) # recode `ncrn.Location.GeodeticDatumID` from str 'NAD83' to int in birds['lu']['GeodeticDatum']['tbl_load']
+    xwalk_dict['ncrn']['Location']['xwalk']['note'] = np.where(mask, "recode ncrn.Location.GeodeticDatumID from str 'NAD83' to int in birds['lu']['GeodeticDatum']['tbl_load']", xwalk_dict['ncrn']['Location']['xwalk']['note'])
+    
     # Blanks
     blank_fields = [
         'Rowversion'
