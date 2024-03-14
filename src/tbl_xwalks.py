@@ -759,8 +759,8 @@ def _lu_DetectionType(xwalk_dict:dict) -> dict:
 
     # 1:1 fields
     one_to_one_fields = [
-        'ID'
-        ,'Code'
+        # 'ID'
+        'Code'
         ,'Label'
         ,'Description'
     ]
@@ -768,8 +768,8 @@ def _lu_DetectionType(xwalk_dict:dict) -> dict:
     mask = (xwalk_dict['lu']['DetectionType']['xwalk']['destination'].isin(one_to_one_fields))
     xwalk_dict['lu']['DetectionType']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['lu']['DetectionType']['xwalk']['calculation'])
     # ID
-    mask = (xwalk_dict['lu']['DetectionType']['xwalk']['destination'] == 'ID')
-    xwalk_dict['lu']['DetectionType']['xwalk']['source'] =  np.where(mask, 'ID_Code', xwalk_dict['lu']['DetectionType']['xwalk']['source'])
+    # mask = (xwalk_dict['lu']['DetectionType']['xwalk']['destination'] == 'ID')
+    # xwalk_dict['lu']['DetectionType']['xwalk']['source'] =  np.where(mask, 'ID_Code', xwalk_dict['lu']['DetectionType']['xwalk']['source'])
     # Code
     mask = (xwalk_dict['lu']['DetectionType']['xwalk']['destination'] == 'Code')
     xwalk_dict['lu']['DetectionType']['xwalk']['source'] =  np.where(mask, 'ID_Code', xwalk_dict['lu']['DetectionType']['xwalk']['source'])
@@ -782,11 +782,16 @@ def _lu_DetectionType(xwalk_dict:dict) -> dict:
 
     # Calculated fields
     calculated_fields = [
+        'ID'
     ]
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['lu']['DetectionType']['xwalk']['destination'].isin(calculated_fields))
     xwalk_dict['lu']['DetectionType']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu']['DetectionType']['xwalk']['source']) 
     xwalk_dict['lu']['DetectionType']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['lu']['DetectionType']['xwalk']['calculation'])
+    # ID
+    mask = (xwalk_dict['lu']['DetectionType']['xwalk']['destination'] == 'ID')
+    xwalk_dict['lu']['DetectionType']['xwalk']['source'] = np.where(mask, "xwalk_dict['lu']['DetectionType']['tbl_load']['ID'] = xwalk_dict['lu']['DetectionType']['tbl_load'].index+1", xwalk_dict['lu']['DetectionType']['xwalk']['source'])
+    xwalk_dict['lu']['DetectionType']['xwalk']['note'] = np.where(mask, "generate an int ID for a lookup table that used str logical keys in source", xwalk_dict['lu']['DetectionType']['xwalk']['note'])
 
     # Blanks
     blank_fields = [
@@ -2563,6 +2568,14 @@ def _exception_ncrn_ProtocolDetectionType(xwalk_dict:dict) -> dict:
     df['ID'] = df.index+1
     xwalk_dict['ncrn']['ProtocolDetectionType']['source'] = df.copy()
 
+    lookup = {}
+    lookup['C'] = 1
+    lookup['S'] = 2
+    lookup['V'] = 3
+    for k,v in lookup.items():
+        mask = (xwalk_dict['ncrn']['ProtocolDetectionType']['source']['ID_Code']==k)
+        xwalk_dict['ncrn']['ProtocolDetectionType']['source']['ID_Code'] = np.where(mask, v, xwalk_dict['ncrn']['ProtocolDetectionType']['source']['ID_Code'])
+
     return xwalk_dict
 
 def _ncrn_ProtocolDetectionType(xwalk_dict:dict) -> dict:
@@ -3069,6 +3082,63 @@ def _exception_ncrn_BirdDetection(xwalk_dict:dict, deletes:list) -> dict:
     # it looks like the database somehow assigned a 0 when it should have assigned a 1...
     mask = (xwalk_dict['ncrn']['BirdDetection']['source']['Sex_ID']==0)
     xwalk_dict['ncrn']['BirdDetection']['source']['Sex_ID'] = np.where(mask, 1, xwalk_dict['ncrn']['BirdDetection']['source']['Sex_ID'])
+
+    # EXCEPTION 5: birds['ncrn']['BirdDetection']['tbl_load']['ProtocolDetectionTypeID'] cannot be NULL
+    # scope: 383 site visits, 6365 individual birds
+    mask = (xwalk_dict['ncrn']['BirdDetection']['source']['ID_Method_Code'].isna())
+    xwalk_dict['ncrn']['BirdDetection']['source']['ID_Method_Code'] = np.where(mask, 'S', xwalk_dict['ncrn']['BirdDetection']['source']['ID_Method_Code'])
+    
+    # EXCEPTION 5: recode ncrn.BirdDetection.ProtocolDetectionTypeID from str to int present in ncrn.ProtocolDetectionType.ID
+    # step 1, change lowercase to uppercase
+    xwalk_dict['ncrn']['BirdDetection']['source']['ID_Method_Code'] = xwalk_dict['ncrn']['BirdDetection']['source']['ID_Method_Code'].str.upper()
+    # step 2: replace unacceptable codes with acceptable codes
+    # there are only three acceptable codes: ['C', 'S', 'V']
+    # codes present in source data after capitalizing:
+    #                    ID_Code   count
+    # 2                        5       1
+    # 3                        <       1
+    # 8                        M       1
+    # 10                       U       1
+    # 12                       W       1
+    # 13                       X       1
+    # 0                        1       3
+    # 4                        A       3
+    # 7                        F       5
+    # 6                        D       8
+    # 1                        2      14
+    # 11                       V   33929
+    # 5                        C   77565
+    # 9                        S  118138
+    acceptable = ['C', 'S', 'V']
+    present = list(xwalk_dict['ncrn']['BirdDetection']['source'].ID_Method_Code.unique())
+    replacements = [x for x in present if x not in acceptable]
+    lookup = {}
+    for x in replacements:
+        lookup[x] = 'S'
+    for k,v in lookup.items():
+        mask = (xwalk_dict['ncrn']['BirdDetection']['source']['ID_Method_Code']==k)
+        xwalk_dict['ncrn']['BirdDetection']['source']['ID_Method_Code'] = np.where(mask, v, xwalk_dict['ncrn']['BirdDetection']['source']['ID_Method_Code'])
+    # step 3: recode str to int
+    before_colnames = xwalk_dict['ncrn']['BirdDetection']['source'].columns
+    birddetection = xwalk_dict['ncrn']['BirdDetection']['source'].copy()
+    detectionevent = xwalk_dict['ncrn']['DetectionEvent']['source'].copy()
+    df = birddetection.merge(detectionevent[['event_id','protocol_id']], left_on='Event_ID', right_on='event_id', how='left')
+    df['dummy'] = df['ID_Method_Code'].astype(str) + '_' + df['protocol_id'].astype(str)
+    lookup = pd.read_pickle(r'assets/ProtocolDetectionType.pkl') # since this is a bridge table, its creation happens after the lookup; my order-of-operations didn't accomodate that so I have to reroute the dataframe
+    # step 3: recode int to str
+    rev_lookup = {}
+    rev_lookup[1] = 'C'
+    rev_lookup[2] = 'S'
+    rev_lookup[3] = 'V'
+    for k,v in rev_lookup.items():
+        mask = (lookup['ID_Code']==k)
+        lookup['ID_Code'] = np.where(mask, v, lookup['ID_Code'])
+    lookup['dummy'] = lookup['ID_Code'].astype(str)  + '_' +  lookup['ProtocolID'].astype(str)
+    lookup = lookup[['dummy','ID']]
+    lookup.rename(columns={'ID':'dummyid'}, inplace=True)
+    df = df.merge(lookup, on='dummy', how='left')
+    df['ID_Method_Code'] = df['dummyid']
+    xwalk_dict['ncrn']['BirdDetection']['source'] = df[before_colnames]
 
     xwalk_dict['ncrn']['BirdDetection']['source'].reset_index(drop=True, inplace=True)
     return xwalk_dict
