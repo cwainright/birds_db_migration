@@ -955,8 +955,8 @@ def _exception_lu_Sex(xwalk_dict:dict) -> dict:
     # Sex_Code == 'J' refers to 'Fledglihgs'
     # NCRN has never recorded this choice
     # Further, 'Fledglings' are not a choice on the paper datasheet that field crews take into the field
-    # I have no idea why this is here but we don't use it, never have, and it's inconsistent with NETNMIDN, so I'm retiring it before it propogates further
-    xwalk_dict['lu']['Sex']['xwalk']['source'] = xwalk_dict['lu']['Sex']['xwalk']['source'][xwalk_dict['lu']['Sex']['xwalk']['source']['Sex_Code']!='J']
+    # I have no idea why this is here but we don't use it, never have, and it's inconsistent with NETNMIDN, so I'm deprecating it
+    xwalk_dict['lu']['Sex']['source'] = xwalk_dict['lu']['Sex']['source'][xwalk_dict['lu']['Sex']['source']['Sex_Code']!='J']
 
     return xwalk_dict
 
@@ -3056,8 +3056,14 @@ def _exception_ncrn_BirdDetection(xwalk_dict:dict, deletes:list) -> dict:
     del xwalk_dict['ncrn']['BirdDetection']['source']['event_id']
     del xwalk_dict['ncrn']['BirdDetection']['source']['dummyid']
 
-    # EXCEPTION 4: re-code sex from 
-    # birds['ncrn']['BirdDetection']['tbl_load']['SexID']
+    # EXCEPTION 4: recode SexID== 0 to 1
+    # In 79571 cases between 2017 and 2023, NCRN recorded a SexID of 0
+    # 0 is not in the lookup table for sex so the db should never have allowed it to be entered
+    # from reviewing paper datasheets, 'Undetermined' (SexID==1) is the most common sex choice
+    # from spot-checking datasheets, 'Undetermined' birds were recorded as SexID==0
+    # it looks like the database somehow assigned a 0 when it should have assigned a 1...
+    mask = (xwalk_dict['ncrn']['BirdDetection']['source']['Sex_ID']==0)
+    xwalk_dict['ncrn']['BirdDetection']['source']['Sex_ID'] = np.where(mask, 1, xwalk_dict['ncrn']['BirdDetection']['source']['Sex_ID'])
 
     xwalk_dict['ncrn']['BirdDetection']['source'].reset_index(drop=True, inplace=True)
     return xwalk_dict
