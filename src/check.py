@@ -47,7 +47,42 @@ def check_birds(xwalk_dict:dict) -> None:
     print('Checking referential integrity...')
     _validate_referential_integrity(xwalk_dict=xwalk_dict)
     print('')
+    print('Checking that logical keys were replaced by ints...')
+    _validate_logical_keys(xwalk_dict=xwalk_dict)
+    print('')
 
+    return None
+
+def _validate_logical_keys(xwalk_dict:dict) -> None:
+    # loads_to_check:list = ['tbl_load','k_load']
+    loads_to_check:list = ['k_load']
+    missing = {
+    'counter':0
+    ,'mylist':[]
+    }
+    for schema in xwalk_dict.keys():
+        for tbl in xwalk_dict[schema].keys():
+            mask = (xwalk_dict[schema][tbl]['xwalk']['fk']==True) & (xwalk_dict[schema][tbl]['xwalk']['calculation']!='blank_field')
+            fks = xwalk_dict[schema][tbl]['xwalk'][mask].destination.unique()
+            if len(fks) >0:
+                for fk in fks:
+                    for load in loads_to_check:
+                        try:
+                            xwalk_dict[schema][tbl][load][fk].astype(int)
+                        except:
+                            missing['counter'] +=1
+                            missing['mylist'].append(f"birds['{schema}']['{tbl}']['{load}']['{fk}'] could not be coerced to int")
+                            missing['mylist'].append(f"    birds['{schema}']['{tbl}']['{load}']['{fk}'].astype(int)")
+
+    # summarize output by table
+    if missing['counter'] >0:
+        print(f"WARNING: non-int primary-key/foreign-key references present! (n): {missing['counter']}")
+        for v in missing['mylist']:
+            print(f'    {v}')
+    else:
+        for load in loads_to_check:
+            print(f'SUCCESS: All pk-fk relationships are in int format in `{load}`!')
+    
     return None
 
 def _check_schema(xwalk_dict:dict) -> None:
@@ -255,8 +290,8 @@ def _validate_cols(xwalk_dict:dict, mykeys:list, target:str) -> None:
 def _validate_referential_integrity(xwalk_dict:dict) -> None:
     # TODO: check that the INT id for each GUID lines up among related tables
     """Check for null values in non-nullable fields"""
-    # loads_to_check:list = ['tbl_load','k_load']
-    loads_to_check:list = ['tbl_load']
+    loads_to_check:list = ['tbl_load','k_load']
+    # loads_to_check:list = ['tbl_load']
     missing = {
     'counter':0
     ,'mylist':[]
@@ -295,7 +330,7 @@ def _validate_referential_integrity(xwalk_dict:dict) -> None:
             print(f'    {v}')
     else:
         for load in loads_to_check:
-            print(f'SUCCESS: All non-nullable fields have values in `{load}`!')
+            print(f'SUCCESS: All foreign keys in `{load}` exist as primary keys in their related table!')
     
     return None
 
@@ -481,8 +516,8 @@ def _check_attrs(xwalk_dict:dict) -> None:
 
 def _validate_nulls(xwalk_dict:dict) -> None:
     """Check for null values in non-nullable fields"""
-    # loads_to_check:list = ['tbl_load','k_load']
-    loads_to_check:list = ['tbl_load']
+    loads_to_check:list = ['tbl_load','k_load']
+    # loads_to_check:list = ['tbl_load']
     missing = {
     'counter':0
     ,'mylist':[]
