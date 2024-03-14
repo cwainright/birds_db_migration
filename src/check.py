@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import assets.assets as assets
 import re
 import src.tbl_xwalks as tx
@@ -278,6 +279,7 @@ def _validate_referential_integrity(xwalk_dict:dict) -> None:
                             if len(present_load_absent_lookup) >0:
                                 missing['counter'] +=1
                                 missing['mylist'].append(f"birds['{schema}']['{tbl}']['{load}']['{fk}']: {len(present_load_absent_lookup)} not in {constrained_by}")
+                                missing['mylist'].append(f"    [x for x in birds['{schema}']['{tbl}']['{load}']['{fk}'].unique() if x not in birds['{lookup[0]}']['{lookup[1]}']['{load}']['{lookup[2]}'].unique()]")
                             else:
                                 continue
                         except:
