@@ -2398,7 +2398,7 @@ def _ncrn_ProtocolPrecipitationType(xwalk_dict:dict) -> dict:
     xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['source'] =  np.where(mask, 'ProtocolID', xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['source'])
     # PrecipitationTypeID
     mask = (xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['destination'] == 'PrecipitationTypeID')
-    xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['source'] =  np.where(mask, 'ID', xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['source'])
+    xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['source'] =  np.where(mask, 'PrecipitationTypeID', xwalk_dict['ncrn']['ProtocolPrecipitationType']['xwalk']['source'])
 
     # Calculated fields
     calculated_fields = [
