@@ -2,6 +2,8 @@ import pandas as pd
 import assets.assets as assets
 import re
 import src.tbl_xwalks as tx
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 EXCLUSIONS = ['unique_vals'] # 'unique_vals` is empty when the table does not enforce unique values in any field; this can happen in reality so we ignore here
 KNOWN_EMPTY = {
@@ -272,13 +274,12 @@ def _validate_referential_integrity(xwalk_dict:dict) -> None:
                                 print(f"FAIL: check referential integrity, lookup error: birds['{schema}']['{tbl}']['xwalk'].destination=='{fk}'; ['references'] is broken")
                             else:
                                 ref = xwalk_dict[lookup[0]][lookup[1]][load][lookup[2]]
-                                present_load_absent_lookup = []
-                                for val in xwalk_dict[schema][tbl][load][fk].unique():
-                                    if val not in ref:
-                                        present_load_absent_lookup.append(val)
+                                present_load_absent_lookup = [x for x in xwalk_dict[schema][tbl][load][fk].unique() if x not in ref.unique()]
                             if len(present_load_absent_lookup) >0:
                                 missing['counter'] +=1
                                 missing['mylist'].append(f"birds['{schema}']['{tbl}']['{load}']['{fk}']: {len(present_load_absent_lookup)} not in {constrained_by}")
+                            else:
+                                continue
                         except:
                             print(f"FAIL: check referential integrity: birds['{schema}']['{tbl}']['{load}']['{fk}']")
 
