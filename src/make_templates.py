@@ -3,13 +3,14 @@
 main data structure, attributes, attribute type, attribute description
 -xwalk: pd.DataFrame, a dataframe that describes how where every `destination` column comes from in a `source` table
 -source_name: str, the name of the `source` table from which the `destination` table came
--source: pd.DataFrame, the table in the source database (the result of executing a SELECT query against the db)
+-original: pd.DataFrame, an immutable copy of the original source data; blank in cases where an equivalent did not exist in source files
+-source: pd.DataFrame, a mutable ocpy of the original source data; the `original` data after congruency tranformations and deduplication
 -destination: pd.DataFrame, a dataframe matching the schema of the sql server table to which `source` should be tranformed
--tbl_load: pd.DataFrame, a dataframe of `source` records transformed to `destination` schema with primary-key/foreign-key relationships from `source` ID fields (guids, concatenations, abbreviations, logical keys, etc.) intact
--k_load pd.DataFrame, a dataframe of `source` records transformed to `destination` schema with `source` ID fields replaced by INT keys
+-tbl_load: pd.DataFrame, `source` records transformed to `destination` schema with `source` primary-key/foreign-key values (guids, concatenations, abbreviations, logical keys, etc.) updated to `destination` relationships (e.g., addition of bridge tables)
+-k_load pd.DataFrame, `tbl_load` but with `source` primary-key/foreign-key values replaced by INT keys
 -payload_cols: list, a subset of `k_load` columns that should be included in `payload`
--payload: pd.DataFrame, the exact sql server table-input format (excludes auto-generated fields, like IDs, rowversion, etc. that are present in `k_load`)
--tsql: str, a long string of Transact SQL generated from breaking `payload` into row-wise tuples (i.e., a collection of INSERT statements that, if executed against the db, would load `payload` to the db)
+-payload: pd.DataFrame, `k_load` tranformed to the sql server table-input format (exclude auto-generated fields, like IDs, rowversion, etc.)
+-tsql: str, Transact SQL INSERT statements for loading `payload` to the db
 """
 import assets.assets as assets
 import pandas as pd
@@ -59,7 +60,8 @@ def make_birds(dest:str='') -> dict:
             xwalk_dict[schema][tbl] = {
                 'xwalk': pd.DataFrame(columns=['destination', 'source', 'calculation', 'note']) # the crosswalk to translate from `source` to `tbl_load`
                 ,'source_name': assets.TBL_XWALK[schema][tbl] # name of source table
-                ,'source': pd.DataFrame() # source data
+                ,'original': pd.DataFrame() # immutable copy of source data
+                ,'source': pd.DataFrame() # mutable source data for generating `tbl_oad`
                 ,'destination': dest_dict[tbl] # destination data (mostly just for its column names and order)
                 ,'tbl_load': pd.DataFrame() # `source` data crosswalked to the destination schema
                 ,'unique_vals': [] # a list of zero or more lists of one-or-more fields that, when combined into a `dummy` variable, should be unique in the table
@@ -69,6 +71,7 @@ def make_birds(dest:str='') -> dict:
                 ,'payload': pd.DataFrame() # `tbl_load` transformed for loading to destination database
                 ,'tsql': '' # the t-sql to load the `payload` to the destination table
             }
+            xwalk_dict[schema][tbl]['original'] = source_dict[xwalk_dict[schema][tbl]['source_name']] # route the source data to its placeholder
             xwalk_dict[schema][tbl]['source'] = source_dict[xwalk_dict[schema][tbl]['source_name']] # route the source data to its placeholder
 
     # add the tables for which we have no source
@@ -79,7 +82,8 @@ def make_birds(dest:str='') -> dict:
             xwalk_dict[schema][tbl] = {
                 'xwalk': pd.DataFrame(columns=['destination', 'source', 'calculation', 'note']) # the crosswalk to translate from `source` to `tbl_load`
                 ,'source_name': 'NCRN_Landbirds.'+schema+'.'+tbl # name of source table
-                ,'source': pd.DataFrame(columns=dest_dict[tbl].columns) # source data
+                ,'original': pd.DataFrame() # immutable copy of source data; empty here because there is no NCRN equivalent for `TBL_ADDITIONS`
+                ,'source': pd.DataFrame(columns=dest_dict[tbl].columns) # mutable source data for generating `tbl_oad`
                 ,'destination': dest_dict[tbl] # destination data (mostly just for its column names and order)
                 ,'tbl_load': pd.DataFrame() # `source` data crosswalked to the destination schema
                 ,'unique_vals': [] # a list of zero or more lists of one-or-more fields that, when combined into a `dummy` variable, should be unique in the table
