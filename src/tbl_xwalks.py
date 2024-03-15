@@ -2355,7 +2355,7 @@ def _ncrn_ProtocolWindCode(xwalk_dict:dict) -> dict:
     one_to_one_fields = [
         'ID'
         ,'ProtocolID'
-        ,'WindCodeID'
+        # ,'WindCodeID'
     ]
     # assign grouping variable `calculation` for the 1:1 fields
     mask = (xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['destination'].isin(one_to_one_fields))
@@ -2367,16 +2367,21 @@ def _ncrn_ProtocolWindCode(xwalk_dict:dict) -> dict:
     mask = (xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['destination'] == 'ProtocolID')
     xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['source'] =  np.where(mask, 'ProtocolID', xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['source'])
     # WindCodeID
-    mask = (xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['destination'] == 'WindCodeID')
-    xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['source'] =  np.where(mask, 'Wind_Code', xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['source'])
+    # mask = (xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['destination'] == 'WindCodeID')
+    # xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['source'] =  np.where(mask, 'Wind_Code', xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['source'])
 
     # Calculated fields
     calculated_fields = [
+        'WindCodeID'
     ]
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['destination'].isin(calculated_fields))
     xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['source'])
     xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['calculation'])
+    # `WindCodeID` update from zero-index to 1-index
+    mask = (xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['destination'] == 'WindCodeID')
+    xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['source'] =  np.where(mask, "xwalk_dict['ncrn']['ProtocolWindCode']['tbl_load']['WindCodeID'] = xwalk_dict['ncrn']['ProtocolWindCode']['source']['Wind_Code']+1", xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['source'])
+    xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['note'] =  np.where(mask, "source.Wind_Code is zero-index and we need 1-index in destination", xwalk_dict['ncrn']['ProtocolWindCode']['xwalk']['note'])
 
     # Blanks
     blank_fields = [
