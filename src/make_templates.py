@@ -278,7 +278,7 @@ def _generate_k_load(xwalk_dict:dict) -> dict:
             del xwalk_dict[schema][tbl]['k_load']['rowid']
 
     kl._update_primary_keys(xwalk_dict)
-    # kl._update_foreign_keys(xwalk_dict)
+    kl._update_foreign_keys(xwalk_dict)
 
     return xwalk_dict
 
