@@ -75,12 +75,15 @@ def _validate_foreign_keys(xwalk_dict:dict) -> None:
             fks = xwalk_dict[schema][tbl]['xwalk'][mask].destination.unique()
             if len(fks) >0:
                 for fk in fks:
-                    for load in loads_to_check:
-                        try:
-                            xwalk_dict[schema][tbl][load][fk].astype(int)
-                        except:
-                            missing['counter'] +=1
-                            missing['mylist'].append(f"birds['{schema}']['{tbl}']['{load}']['{fk}'] could not be coerced to int")
+                    if fk.lower().endswith('code'):
+                        pass
+                    else:
+                        for load in loads_to_check:
+                            try:
+                                xwalk_dict[schema][tbl][load][fk].astype(int)
+                            except:
+                                missing['counter'] +=1
+                                missing['mylist'].append(f"birds['{schema}']['{tbl}']['{load}']['{fk}'] could not be coerced to int")
 
     # summarize output by table
     if missing['counter'] >0:
@@ -106,12 +109,15 @@ def _validate_primary_keys(xwalk_dict:dict) -> None:
             pks = xwalk_dict[schema][tbl]['xwalk'][mask].destination.unique()
             if len(pks) ==1:
                 for pk in pks:
-                    for load in loads_to_check:
-                        try:
-                            xwalk_dict[schema][tbl][load][pk].astype(int)
-                        except:
-                            missing['counter'] +=1
-                            missing['mylist'].append(f"birds['{schema}']['{tbl}']['{load}']['{pk}'] could not be coerced to int")
+                    if pk == 'Code': # when the primary key is called 'Code', we keep a str pk...
+                        pass
+                    else:
+                        for load in loads_to_check:
+                            try:
+                                xwalk_dict[schema][tbl][load][pk].astype(int)
+                            except:
+                                missing['counter'] +=1
+                                missing['mylist'].append(f"birds['{schema}']['{tbl}']['{load}']['{pk}'] could not be coerced to int")
             else:
                 print(f"FAIL: multiple primary-key fields found in birds['{schema}']['{tbl}']['xwalk']")
 
