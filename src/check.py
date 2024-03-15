@@ -69,6 +69,7 @@ def _validate_foreign_keys(xwalk_dict:dict) -> None:
     'counter':0
     ,'mylist':[]
     }
+    # TODO: update this to check whether all values present in birds[schema][tbl][load][fk] are present in birds[lookup[0]][lookup[1]]['pk_fk_lookup'][pk]
     for schema in xwalk_dict.keys():
         for tbl in xwalk_dict[schema].keys():
             mask = (xwalk_dict[schema][tbl]['xwalk']['fk']==True) & (xwalk_dict[schema][tbl]['xwalk']['calculation']!='blank_field')
