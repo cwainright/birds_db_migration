@@ -75,7 +75,7 @@ def _validate_foreign_keys(xwalk_dict:dict) -> None:
             fks = xwalk_dict[schema][tbl]['xwalk'][mask].destination.unique()
             if len(fks) >0:
                 for fk in fks:
-                    if fk.lower().endswith('code'):
+                    if fk.lower().endswith('code') or fk=='SynonymID' and schema=='ncrn' and tbl=='BirdSpecies':
                         pass
                     else:
                         for load in loads_to_check:

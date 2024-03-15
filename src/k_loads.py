@@ -15,36 +15,39 @@ def _update_foreign_keys(xwalk_dict:dict) -> dict:
             fks = xwalk_dict[schema][tbl]['xwalk'][mask].destination.unique()
             if len(fks) >0:
                 for fk in fks:
-                    constrained_by = xwalk_dict[schema][tbl]['xwalk'][xwalk_dict[schema][tbl]['xwalk']['destination']==fk].references.values[0]
-                    lookup = constrained_by.split('.')
-                    if len(lookup) ==3:
-                        ref = xwalk_dict[lookup[0]][lookup[1]]['pk_fk_lookup']
-                        pk_orig = lookup[2]
-                        pk_new = pk_orig + '_pk'
-                        ref.rename(columns={pk_orig:pk_new}, inplace=True)
-                        for load in loads_to_check:
-                            if all([x for x in xwalk_dict[schema][tbl][load][fk].unique() if x in ref[pk_new].unique()]):
-                                before_columns = xwalk_dict[schema][tbl][load].columns
-                                before_len = len(xwalk_dict[schema][tbl][load])
-                                try:
-                                    xwalk_dict[schema][tbl][load][fk].astype(int) # if the key is already an int, leave it
-                                except:
-                                    try:
-                                        beforedf = xwalk_dict[schema][tbl][load].copy()
-                                        xwalk_dict[schema][tbl][load] = xwalk_dict[schema][tbl][load].merge(ref, left_on=fk, right_on=pk_new, how='left')
-                                        if len(xwalk_dict[schema][tbl][load])==before_len:
-                                            xwalk_dict[schema][tbl][load][fk] = xwalk_dict[schema][tbl][load]['rowid']
-                                            xwalk_dict[schema][tbl][load] = xwalk_dict[schema][tbl][load][before_columns]
-                                            print(f"Updated:  `birds['{schema}']['{tbl}']['{load}']['{fk}']` now congruent with `birds['{lookup[0]}']['{lookup[1]}']['{load}']['{lookup[2]}']`")
-                                        else:
-                                            print(f"FAILED TO UPDATE FOREIGN KEY: merge added rows, merging {lookup} and `birds['{schema}']['{tbl}']['{load}']`, change rolled back...")
-                                            xwalk_dict[schema][tbl][load] = beforedf.copy()
-                                    except:
-                                        print(f"FAILED TO UPDATE FOREIGN KEY: unable to merge step: birds['{schema}']['{tbl}']['{load}']['{fk}'] constrained by {lookup}")
-                            else:
-                                print(f"FAILED TO UPDATE FOREIGN KEY: lookup-table step: birds['{schema}']['{tbl}']['{load}']['{fk}'] constrained by {lookup}")
+                    if fk=='SynonymID' and schema=='ncrn' and tbl=='BirdSpecies':
+                        pass
                     else:
-                        print(f"FAIL: check referential integrity, lookup error: birds['{schema}']['{tbl}']['xwalk'].destination=='{fk}'; ['references'] is broken")
+                        constrained_by = xwalk_dict[schema][tbl]['xwalk'][xwalk_dict[schema][tbl]['xwalk']['destination']==fk].references.values[0]
+                        lookup = constrained_by.split('.')
+                        if len(lookup) ==3:
+                            ref = xwalk_dict[lookup[0]][lookup[1]]['pk_fk_lookup']
+                            pk_orig = lookup[2]
+                            pk_new = pk_orig + '_pk'
+                            ref.rename(columns={pk_orig:pk_new}, inplace=True)
+                            for load in loads_to_check:
+                                if all([x for x in xwalk_dict[schema][tbl][load][fk].unique() if x in ref[pk_new].unique()]):
+                                    before_columns = xwalk_dict[schema][tbl][load].columns
+                                    before_len = len(xwalk_dict[schema][tbl][load])
+                                    try:
+                                        xwalk_dict[schema][tbl][load][fk].astype(int) # if the key is already an int, leave it
+                                    except:
+                                        try:
+                                            beforedf = xwalk_dict[schema][tbl][load].copy()
+                                            xwalk_dict[schema][tbl][load] = xwalk_dict[schema][tbl][load].merge(ref, left_on=fk, right_on=pk_new, how='left')
+                                            if len(xwalk_dict[schema][tbl][load])==before_len:
+                                                xwalk_dict[schema][tbl][load][fk] = xwalk_dict[schema][tbl][load]['rowid']
+                                                xwalk_dict[schema][tbl][load] = xwalk_dict[schema][tbl][load][before_columns]
+                                                print(f"Updated: `birds['{schema}']['{tbl}']['{load}']['{fk}']` now congruent with `birds['{lookup[0]}']['{lookup[1]}']['{load}']['{lookup[2]}']`")
+                                            else:
+                                                print(f"FAILED TO UPDATE FOREIGN KEY: merge added rows, change rolled back... `birds['{lookup[0]}']['{lookup[1]}']['{load}']['{lookup[2]}']` to `birds['{schema}']['{tbl}']['{load}']['{fk}']`")
+                                                xwalk_dict[schema][tbl][load] = beforedf.copy()
+                                        except:
+                                            print(f"FAILED TO UPDATE FOREIGN KEY: merge step: `birds['{lookup[0]}']['{lookup[1]}']['{load}']['{lookup[2]}']` to `birds['{schema}']['{tbl}']['{load}']['{fk}']`")
+                                else:
+                                    print(f"FAILED TO UPDATE FOREIGN KEY: lookup-table step:`birds['{lookup[0]}']['{lookup[1]}']['{load}']['{lookup[2]}']` to `birds['{schema}']['{tbl}']['{load}']['{fk}']`")
+                        else:
+                            print(f"FAIL: check referential integrity, lookup error: birds['{schema}']['{tbl}']['xwalk'].destination=='{fk}'; ['references'] is broken")
 
     return xwalk_dict
 
