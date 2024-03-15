@@ -51,7 +51,8 @@ def check_birds(xwalk_dict:dict) -> None:
     _validate_referential_integrity(xwalk_dict=xwalk_dict)
     print('')
     print('Checking that logical keys were replaced by ints...')
-    _validate_logical_keys(xwalk_dict=xwalk_dict)
+    _validate_foreign_keys(xwalk_dict=xwalk_dict)
+    _validate_primary_keys(xwalk_dict=xwalk_dict)
     print('')
     end_time = time.time()
     elapsed_time = end_time - start_time
@@ -61,7 +62,7 @@ def check_birds(xwalk_dict:dict) -> None:
 
     return None
 
-def _validate_logical_keys(xwalk_dict:dict) -> None:
+def _validate_foreign_keys(xwalk_dict:dict) -> None:
     # loads_to_check:list = ['tbl_load','k_load']
     loads_to_check:list = ['k_load']
     missing = {
@@ -83,12 +84,45 @@ def _validate_logical_keys(xwalk_dict:dict) -> None:
 
     # summarize output by table
     if missing['counter'] >0:
-        print(f"WARNING: non-int primary-key/foreign-key references present! (n): {missing['counter']}")
+        print(f"WARNING: non-int foreign-keys present in `{load}`! (n): {missing['counter']}")
         for v in missing['mylist']:
             print(f'    {v}')
     else:
         for load in loads_to_check:
-            print(f'SUCCESS: All pk-fk relationships are in int format in `{load}`!')
+            print(f'SUCCESS: All primary-key/foreign-key relationships are in int format in `{load}`!')
+    
+    return None
+
+def _validate_primary_keys(xwalk_dict:dict) -> None:
+    # loads_to_check:list = ['tbl_load','k_load']
+    loads_to_check:list = ['k_load']
+    missing = {
+    'counter':0
+    ,'mylist':[]
+    }
+    for schema in xwalk_dict.keys():
+        for tbl in xwalk_dict[schema].keys():
+            mask = (xwalk_dict[schema][tbl]['xwalk']['pk']==True)
+            pks = xwalk_dict[schema][tbl]['xwalk'][mask].destination.unique()
+            if len(pks) ==1:
+                for pk in pks:
+                    for load in loads_to_check:
+                        try:
+                            xwalk_dict[schema][tbl][load][pk].astype(int)
+                        except:
+                            missing['counter'] +=1
+                            missing['mylist'].append(f"birds['{schema}']['{tbl}']['{load}']['{pk}'] could not be coerced to int")
+            else:
+                print(f"FAIL: multiple primary-key fields found in birds['{schema}']['{tbl}']['xwalk']")
+
+    # summarize output by table
+    if missing['counter'] >0:
+        print(f"WARNING: non-int primary-keys present in `{load}`! (n): {missing['counter']}")
+        for v in missing['mylist']:
+            print(f'    {v}')
+    else:
+        for load in loads_to_check:
+            print(f'SUCCESS: All primary keys are in int format in `{load}`!')
     
     return None
 
