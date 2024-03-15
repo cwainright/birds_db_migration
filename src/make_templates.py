@@ -17,6 +17,7 @@ import pandas as pd
 import pickle
 import src.build_tbls as bt
 import src.tbl_xwalks as tx
+import src.k_loads as kl
 import src.check as c
 import numpy as np
 import datetime as dt
@@ -273,13 +274,11 @@ def _generate_k_load(xwalk_dict:dict) -> dict:
     """
     for schema in xwalk_dict.keys():
         for tbl in xwalk_dict[schema].keys():
-            k_load = xwalk_dict[schema][tbl]['tbl_load'].copy()
-            # replace primary key
-            # k_load['ID'] = k_load['rowid']
-            # del k_load['rowid']
-            # replace foreign key(s)
-            f_keys = [x for x in k_load.columns if x.endswith('ID') and x != 'ID']
-            xwalk_dict[schema][tbl]['k_load'] = k_load
+            xwalk_dict[schema][tbl]['k_load'] = xwalk_dict[schema][tbl]['tbl_load'].copy()
+            del xwalk_dict[schema][tbl]['k_load']['rowid']
+
+    kl._update_primary_keys(xwalk_dict)
+    # kl._update_foreign_keys(xwalk_dict)
 
     return xwalk_dict
 

@@ -8,6 +8,42 @@ def _update_foreign_keys(xwalk_dict:dict) -> dict:
 
     """
 
+    loads_to_check:list = ['k_load']
+    for schema in xwalk_dict.keys():
+        for tbl in xwalk_dict[schema].keys():
+            mask = (xwalk_dict[schema][tbl]['xwalk']['fk']==True) & (xwalk_dict[schema][tbl]['xwalk']['calculation']!='blank_field')
+            fks = xwalk_dict[schema][tbl]['xwalk'][mask].destination.unique()
+            if len(fks) >0:
+                for fk in fks:
+                    constrained_by = xwalk_dict[schema][tbl]['xwalk'][xwalk_dict[schema][tbl]['xwalk']['destination']==fk].references.values[0]
+                    lookup = constrained_by.split('.')
+                    if len(lookup) ==3:
+                        ref = xwalk_dict[lookup[0]][lookup[1]]['pk_fk_lookup']
+                        pk_orig = lookup[2]
+                        pk_new = pk_orig + '_pk'
+                        ref.rename(columns={pk_orig:pk_new}, inplace=True)
+                        for load in loads_to_check:
+                            if all([x for x in xwalk_dict[schema][tbl][load][fk].unique() if x in ref[pk_new].unique()]):
+                                before_columns = xwalk_dict[schema][tbl][load].columns
+                                before_len = len(xwalk_dict[schema][tbl][load])
+                                try:
+                                    xwalk_dict[schema][tbl][load][fk].astype(int)
+                                except:
+                                    try:
+                                        xwalk_dict[schema][tbl][load] = xwalk_dict[schema][tbl][load].merge(ref, left_on=fk, right_on=pk_new, how='left')
+                                        if len(xwalk_dict[schema][tbl][load])==before_len:
+                                            xwalk_dict[schema][tbl][load][fk] = xwalk_dict[schema][tbl][load]['rowid']
+                                            xwalk_dict[schema][tbl][load] = xwalk_dict[schema][tbl][load][before_columns]
+                                            print(f"Updated:  xwalk_dict['{schema}']['{tbl}']['{load}']['{pk_orig}'] to match {lookup}")
+                                        else:
+                                            print(f"FAIL: check referential integrity, fatal error, merging lookup and birds['{schema}']['{tbl}']['{load}'] added rows, lookup may contain duplicated keys")
+                                    except:
+                                        print(f"fail merge step: {fk=} constrained by {lookup}")
+                            else:
+                                print(f"fail lookup table check-step: {fk=} constrained by {lookup}")
+                    else:
+                        print(f"FAIL: check referential integrity, lookup error: birds['{schema}']['{tbl}']['xwalk'].destination=='{fk}'; ['references'] is broken")
+
     return xwalk_dict
 
 def _update_primary_keys(xwalk_dict:dict) -> dict:
@@ -22,7 +58,7 @@ def _update_primary_keys(xwalk_dict:dict) -> dict:
             mask = (xwalk_dict[schema][tbl]['xwalk']['pk']==True)
             pks = xwalk_dict[schema][tbl]['xwalk'][mask].destination.unique()
             lookup = xwalk_dict[schema][tbl]['pk_fk_lookup']
-            if len(pks) ==1:
+            if len(pks) == 1:
                 for pk in pks:
                     if pk == 'Code': # when the primary key is called 'Code', we keep a str pk...
                         pass
@@ -40,7 +76,6 @@ def _update_primary_keys(xwalk_dict:dict) -> dict:
                             else: 
                                 print(f"FAIL: length of birds['{schema}']['{tbl}']['{load}']] is different than birds['{schema}']['{tbl}']['pk_fk_lookup']: {len(lookup)=} vs. {len(xwalk_dict[schema][tbl][load][pk].unique())=}")
             else:
-                # print(f"FAILc")
                 print(f"FAIL: multiple primary-key fields found in birds['{schema}']['{tbl}']['xwalk']")
 
     return xwalk_dict
