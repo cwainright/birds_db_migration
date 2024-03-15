@@ -27,20 +27,22 @@ def _update_foreign_keys(xwalk_dict:dict) -> dict:
                                 before_columns = xwalk_dict[schema][tbl][load].columns
                                 before_len = len(xwalk_dict[schema][tbl][load])
                                 try:
-                                    xwalk_dict[schema][tbl][load][fk].astype(int)
+                                    xwalk_dict[schema][tbl][load][fk].astype(int) # if the key is already an int, leave it
                                 except:
                                     try:
+                                        beforedf = xwalk_dict[schema][tbl][load].copy()
                                         xwalk_dict[schema][tbl][load] = xwalk_dict[schema][tbl][load].merge(ref, left_on=fk, right_on=pk_new, how='left')
                                         if len(xwalk_dict[schema][tbl][load])==before_len:
                                             xwalk_dict[schema][tbl][load][fk] = xwalk_dict[schema][tbl][load]['rowid']
                                             xwalk_dict[schema][tbl][load] = xwalk_dict[schema][tbl][load][before_columns]
-                                            print(f"Updated:  xwalk_dict['{schema}']['{tbl}']['{load}']['{pk_orig}'] to match {lookup}")
+                                            print(f"Updated:  `birds['{schema}']['{tbl}']['{load}']['{fk}']` now congruent with `birds['{lookup[0]}']['{lookup[1]}']['{load}']['{lookup[2]}']`")
                                         else:
-                                            print(f"FAIL: check referential integrity, fatal error, merging lookup and birds['{schema}']['{tbl}']['{load}'] added rows, lookup may contain duplicated keys")
+                                            print(f"FAILED TO UPDATE FOREIGN KEY: merge added rows, merging {lookup} and `birds['{schema}']['{tbl}']['{load}']`, change rolled back...")
+                                            xwalk_dict[schema][tbl][load] = beforedf.copy()
                                     except:
-                                        print(f"fail merge step: {fk=} constrained by {lookup}")
+                                        print(f"FAILED TO UPDATE FOREIGN KEY: unable to merge step: birds['{schema}']['{tbl}']['{load}']['{fk}'] constrained by {lookup}")
                             else:
-                                print(f"fail lookup table check-step: {fk=} constrained by {lookup}")
+                                print(f"FAILED TO UPDATE FOREIGN KEY: lookup-table step: birds['{schema}']['{tbl}']['{load}']['{fk}'] constrained by {lookup}")
                     else:
                         print(f"FAIL: check referential integrity, lookup error: birds['{schema}']['{tbl}']['xwalk'].destination=='{fk}'; ['references'] is broken")
 
