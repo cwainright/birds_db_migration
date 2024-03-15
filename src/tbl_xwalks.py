@@ -1910,6 +1910,31 @@ def _exception_ncrn_BirdSpecies(xwalk_dict:dict) -> dict:
 
     xwalk_dict['ncrn']['BirdSpecies']['source'] = df
 
+    # add rows for ncrn-specific unidentified bird codes
+    # df = pd.read_excel(r'assets\birds_questions_20240215.xlsx', sheet_name='species_missing_attribute')
+    # newrows = df[df['RESOLUTION'].isna()].reset_index(drop=True)
+    # newrows.rename(columns={
+    #     'scientific_name':'ScientificName'
+    #     ,'common_name':'CommonName'
+    #     ,'AOU_Code':'ID'
+    # }
+    # ,inplace=True)
+    # newrows = newrows[['ID', 'ScientificName', 'CommonName']]
+    # newrows['Code'] = newrows['ID']
+    # newrows['Family'] = newrows['ScientificName']
+    # newrows['Order'] = newrows['ScientificName']
+    # newrows['IsActive'] = 1
+    # newrows['IsTarget'] = 0
+    # newrows['Comments'] = 'NCRN-specific code for an unidentified bird'
+    # newrows['SynonymID'] = newrows['ID']
+    # newtaxonomic_orders = [x for x in range((99999-len(newrows)),99999,1)]
+    # newrows['TaxonomicOrder'] = newtaxonomic_orders
+
+    # xwalk_dict['ncrn']['BirdSpecies']['tbl_load'] = pd.concat([xwalk_dict['ncrn']['BirdSpecies']['tbl_load'], newrows])
+    # xwalk_dict['ncrn']['BirdSpecies']['tbl_load'].reset_index(drop=True, inplace=True)
+    xwalk_dict['ncrn']['BirdSpecies']['source'].reset_index(drop=True, inplace=True)
+    
+
     return xwalk_dict
 
 def _add_row_id(xwalk_dict:dict) -> dict:
@@ -2094,7 +2119,7 @@ def _exception_ncrn_BirdSpeciesPark(xwalk_dict:dict) -> dict:
         tmp['ProtectedStatusID'] = 3
         df = pd.concat([df, tmp])
     df = df.reset_index()
-    df['ID'] = df.index+1
+    df['ID'] = df['BirdSpeciesID'] + '_' + df['ParkID']
     df['Comment'] = np.NaN
     df = df[xwalk_dict['ncrn']['BirdSpeciesPark']['source'].columns]
 
@@ -3088,7 +3113,7 @@ def _exception_ncrn_BirdDetection(xwalk_dict:dict, deletes:list) -> dict:
     mask = (xwalk_dict['ncrn']['BirdDetection']['source']['ID_Method_Code'].isna())
     xwalk_dict['ncrn']['BirdDetection']['source']['ID_Method_Code'] = np.where(mask, 'S', xwalk_dict['ncrn']['BirdDetection']['source']['ID_Method_Code'])
     
-    # EXCEPTION 5: recode ncrn.BirdDetection.ProtocolDetectionTypeID from str to int present in ncrn.ProtocolDetectionType.ID
+    # EXCEPTION 6: recode ncrn.BirdDetection.ProtocolDetectionTypeID from str to int present in ncrn.ProtocolDetectionType.ID
     # step 1, change lowercase to uppercase
     xwalk_dict['ncrn']['BirdDetection']['source']['ID_Method_Code'] = xwalk_dict['ncrn']['BirdDetection']['source']['ID_Method_Code'].str.upper()
     # step 2: replace unacceptable codes with acceptable codes
@@ -3139,6 +3164,34 @@ def _exception_ncrn_BirdDetection(xwalk_dict:dict, deletes:list) -> dict:
     df = df.merge(lookup, on='dummy', how='left')
     df['ID_Method_Code'] = df['dummyid']
     xwalk_dict['ncrn']['BirdDetection']['source'] = df[before_colnames]
+
+    # EXCEPTION 7:
+    # species codes were entered wrong or have been updated since NCRN made tbl_species
+    # need to read in responses from `species_missing_attribute` and correct ncrn.BirdDetection.source.AOU_Code accordingly
+    starters = [x for x in xwalk_dict['ncrn']['BirdDetection']['source']['AOU_Code'].unique() if x not in xwalk_dict['ncrn']['BirdSpecies']['source']['AOU_Code'].unique()]
+    df = pd.read_excel(r'assets\birds_questions_20240215.xlsx', sheet_name='species_missing_attribute')
+    df['corrected_AOU'] = None
+    mask = (df['RESOLUTION'].str.contains('should be changed'))
+    df['corrected_AOU'] = np.where(mask, df['RESOLUTION'].str[-4:], df['corrected_AOU'])
+    df[df['AOU_Code'].isin(starters)==False]
+    lookup = df[df['corrected_AOU'].isna()==False][['AOU_Code', 'corrected_AOU']]
+    for i in range(len(lookup)):
+        aou:str = lookup['AOU_Code'].values[i]
+        corrected_aou:str = lookup['corrected_AOU'].values[i]
+        mask = (xwalk_dict['ncrn']['BirdDetection']['source']['AOU_Code'] == aou)
+        xwalk_dict['ncrn']['BirdDetection']['source']['AOU_Code'] = np.where(mask, corrected_aou, xwalk_dict['ncrn']['BirdDetection']['source']['AOU_Code'])
+    # need to add rows to ncrn.BirdSpecies.source to accomodate 'unidentified' birds present in NCRN data but absent from official species list
+    # done in `_exception_ncrn_BirdSpecies()`
+
+    # ncrn.BirdDetection.BirdSpeciesParkID should be a fk that's relative to park (to match bridge table ncrn.BirdSpeciesPark.ID)
+    # before_colnames = xwalk_dict['ncrn']['BirdDetection']['source'].columns
+    # birddetection = xwalk_dict['ncrn']['BirdDetection']['source'].copy()
+    # detectionevent = xwalk_dict['ncrn']['DetectionEvent']['source'].copy()
+    # location = pd.read_pickle(r'assets/Location.pkl')
+    # detectionevent = detectionevent.merge(location[['Location_ID', 'Unit_Code']], left_on='location_id', right_on='Location_ID', how='left')
+    # df = birddetection.merge(detectionevent[['event_id','Unit_Code']], left_on='Event_ID', right_on='event_id', how='left')
+    # df['AOU_Code'] = df['AOU_Code'] + '_' + df['Unit_Code']
+    # xwalk_dict['ncrn']['BirdDetection']['source'] = df[before_colnames]
 
     xwalk_dict['ncrn']['BirdDetection']['source'].reset_index(drop=True, inplace=True)
     return xwalk_dict
