@@ -5,6 +5,8 @@ import re
 import src.tbl_xwalks as tx
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
+import time
+import datetime as dt
 
 EXCLUSIONS = ['unique_vals'] # 'unique_vals` is empty when the table does not enforce unique values in any field; this can happen in reality so we ignore here
 KNOWN_EMPTY = {
@@ -27,6 +29,7 @@ def check_birds(xwalk_dict:dict) -> None:
     Returns:
         None: This function returns None.
     """
+    start_time = time.time()
     print('')
     print(f'Validating dictionary against db schema...')
     _check_schema(xwalk_dict=xwalk_dict)
@@ -50,6 +53,11 @@ def check_birds(xwalk_dict:dict) -> None:
     print('Checking that logical keys were replaced by ints...')
     _validate_logical_keys(xwalk_dict=xwalk_dict)
     print('')
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    elapsed_time = str(dt.timedelta(seconds=elapsed_time))
+    elapsed_time = elapsed_time.split('.')[0]
+    print(f'`check()` succeeded in: {elapsed_time}')
 
     return None
 
@@ -72,7 +80,6 @@ def _validate_logical_keys(xwalk_dict:dict) -> None:
                         except:
                             missing['counter'] +=1
                             missing['mylist'].append(f"birds['{schema}']['{tbl}']['{load}']['{fk}'] could not be coerced to int")
-                            missing['mylist'].append(f"    birds['{schema}']['{tbl}']['{load}']['{fk}'].astype(int)")
 
     # summarize output by table
     if missing['counter'] >0:
