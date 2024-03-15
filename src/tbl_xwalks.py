@@ -2482,7 +2482,7 @@ def _ncrn_ProtocolNoiseLevel(xwalk_dict:dict) -> dict:
     one_to_one_fields = [
         'ID'
         ,'ProtocolID'
-        ,'NoiseLevelID'
+        # ,'NoiseLevelID'
     ]
     # assign grouping variable `calculation` for the 1:1 fields
     mask = (xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['destination'].isin(one_to_one_fields))
@@ -2494,16 +2494,21 @@ def _ncrn_ProtocolNoiseLevel(xwalk_dict:dict) -> dict:
     mask = (xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['destination'] == 'ProtocolID')
     xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['source'] =  np.where(mask, 'ProtocolID', xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['source'])
     # NoiseLevelID
-    mask = (xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['destination'] == 'NoiseLevelID')
-    xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['source'] =  np.where(mask, 'Disturbance_Code', xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['source'])
+    # mask = (xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['destination'] == 'NoiseLevelID')
+    # xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['source'] =  np.where(mask, 'Disturbance_Code', xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['source'])
 
     # Calculated fields
     calculated_fields = [
+        'NoiseLevelID'
     ]
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['destination'].isin(calculated_fields))
     xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['source'])
     xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['calculation'])
+    # `NoiseLevelID` update from zero-index to 1-index
+    mask = (xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['destination'] == 'NoiseLevelID')
+    xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['source'] =  np.where(mask, "xwalk_dict['ncrn']['ProtocolNoiseLevel']['tbl_load']['NoiseLevelID'] = xwalk_dict['ncrn']['ProtocolNoiseLevel']['source']['Disturbance_Code']+1", xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['source'])
+    xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['note'] =  np.where(mask, "source.Disturbance_Code is zero-index and we need 1-index in destination", xwalk_dict['ncrn']['ProtocolNoiseLevel']['xwalk']['note'])
 
     # Blanks
     blank_fields = [
