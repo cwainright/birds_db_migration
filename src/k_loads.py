@@ -1,5 +1,7 @@
 import pandas as pd
 import numpy as np
+import warnings
+warnings.simplefilter(action='ignore', category=UserWarning)
 
 def _update_foreign_keys(xwalk_dict:dict) -> dict:
     """Update the source-file foreign keys to destination-file foreign keys
@@ -21,7 +23,7 @@ def _update_foreign_keys(xwalk_dict:dict) -> dict:
                         constrained_by = xwalk_dict[schema][tbl]['xwalk'][xwalk_dict[schema][tbl]['xwalk']['destination']==fk].references.values[0]
                         lookup = constrained_by.split('.')
                         if len(lookup) ==3:
-                            ref = xwalk_dict[lookup[0]][lookup[1]]['pk_fk_lookup']
+                            ref = xwalk_dict[lookup[0]][lookup[1]]['pk_fk_lookup'].copy()
                             pk_orig = lookup[2]
                             pk_new = pk_orig + '_pk'
                             ref.rename(columns={pk_orig:pk_new}, inplace=True)
@@ -40,12 +42,12 @@ def _update_foreign_keys(xwalk_dict:dict) -> dict:
                                                 xwalk_dict[schema][tbl][load] = xwalk_dict[schema][tbl][load][before_columns]
                                                 print(f"Updated: `birds['{schema}']['{tbl}']['{load}']['{fk}']` now congruent with `birds['{lookup[0]}']['{lookup[1]}']['{load}']['{lookup[2]}']`")
                                             else:
-                                                print(f"FAILED TO UPDATE FOREIGN KEY: merge added rows, change rolled back... `birds['{lookup[0]}']['{lookup[1]}']['{load}']['{lookup[2]}']` to `birds['{schema}']['{tbl}']['{load}']['{fk}']`")
+                                                print(f"FAILED TO UPDATE FOREIGN KEY: merge added rows, change rolled back... `birds['{schema}']['{tbl}']['{load}']['{fk}']` to `birds['{lookup[0]}']['{lookup[1]}']['{load}']['{lookup[2]}']`")
                                                 xwalk_dict[schema][tbl][load] = beforedf.copy()
                                         except:
-                                            print(f"FAILED TO UPDATE FOREIGN KEY: merge step: `birds['{lookup[0]}']['{lookup[1]}']['{load}']['{lookup[2]}']` to `birds['{schema}']['{tbl}']['{load}']['{fk}']`")
+                                            print(f"FAILED TO UPDATE FOREIGN KEY: merge step: `birds['{schema}']['{tbl}']['{load}']['{fk}']` to `birds['{lookup[0]}']['{lookup[1]}']['{load}']['{lookup[2]}']`")
                                 else:
-                                    print(f"FAILED TO UPDATE FOREIGN KEY: lookup-table step:`birds['{lookup[0]}']['{lookup[1]}']['{load}']['{lookup[2]}']` to `birds['{schema}']['{tbl}']['{load}']['{fk}']`")
+                                    print(f"FAILED TO UPDATE FOREIGN KEY: lookup-table step: `birds['{schema}']['{tbl}']['{load}']['{fk}']` to `birds['{lookup[0]}']['{lookup[1]}']['{load}']['{lookup[2]}']`")
                         else:
                             print(f"FAIL: check referential integrity, lookup error: birds['{schema}']['{tbl}']['xwalk'].destination=='{fk}'; ['references'] is broken")
 
