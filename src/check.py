@@ -593,3 +593,20 @@ def _validate_nulls(xwalk_dict:dict) -> None:
 
     return None
 
+def unit_test(xwalk_dict:dict) -> None:
+    """
+    Automated unit test to confirm that pk-fk relationships return the exact records in `k_load` that were present in `source`
+
+    Make a flattened dataset out of the `source`, `tbl_load`, and `k_load`
+
+    Compare the datasets
+
+    - counts of records per date
+    - counts of records per site
+    - counts of records per bird species
+    - counts of records per observer, recorder
+    - pivot, compare counts of records (like in summary sent to collaborator)
+    """
+
+    return None
+
