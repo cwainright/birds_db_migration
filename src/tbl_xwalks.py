@@ -972,6 +972,8 @@ def _exception_lu_Sex(xwalk_dict:dict) -> dict:
     # Further, 'Fledglings' are not a choice on the paper datasheet that field crews take into the field
     # I have no idea why this is here but we don't use it, never have, and it's inconsistent with NETNMIDN, so I'm deprecating it
     xwalk_dict['lu']['Sex']['source'] = xwalk_dict['lu']['Sex']['source'][xwalk_dict['lu']['Sex']['source']['Sex_Code']!='J']
+    xwalk_dict['lu']['Sex']['source'] = xwalk_dict['lu']['Sex']['source'].sort_values('Sex_Code_Value', ascending=True)
+    xwalk_dict['lu']['Sex']['source'].reset_index(drop=True, inplace=True)
 
     return xwalk_dict
 
