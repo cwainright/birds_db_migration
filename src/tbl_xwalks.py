@@ -2948,6 +2948,8 @@ def _exception_ncrn_Contact(xwalk_dict:dict) -> dict:
         mask = (xwalk_dict['ncrn']['Contact']['source'].Position_Title == k)
         xwalk_dict['ncrn']['Contact']['source']['ExperienceLevelID'] = np.where(mask, v, xwalk_dict['ncrn']['Contact']['source']['ExperienceLevelID'])
 
+    xwalk_dict['ncrn']['Contact']['source']['Organization'] = xwalk_dict['ncrn']['Contact']['source']['Organization'].str.upper()
+
     return xwalk_dict
 
 def _exception_ncrn_Location(xwalk_dict:dict) -> dict:
