@@ -19,6 +19,10 @@ def _update_foreign_keys(xwalk_dict:dict) -> dict:
                 for fk in fks:
                     if fk=='SynonymID' and schema=='ncrn' and tbl=='BirdSpecies':
                         pass
+                    elif fk=='TemperatureUnitCode' and schema=='ncrn' and tbl =='DetectionEvent':
+                        pass
+                    elif fk=='UserID' and schema=='dbo' and tbl =='UserRole':
+                        pass
                     else:
                         constrained_by = xwalk_dict[schema][tbl]['xwalk'][xwalk_dict[schema][tbl]['xwalk']['destination']==fk].references.values[0]
                         lookup = constrained_by.split('.')
@@ -68,6 +72,8 @@ def _update_primary_keys(xwalk_dict:dict) -> dict:
             if len(pks) == 1:
                 for pk in pks:
                     if pk == 'Code': # when the primary key is called 'Code', we keep a str pk...
+                        pass
+                    elif pk=='ID' and schema=='dbo' and tbl =='User':
                         pass
                     else:
                         for load in loads_to_check:
