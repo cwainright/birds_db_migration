@@ -277,6 +277,10 @@ def _generate_k_load(xwalk_dict:dict) -> dict:
             xwalk_dict[schema][tbl]['k_load'] = xwalk_dict[schema][tbl]['tbl_load'].copy()
             del xwalk_dict[schema][tbl]['k_load']['rowid']
 
+
+    print('')
+    print('Enforcing congruency for primary-key/foreign-key relationships...')
+    print('')
     kl._update_primary_keys(xwalk_dict)
     kl._update_foreign_keys(xwalk_dict)
 
