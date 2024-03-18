@@ -110,6 +110,9 @@ def make_birds(dest:str='') -> dict:
     xwalk_dict = _execute_xwalk_exceptions(xwalk_dict)
 
     # execute xwalk to generate load
+    print('')
+    print('Transforming source data to destination target schemas...')
+    print('')
     xwalk_dict = _execute_xwalks(xwalk_dict)
 
     # add t-sql constraints to xwalks
@@ -118,12 +121,17 @@ def make_birds(dest:str='') -> dict:
     xwalk_dict = tx._make_pk_fk_lookup(xwalk_dict)
 
     # generate k_load
+    print('Enforcing congruency for primary-key/foreign-key relationships...')
+    print('')
     xwalk_dict = _generate_k_load(xwalk_dict)
 
     # generate payload
     xwalk_dict = _generate_payload(xwalk_dict)
 
     # generate t-sql
+    print('')
+    print('Generating TSQL for payloads...')
+    print('')
     xwalk_dict = _generate_tsql(xwalk_dict)
 
     # save output
@@ -277,10 +285,6 @@ def _generate_k_load(xwalk_dict:dict) -> dict:
             xwalk_dict[schema][tbl]['k_load'] = xwalk_dict[schema][tbl]['tbl_load'].copy()
             del xwalk_dict[schema][tbl]['k_load']['rowid']
 
-
-    print('')
-    print('Enforcing congruency for primary-key/foreign-key relationships...')
-    print('')
     kl._update_primary_keys(xwalk_dict)
     kl._update_foreign_keys(xwalk_dict)
 
