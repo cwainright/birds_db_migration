@@ -277,7 +277,7 @@ def _ncrn_Protocol(xwalk_dict:dict) -> dict:
     one_to_one_fields = [
         'ID'
         ,'Title'
-        ,'Version'
+        # ,'Version'
         ,'EffectiveBeginDate'
         ,'Comments'
     ]
@@ -291,8 +291,8 @@ def _ncrn_Protocol(xwalk_dict:dict) -> dict:
     mask = (xwalk_dict['ncrn']['Protocol']['xwalk']['destination'] == 'Title')
     xwalk_dict['ncrn']['Protocol']['xwalk']['source'] =  np.where(mask, 'Protocol_Name', xwalk_dict['ncrn']['Protocol']['xwalk']['source'])
     # Version
-    mask = (xwalk_dict['ncrn']['Protocol']['xwalk']['destination'] == 'Version')
-    xwalk_dict['ncrn']['Protocol']['xwalk']['source'] =  np.where(mask, 'Protocol_Version', xwalk_dict['ncrn']['Protocol']['xwalk']['source'])
+    # mask = (xwalk_dict['ncrn']['Protocol']['xwalk']['destination'] == 'Version')
+    # xwalk_dict['ncrn']['Protocol']['xwalk']['source'] =  np.where(mask, 'Protocol_Version', xwalk_dict['ncrn']['Protocol']['xwalk']['source'])
     # EffectiveBeginDate
     mask = (xwalk_dict['ncrn']['Protocol']['xwalk']['destination'] == 'EffectiveBeginDate')
     xwalk_dict['ncrn']['Protocol']['xwalk']['source'] =  np.where(mask, 'Version_Date', xwalk_dict['ncrn']['Protocol']['xwalk']['source'])
@@ -305,6 +305,7 @@ def _ncrn_Protocol(xwalk_dict:dict) -> dict:
         'IsActive'
         ,'IsDefault'
         ,'ObserverExperienceRequired'
+        ,'Version'
     ]
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['ncrn']['Protocol']['xwalk']['destination'].isin(calculated_fields))
@@ -321,6 +322,10 @@ def _ncrn_Protocol(xwalk_dict:dict) -> dict:
     mask = (xwalk_dict['ncrn']['Protocol']['xwalk']['destination'] == 'ObserverExperienceRequired')
     xwalk_dict['ncrn']['Protocol']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn']['Protocol']['tbl_load']['ObserverExperienceRequired']=0", xwalk_dict['ncrn']['Protocol']['xwalk']['source'])
     xwalk_dict['ncrn']['Protocol']['xwalk']['note'] = np.where(mask, "BIT type (bool as 0 or 1); NCRN did not require observer experience", xwalk_dict['ncrn']['Protocol']['xwalk']['note'])
+    # Version
+    mask = (xwalk_dict['ncrn']['Protocol']['xwalk']['destination'] == 'Version')
+    xwalk_dict['ncrn']['Protocol']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn']['Protocol']['tbl_load']['Version']=np.where((xwalk_dict['ncrn']['Protocol']['source']['Protocol_Name']=='Grassland Bird Monitoring'),'G.1.0','F.1.0')", xwalk_dict['ncrn']['Protocol']['xwalk']['source'])
+    xwalk_dict['ncrn']['Protocol']['xwalk']['note'] = np.where(mask, "VARCHAR (10); required unique; NCRN stored this as a float that was independent of the protocol name; new schema requires the version to be protocol-dependent", xwalk_dict['ncrn']['Protocol']['xwalk']['note'])
 
     # Blanks
     blank_fields = [
