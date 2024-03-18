@@ -2937,6 +2937,7 @@ def _exception_lu_ProtectedStatus(xwalk_dict:dict) -> dict:
 def _exception_ncrn_Contact(xwalk_dict:dict) -> dict:
     """map experience level to ncrn.Contact.source.ExperienceLevelID"""
 
+    # EXCEPTION 1: make erroneous position titles into sensible experience levels consistent with NETNMIDN
     mymap = {}
     mymap['Crew Leader'] = 3
     mymap['None'] = 1
@@ -2945,15 +2946,29 @@ def _exception_ncrn_Contact(xwalk_dict:dict) -> dict:
     mymap['NCRN Data Manager'] = 1
     mymap['Undergrad'] = 2
     mymap['Top Dog'] = 3
-
     xwalk_dict['ncrn']['Contact']['source']['ExperienceLevelID'] = np.NaN
     xwalk_dict['ncrn']['Contact']['source']['Position_Title'] = xwalk_dict['ncrn']['Contact']['source']['Position_Title'].astype(str)
-
     for k,v in mymap.items():
         mask = (xwalk_dict['ncrn']['Contact']['source'].Position_Title == k)
         xwalk_dict['ncrn']['Contact']['source']['ExperienceLevelID'] = np.where(mask, v, xwalk_dict['ncrn']['Contact']['source']['ExperienceLevelID'])
 
-    xwalk_dict['ncrn']['Contact']['source']['Organization'] = xwalk_dict['ncrn']['Contact']['source']['Organization'].str.upper()
+    # EXCEPTION 2: fill in blanks and replace erroneous `organization` values
+    xwalk_dict['ncrn']['Contact']['source']['Organization'] = xwalk_dict['ncrn']['Contact']['source']['Organization'].str.upper() # make org case-insensitive
+    mask = (xwalk_dict['ncrn']['Contact']['source']['Organization']=='UNKNOWN')
+    xwalk_dict['ncrn']['Contact']['source']['Organization'] = np.where(mask, 'UDEL', xwalk_dict['ncrn']['Contact']['source']['Organization'])
+
+    # EXCEPTION 3: filter out erroneous contact IDs
+    # exclusions
+    # these are IDs that have no related records, are erroneous, and should be deleted from the dataset
+    exclude_names = [
+        '{BD1C25D7-5D8A-4998-8031-21421D0C9767}' # First: 'TEST', Last: 'TEST', related records (n): 0
+        ,'{FC4440FD-820F-436C-8833-71641A801664}' # First: 'josh', Last: '.', related records (n): 0
+    ]
+    xwalk_dict['ncrn']['Contact']['source'] = xwalk_dict['ncrn']['Contact']['source'][xwalk_dict['ncrn']['Contact']['source']['Contact_ID'].isin(exclude_names)==False]
+    xwalk_dict['ncrn']['Contact']['source'].reset_index(drop=True, inplace=True)
+
+    # EXCEPTION 4: deduplicate contact IDs, cascade changes to `ncrn.DetectionEvent.source.observer` and `ncrn.DetectionEvent.source.recorder`
+    # TODO
 
     return xwalk_dict
 
