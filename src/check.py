@@ -8,7 +8,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 import time
 import datetime as dt
 
-EXCLUSIONS = ['unique_vals'] # 'unique_vals` is empty when the table does not enforce unique values in any field; this can happen in reality so we ignore here
+EXCLUSIONS = ['unique_vals', 'original'] # 'unique_vals` is empty when the table does not enforce unique values in any field; this can happen in reality so we ignore here
 KNOWN_EMPTY = {
     'ncrn':[
         'ScannedFile'
@@ -50,7 +50,7 @@ def check_birds(xwalk_dict:dict) -> None:
     print('Checking referential integrity...')
     _validate_referential_integrity(xwalk_dict=xwalk_dict)
     print('')
-    print('Checking that logical keys were replaced by ints...')
+    print('Checking that logical keys were replaced by INTs...')
     _validate_foreign_keys(xwalk_dict=xwalk_dict)
     _validate_primary_keys(xwalk_dict=xwalk_dict)
     print('')
@@ -383,8 +383,8 @@ def _validate_referential_integrity(xwalk_dict:dict) -> None:
 
 def _validate_unique_vals(xwalk_dict:dict) -> None:
     """Check for duplicate values in required-unique fields"""
-    # loads_to_check:list = ['tbl_load','k_load']
-    loads_to_check:list = ['tbl_load']
+    loads_to_check:list = ['k_load']
+    # loads_to_check:list = ['tbl_load']
     missing = {
     'counter':0
     ,'mylist':[]
@@ -397,7 +397,7 @@ def _validate_unique_vals(xwalk_dict:dict) -> None:
                     for val in xwalk_dict[schema][tbl]['unique_vals']:
                         unique_vals =val.split(',')
                         unique_vals = [f"tmp['{x}'].astype(str).str.lower()" for x in unique_vals]
-                        unique_vals = '+'.join(unique_vals)
+                        unique_vals = '+"_"+'.join(unique_vals)
                         mycode = "tmp['dummy'] = " + unique_vals
                         try:
                             exec(mycode)
