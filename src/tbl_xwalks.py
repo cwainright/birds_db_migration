@@ -1887,6 +1887,15 @@ def _exception_ncrn_DetectionEvent(xwalk_dict:dict, deletes:list) -> dict:
     # step 9: get rid of lookup values
     xwalk_dict['ncrn']['DetectionEvent']['source'] = xwalk_dict['ncrn']['DetectionEvent']['source'][before_colnames]
 
+    # EXCEPTION 11: cascade update changes from deduplicating `ncrn.Contact.source.Contact_ID` in `_exception_ncrn_Contact()`
+    targets = _find_erroneous_contacts(xwalk_dict)
+    for k,v in targets['lookup'].items():
+        mask = (xwalk_dict['ncrn']['DetectionEvent']['source']['observer']==k)
+        xwalk_dict['ncrn']['DetectionEvent']['source']['observer'] = np.where(mask, v, xwalk_dict['ncrn']['DetectionEvent']['source']['observer'])
+        mask = (xwalk_dict['ncrn']['DetectionEvent']['source']['recorder']==k)
+        xwalk_dict['ncrn']['DetectionEvent']['source']['recorder'] = np.where(mask, v, xwalk_dict['ncrn']['DetectionEvent']['source']['recorder'])
+
+    xwalk_dict['ncrn']['DetectionEvent']['source'].reset_index(drop=True, inplace=True)
     return xwalk_dict
 
 def _exception_ncrn_BirdSpecies(xwalk_dict:dict) -> dict:
@@ -2967,12 +2976,107 @@ def _exception_ncrn_Contact(xwalk_dict:dict) -> dict:
         ,'{FC4440FD-820F-436C-8833-71641A801664}' # First: 'josh', Last: '.', related records (n): 0
     ]
     xwalk_dict['ncrn']['Contact']['source'] = xwalk_dict['ncrn']['Contact']['source'][xwalk_dict['ncrn']['Contact']['source']['Contact_ID'].isin(exclude_names)==False]
+    
+
+    # EXCEPTION 4: duplicate contact IDs
+    # 4.1 deduplicate contact IDs
+    # 4.2 cascade changes to `ncrn.DetectionEvent.source.observer` and `ncrn.DetectionEvent.source.recorder`
+    # 4.3 cascade attributes to remaining contacts
+    targets = _find_erroneous_contacts(xwalk_dict)
+    # 4.1
+    xwalk_dict['ncrn']['Contact']['source'] = xwalk_dict['ncrn']['Contact']['source'][xwalk_dict['ncrn']['Contact']['source']['Contact_ID'].isin(targets['deletes'].Contact_ID.unique())==False]
+    # 4.2
+    # completed in `_exception_ncrn_DetectionEvent()` EXCEPTION 11 and `ncrn.DetectionEvent.source`
+    # 4.3
+    orig_cols = xwalk_dict['ncrn']['Contact']['source'].columns
+    xwalk_dict['ncrn']['Contact']['source']['dummy'] = xwalk_dict['ncrn']['Contact']['source']['Last_Name'] + xwalk_dict['ncrn']['Contact']['source']['First_Name']
+    xwalk_dict['ncrn']['Contact']['source'] = xwalk_dict['ncrn']['Contact']['source'].merge(targets['attributes'], on='dummy', how='left')
+    mask = (xwalk_dict['ncrn']['Contact']['source']['emails'].isna()==False)
+    xwalk_dict['ncrn']['Contact']['source']['Email_Address'] = np.where(mask, xwalk_dict['ncrn']['Contact']['source']['emails'], xwalk_dict['ncrn']['Contact']['source']['Email_Address'])
+    mask = (xwalk_dict['ncrn']['Contact']['source']['phones'].isna()==False)
+    xwalk_dict['ncrn']['Contact']['source']['Work_Phone'] = np.where(mask, xwalk_dict['ncrn']['Contact']['source']['phones'], xwalk_dict['ncrn']['Contact']['source']['Work_Phone'])
+    mask = (xwalk_dict['ncrn']['Contact']['source']['notes'].isna()==False)
+    xwalk_dict['ncrn']['Contact']['source']['Contact_Notes'] = np.where(mask, xwalk_dict['ncrn']['Contact']['source']['notes'], xwalk_dict['ncrn']['Contact']['source']['Contact_Notes'])
+    xwalk_dict['ncrn']['Contact']['source'] = xwalk_dict['ncrn']['Contact']['source'][orig_cols]
+
     xwalk_dict['ncrn']['Contact']['source'].reset_index(drop=True, inplace=True)
-
-    # EXCEPTION 4: deduplicate contact IDs, cascade changes to `ncrn.DetectionEvent.source.observer` and `ncrn.DetectionEvent.source.recorder`
-    # TODO
-
     return xwalk_dict
+
+def _find_erroneous_contacts(xwalk_dict:dict) -> dict:
+    """Find and prep duplicated contacts
+    
+    Duplicate contacts occur when a single unique combination of first name and last name occurs >1 time.
+    Duplicates tend to occur when one person worked in multiple db back-ends through time; for example a field-lead that trained people in multiple copies of the database.
+
+    Returns:
+        a dictionary with two key-value pairs:
+            `deletes` (pd.DataFrame): `deletes.Contact_ID` is a `ncrn.Contact.source.Contact_ID` that should be replaced by its `deletes.update_to` value in `ncrn.Contact.source` and `ncrn.DetectionEvent.source.observer` and `ncrn.DetectionEvent.source.recorder`
+            `attributes` (pd.DataFrame): the combined attributes (email, phone, etc.) for all unique combinations of first and last name (i.e.,`dummy`s) containing attribute data.
+    """
+
+    orig_contacts = xwalk_dict['ncrn']['Contact']['source'].copy()
+    orig_contacts['dummy'] = orig_contacts['Last_Name'] + orig_contacts['First_Name']
+    df = orig_contacts.groupby(['dummy']).size().reset_index(name='count').sort_values(['count'], ascending=False)
+    df = df[df['count']>1]
+
+    mask = (orig_contacts['dummy'].isin(df.dummy.unique()))
+    orig_contacts = orig_contacts[mask][['Contact_ID', 'dummy', 'Active_Contact', 'Email_Address', 'Work_Phone', 'Contact_Notes']]
+
+    # keep the attribute data (email, phone, etc.) regardless of which `Contact_ID` we keep
+    attribute_info = {}
+    for dummy in orig_contacts.dummy.unique():
+        attribute_info[dummy] = {}
+    for dummy in orig_contacts.dummy.unique():
+        mysub = orig_contacts[orig_contacts['dummy']==dummy]
+        emails = [x for x in mysub.Email_Address.unique() if x != None]
+        phones = [x for x in mysub.Work_Phone.unique() if x != None]
+        notes = [x for x in mysub.Contact_Notes.unique() if x != None]
+        attribute_info[dummy]['emails'] = ';'.join(set(emails))
+        attribute_info[dummy]['phones'] = ';'.join(set(phones))
+        attribute_info[dummy]['notes'] = ';'.join(set(notes))
+    attributes = pd.DataFrame(attribute_info).transpose()
+    attributes = attributes.reset_index().rename(columns={'index':'dummy'})
+
+    # Rule 1: if a `dummy` is flagged as 'active', keep that one
+    keeps = orig_contacts[orig_contacts['Active_Contact']==True]
+    contacts = orig_contacts[orig_contacts['Contact_ID'].isin(keeps['Contact_ID'].unique())==False]
+
+    assert len(contacts) + len(keeps) == len(orig_contacts), print(f'fail integrity check 1: {len(contacts)=} + {len(keeps)=} != {len(orig_contacts)=}') # sanity check
+    assert len(contacts.Contact_ID.unique()) + len(keeps.Contact_ID.unique()) == len(orig_contacts.Contact_ID.unique()), print(f'fail integrity check 2: {len(contacts.Contact_ID.unique())=} + {len(keeps.Contact_ID.unique())=} != {len(orig_contacts.Contact_ID.unique())=}')
+
+    deletes = contacts[contacts['dummy'].isin(keeps['dummy'].unique())]
+    contacts = contacts[contacts['dummy'].isin(keeps['dummy'].unique())==False]
+
+    assert len(contacts) + len(keeps) + len(deletes) == len(orig_contacts), print(f'fail integrity check 3: {len(contacts)=} + {len(deletes)=} =! {len(orig_contacts)=}') # sanity check
+    assert len(contacts.Contact_ID.unique()) + len(keeps.Contact_ID.unique()) + len(deletes.Contact_ID.unique()) == len(orig_contacts.Contact_ID.unique()), print(f'fail integrity check 4: {len(contacts.Contact_ID.unique())=} + {len(keeps.Contact_ID.unique())} != {len(orig_contacts.Contact_ID.unique())=}')
+
+    tmp_keep = contacts.drop_duplicates('dummy')
+    deletes = pd.concat([deletes, contacts[contacts['Contact_ID'].isin(tmp_keep.Contact_ID.unique())==False]])
+    keeps = pd.concat([keeps, tmp_keep])
+    contacts = contacts[(contacts['Contact_ID'].isin(keeps)) & (contacts['Contact_ID'].isin(deletes))]
+    assert len(contacts) == 0, print(f'fail integrity check 5: {len(contacts)=} != 0')
+    assert len(keeps) + len(deletes) == len(orig_contacts), print(f'fail integrity check 6: {len(keeps)=} + {len(deletes)=} != {len(orig_contacts)}')
+    assert len(keeps.Contact_ID.unique()) + len(deletes.Contact_ID.unique()) == len(orig_contacts.Contact_ID.unique()), print(f'fail integrity check 7: {len(keeps.Contact_ID.unique())=} + {len(deletes.Contact_ID.unique())=} != {len(orig_contacts.Contact_ID.unique())}')
+
+    deletes = deletes[['Contact_ID', 'dummy']]
+    tmp_keep = keeps.copy()
+    tmp_keep = tmp_keep[['Contact_ID', 'dummy']]
+    tmp_keep.rename(columns={'Contact_ID': 'update_to'}, inplace=True)
+    deletes = deletes.merge(tmp_keep, on='dummy', how='left')
+    deletes = deletes[['Contact_ID', 'update_to']]
+
+    lookup = {}
+    for i in range(len(deletes)):
+        lookup[deletes['Contact_ID'].values[i]] = deletes['update_to'].values[i]
+
+    erroneous_contacts = {
+        'deletes':deletes
+        ,'attributes':attributes
+        ,'lookup':lookup
+    }
+
+    return erroneous_contacts
+
 
 def _exception_ncrn_Location(xwalk_dict:dict) -> dict:
     """
