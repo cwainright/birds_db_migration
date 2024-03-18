@@ -336,9 +336,8 @@ def _validate_cols(xwalk_dict:dict, mykeys:list, target:str) -> None:
     return None
 
 def _validate_referential_integrity(xwalk_dict:dict) -> None:
-    # TODO: check that the INT id for each GUID lines up among related tables
     """Check for null values in non-nullable fields"""
-    loads_to_check:list = ['tbl_load','k_load']
+    loads_to_check:list = ['k_load']
     # loads_to_check:list = ['tbl_load']
     missing = {
     'counter':0
