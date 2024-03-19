@@ -302,7 +302,7 @@ def _generate_payload(xwalk_dict:dict) -> dict:
         for tbl in xwalk_dict[schema].keys():
             payload = xwalk_dict[schema][tbl]['k_load'].copy()
             payload_cols = list(payload.columns)
-            payload_cols = [x for x in payload_cols if x!='ID' and x!='rowid']
+            payload_cols = [x for x in payload_cols if x!='ID' and x!='rowid' and x != 'Rowversion']
             payload = payload[payload_cols]
             xwalk_dict[schema][tbl]['payload'] = payload.copy()
 
