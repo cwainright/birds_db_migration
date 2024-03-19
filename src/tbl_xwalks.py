@@ -1196,7 +1196,6 @@ def _ncrn_BirdGroups(xwalk_dict:dict) -> dict:
     # 1:1 fields
     one_to_one_fields = [
         'ID'
-        ,'GroupName'
         ,'IsActive'
     ]
     # assign grouping variable `calculation` for the 1:1 fields
@@ -1205,9 +1204,6 @@ def _ncrn_BirdGroups(xwalk_dict:dict) -> dict:
     # ID
     mask = (xwalk_dict['ncrn']['BirdGroups']['xwalk']['destination'] == 'ID')
     xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'] =  np.where(mask, 'Guild_Assignment_ID', xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'])
-    # GroupName
-    mask = (xwalk_dict['ncrn']['BirdGroups']['xwalk']['destination'] == 'GroupName')
-    xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'] =  np.where(mask, 'Guild_Level', xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'])
     # IsActive
     mask = (xwalk_dict['ncrn']['BirdGroups']['xwalk']['destination'] == 'IsActive')
     xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'] =  np.where(mask, 'Active', xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'])
@@ -1217,6 +1213,7 @@ def _ncrn_BirdGroups(xwalk_dict:dict) -> dict:
     calculated_fields = [
         'IsGuild'
         ,'Comment'
+        ,'GroupName'
     ]
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['ncrn']['BirdGroups']['xwalk']['destination'].isin(calculated_fields))
@@ -1230,6 +1227,11 @@ def _ncrn_BirdGroups(xwalk_dict:dict) -> dict:
     mask = (xwalk_dict['ncrn']['BirdGroups']['xwalk']['destination'] == 'Comment')
     xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'] =  np.where(mask, "xwalk_dict['ncrn']['BirdGroups']['tbl_load']['Comment'] = 'Description:'+xwalk_dict['ncrn']['BirdGroups']['source']['Guild_Description'].astype(str)+';Code:'+xwalk_dict['ncrn']['BirdGroups']['source']['GuildCode'].astype(str)+';Integrity_Element:'+xwalk_dict['ncrn']['BirdGroups']['source']['Integrity_Element'].astype(str)+';GuildCategory:'+xwalk_dict['ncrn']['BirdGroups']['source']['GuildCategory'].astype(str)", xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'])
     xwalk_dict['ncrn']['BirdGroups']['xwalk']['note'] =  np.where(mask, 'VARCHAR(MAX); a concatenation of all the leftover attributes from dbo_tlu_Guild_Assignment LEFT JOIN dbo_tbl_Guilds ON dbo_tlu_Guild_Assignment.Guild_ID = dbo_tbl_Guilds.Guild_ID', xwalk_dict['ncrn']['BirdGroups']['xwalk']['note'])
+    # GroupName
+    mask = (xwalk_dict['ncrn']['BirdGroups']['xwalk']['destination'] == 'GroupName')
+    # xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'] =  np.where(mask, "xwalk_dict['ncrn']['BirdGroups']['tbl_load']['GroupName'] = np.where((xwalk_dict['ncrn']['BirdGroups']['source']['GuildCategory'].isna()) | (xwalk_dict['ncrn']['BirdGroups']['source']['Guild_Level']=='Yes'), xwalk_dict['ncrn']['BirdGroups']['source']['Guild_Name'] + '_' + xwalk_dict['ncrn']['BirdGroups']['source']['Guild_Level'], xwalk_dict['ncrn']['BirdGroups']['source']['Guild_Level'])", xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'])
+    xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'] =  np.where(mask, "xwalk_dict['ncrn']['BirdGroups']['tbl_load']['GroupName'] = np.where(xwalk_dict['ncrn']['BirdGroups']['source']['Guild_Name'].isin(['PIF Avg Groupings', 'Primary Habitat', 'Mass in Quartiles', 'Nest Height', 'Nest Placement']), xwalk_dict['ncrn']['BirdGroups']['source']['Guild_Name'] + '_' + xwalk_dict['ncrn']['BirdGroups']['source']['Guild_Level'], xwalk_dict['ncrn']['BirdGroups']['source']['Guild_Level'])", xwalk_dict['ncrn']['BirdGroups']['xwalk']['source'])
+    xwalk_dict['ncrn']['BirdGroups']['xwalk']['note'] =  np.where(mask, 'VARCHAR(50); a concatenation of  dbo_tbl_Guilds.GuildCategory and dbo_tbl_Guilds.Guild_Level', xwalk_dict['ncrn']['BirdGroups']['xwalk']['note'])
 
     # Blanks
     blank_fields = [
