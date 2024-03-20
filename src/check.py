@@ -595,18 +595,347 @@ def _validate_nulls(xwalk_dict:dict) -> None:
 
 def unit_test(xwalk_dict:dict) -> None:
     """
-    Automated unit test to confirm that pk-fk relationships return the exact records in `k_load` that were present in `source`
+    Unit test to confirm that pk-fk relationships return the exact records in `k_load` that were present in `source`
 
+    Flatten each iteration of the dataset into the format needed for contractor-loading
     Make a flattened dataset out of the `source`, `tbl_load`, and `k_load`
+    # in theory, all of the datasets from `source` forward should have the same number of rows
 
     Compare the datasets
-
     - counts of records per date
     - counts of records per site
     - counts of records per bird species
     - counts of records per observer, recorder
     - pivot, compare counts of records (like in summary sent to collaborator)
     """
+    start_time = time.time()
+    outcomes = []
+    print('')
+    print('Unit testing `ncrn` schema...')
 
+    print('')
+    print(f'Unit testing `ncrn.DetectionEvent.k_load`...')
+    outcomes.extend(_unit_test_ncrn_DetectionEvent(xwalk_dict))
+    print('')
+    print(f'Unit testing `ncrn.BirdDetection.k_load`...')
+    outcomes.extend(_unit_test_ncrn_BirdDetection(xwalk_dict))
+    
+    if all(outcomes):
+        print('')
+        print(f'SUCCESS: `ncrn` passed all unit tests!')
+    # 3. compare the dates
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    elapsed_time = str(dt.timedelta(seconds=elapsed_time))
+    elapsed_time = elapsed_time.split('.')[0]
+    print('')
+    print(f'`unit_test()` succeeded in: {elapsed_time}')
     return None
 
+def _unit_test_ncrn_DetectionEvent(xwalk_dict:dict) -> list:
+    outcomes = []
+
+    df_s, df_k = _make_flat_DetectionEvent_k_load(xwalk_dict)
+    # LocationID
+    # outcomes.append(_unit_test_ncrn_DetectionEvent_LocationID(df_s, df_k))
+    # ProtocolID
+    # outcomes.append(_unit_test_ncrn_DetectionEvent_ProtocolID(df_s, df_k))
+    # EnteredBy
+    # outcomes.append(_unit_test_ncrn_DetectionEvent_EnteredBy(df_s, df_k))
+    outcomes.append(_unit_test_ncrn_DetectionEvent_Observer_ContactID(df_s, df_k))
+    outcomes.append(_unit_test_ncrn_DetectionEvent_Recorder_ContactID(df_s, df_k))
+    # Observer_ExperienceLevelID
+    # outcomes.append(_unit_test_ncrn_DetectionEvent_Observer_ExperienceLevelID(df_s, df_k))
+    # ProtocolNoiseLevelID
+    # outcomes.append(_unit_test_ncrn_DetectionEvent_ProtocolNoiseLevelID(df_s, df_k))
+    # ProtocolWindCodeID
+    # outcomes.append(_unit_test_ncrn_DetectionEvent_ProtocolWindCodeID(df_s, df_k))
+    # ProtocolPrecipitationTypeID
+    # outcomes.append(_unit_test_ncrn_DetectionEvent_ProtocolPrecipitationTypeID(df_s, df_k))
+    # AirTemperature
+    # EnteredDateTime
+    # RelativeHumidity
+    # StartDateTime
+    # outcomes.append(_unit_test_ncrn_DetectionEvent_StartDateTime(df_s, df_k))
+    # EnteredDateTime
+    # outcomes.append(_unit_test_ncrn_DetectionEvent_EnteredDateTime(df_s, df_k))
+    # DataProcessingLevelID
+    # outcomes.append(_unit_test_ncrn_DetectionEvent_DataProcessingLevelID(df_s, df_k))
+    # DataProcessingLevelDate
+    # outcomes.append(_unit_test_ncrn_DetectionEvent_DataProcessingLevelDate(df_s, df_k))
+    # RelativeHumidity
+    outcomes.append(_unit_test_ncrn_DetectionEvent_RelativeHumidity(df_s, df_k))
+
+    return outcomes
+
+def _unit_test_ncrn_BirdDetection(xwalk_dict:dict) -> list:
+    outcomes = []
+
+    df_s, df_k = _make_flat_BirdDetection_k_load(xwalk_dict)
+    outcomes.append(_unit_test_BirdDetection_Code(df_s, df_k))
+    outcomes.append(_unit_test_BirdDetection_CommonName(df_s, df_k))
+    outcomes.append(_unit_test_BirdDetection_ScientificName(df_s, df_k))
+    outcomes.append(_unit_test_BirdDetection_groupby(df_s, df_k))
+
+    return outcomes
+
+def _make_flat_DetectionEvent_k_load(xwalk_dict:dict) -> tuple:
+    # 1. compare the `observer` and `recorder` for each record
+    contact_s = xwalk_dict['ncrn']['Contact']['source'].copy()
+    contact_s = contact_s[['Contact_ID','Last_Name','First_Name']]
+    events_s = xwalk_dict['ncrn']['DetectionEvent']['source'].copy()
+    df_s = events_s.merge(contact_s, left_on='observer', right_on='Contact_ID', how='left')
+    df_s.rename(columns={'Last_Name':'observer_Last_Name','First_Name':'observer_First_Name'},inplace=True)
+    df_s = df_s.merge(contact_s, left_on='recorder', right_on='Contact_ID', how='left')
+    df_s.rename(columns={'Last_Name':'recorder_Last_Name','First_Name':'recorder_First_Name'},inplace=True)
+
+    contact_k = xwalk_dict['ncrn']['Contact']['k_load'].copy()
+    contact_k = contact_k[['ID','LastName','FirstName']]
+    events_k = xwalk_dict['ncrn']['DetectionEvent']['k_load'].copy()
+    df_k = events_k.merge(contact_k, left_on='Observer_ContactID', right_on='ID', how='left')
+    df_k.rename(columns={'LastName':'observer_LastName','FirstName':'observer_FirstName'},inplace=True)
+    df_k = df_k.merge(contact_k, left_on='Recorder_ContactID', right_on='ID', how='left')
+    df_k.rename(columns={'LastName':'recorder_LastName','FirstName':'recorder_FirstName'},inplace=True)
+
+    return df_s, df_k
+
+def _unit_test_ncrn_DetectionEvent_Observer_ContactID(df_s:pd.DataFrame, df_k:pd.DataFrame) -> bool:
+
+    outcome = all(df_s['observer_Last_Name']==df_k['observer_LastName'])
+    if all(df_s['observer_Last_Name']==df_k['observer_LastName']):
+        print(f'    SUCCESS: The observer first and last name in `source` matched that of `k_load` for `birds.ncrn.DetectionEvent`!')
+    else:
+        print(f'    FAIL: The observer first and last name in `source` DID NOT match that of `k_load` for `birds.ncrn.DetectionEvent`!')
+
+    return outcome
+
+def _unit_test_ncrn_DetectionEvent_Observer_ExperienceLevelID(df_s:pd.DataFrame, df_k:pd.DataFrame) -> bool:
+
+    outcome = all(df_s['Observer_ExperienceLevelID']==df_k['Observer_ExperienceLevelID'])
+    if all(df_s['wind_speed']==df_k['wind_speed']):
+        print(f'    SUCCESS: The Observer_ExperienceLevelID in `source` matched that of `k_load` for `birds.ncrn.DetectionEvent`!')
+    else:
+        print(f'    FAIL: The Observer_ExperienceLevelID in `source` DID NOT match that of `k_load` for `birds.ncrn.DetectionEvent`!')
+
+    return outcome
+
+def _unit_test_ncrn_DetectionEvent_ProtocolWindCodeID(df_s:pd.DataFrame, df_k:pd.DataFrame) -> bool:
+
+    outcome = all(df_s['wind_speed']==df_k['wind_speed'])
+    if all(df_s['wind_speed']==df_k['wind_speed']):
+        print(f'    SUCCESS: The wind code in `source` matched that of `k_load` for `birds.ncrn.DetectionEvent`!')
+    else:
+        print(f'    FAIL: The wind code in `source` DID NOT match that of `k_load` for `birds.ncrn.DetectionEvent`!')
+
+    return outcome
+
+def _unit_test_ncrn_DetectionEvent_ProtocolNoiseLevelID(df_s:pd.DataFrame, df_k:pd.DataFrame) -> bool:
+
+    outcome = all(df_s['ProtocolNoiseLevelID']==df_k['ProtocolNoiseLevelID'])
+    if all(df_s['recorder_Last_Name']==df_k['recorder_LastName']):
+        print(f'    SUCCESS: The recorder first and last name in `source` matched that of `k_load` for `birds.ncrn.DetectionEvent`!')
+    else:
+        print(f'    FAIL: The recorder first and last name in `source` DID NOT match that of `k_load` for `birds.ncrn.DetectionEvent`!')
+
+    return outcome
+
+def _unit_test_ncrn_DetectionEvent_AirTemperatureRecorded(df_s:pd.DataFrame, df_k:pd.DataFrame) -> bool:
+
+    outcome = all(df_s['recorder_Last_Name']==df_k['recorder_LastName'])
+    if all(df_s['recorder_Last_Name']==df_k['recorder_LastName']):
+        print(f'    SUCCESS: The recorder first and last name in `source` matched that of `k_load` for `birds.ncrn.DetectionEvent`!')
+    else:
+        print(f'    FAIL: The recorder first and last name in `source` DID NOT match that of `k_load` for `birds.ncrn.DetectionEvent`!')
+
+    return outcome
+
+def _unit_test_ncrn_DetectionEvent_EnteredBy(df_s:pd.DataFrame, df_k:pd.DataFrame) -> bool:
+
+    outcome = all(df_s['entered_Last_Name']==df_k['entered_LastName'])
+    if all(df_s['entered_Last_Name']==df_k['entered_LastName']):
+        print(f'    SUCCESS: The EnteredBy first and last name in `source` matched that of `k_load` for `birds.ncrn.DetectionEvent`!')
+    else:
+        print(f'    FAIL: The EnteredBy first and last name in `source` DID NOT match that of `k_load` for `birds.ncrn.DetectionEvent`!')
+
+    return outcome
+
+def _unit_test_ncrn_DetectionEvent_ProtocolPrecipitationTypeID(df_s:pd.DataFrame, df_k:pd.DataFrame) -> bool:
+
+    outcome = all(df_s['ProtocolPrecipitationTypeID']==df_k['ProtocolPrecipitationTypeID'])
+    if all(df_s['ProtocolPrecipitationTypeID']==df_k['ProtocolPrecipitationTypeID']):
+        print(f'    SUCCESS: The ProtocolPrecipitationTypeID in `source` matched that of `k_load` for `birds.ncrn.DetectionEvent`!')
+    else:
+        print(f'    FAIL: The ProtocolPrecipitationTypeID in `source` DID NOT match that of `k_load` for `birds.ncrn.DetectionEvent`!')
+
+    return outcome
+
+def _unit_test_ncrn_DetectionEvent_EnteredDateTime(df_s:pd.DataFrame, df_k:pd.DataFrame) -> bool:
+
+    outcome = all(df_s['EnteredDateTime']==df_k['entered_date'])
+    if all(df_s['EnteredDateTime']==df_k['entered_date']):
+        print(f'    SUCCESS: The EnteredDateTime in `source` matched that of `k_load` for `birds.ncrn.DetectionEvent`!')
+    else:
+        print(f'    FAIL: The EnteredDateTime in `source` DID NOT match that of `k_load` for `birds.ncrn.DetectionEvent`!')
+
+    return outcome
+
+def _unit_test_ncrn_DetectionEvent_RelativeHumidity(df_s:pd.DataFrame, df_k:pd.DataFrame) -> bool:
+    mask_s = (df_s['humidity'].isna())
+    mask_k = (df_k['RelativeHumidity'].isna())
+    na_s = df_s[mask_s].copy().reset_index(drop=True)
+    na_k = df_k[mask_k].copy().reset_index(drop=True)
+    non_na_s = df_s[~mask_s].copy().reset_index(drop=True)
+    non_na_k = df_k[~mask_k].copy().reset_index(drop=True)
+    
+    outcome = all(non_na_s['humidity']==non_na_k['RelativeHumidity']) and len(na_s) == len(na_k)
+    if outcome==True:
+        print(f'    SUCCESS: The RelativeHumidity in `source` matched that of `k_load` for `birds.ncrn.DetectionEvent`!')
+    else:
+        print(f'    FAIL: The RelativeHumidity in `source` DID NOT match that of `k_load` for `birds.ncrn.DetectionEvent`!')
+
+    return outcome
+
+def _unit_test_ncrn_DetectionEvent_DataProcessingLevelID(df_s:pd.DataFrame, df_k:pd.DataFrame) -> bool:
+
+    outcome = all(df_s['recorder_Last_Name']==df_k['recorder_LastName'])
+    if all(df_s['recorder_Last_Name']==df_k['recorder_LastName']):
+        print(f'    SUCCESS: The recorder first and last name in `source` matched that of `k_load` for `birds.ncrn.DetectionEvent`!')
+    else:
+        print(f'    FAIL: The recorder first and last name in `source` DID NOT match that of `k_load` for `birds.ncrn.DetectionEvent`!')
+
+    return outcome
+
+def _unit_test_ncrn_DetectionEvent_StartDateTime(df_s:pd.DataFrame, df_k:pd.DataFrame) -> bool:
+
+    outcome = all(df_s['recorder_Last_Name']==df_k['recorder_LastName'])
+    if all(df_s['recorder_Last_Name']==df_k['recorder_LastName']):
+        print(f'    SUCCESS: The recorder first and last name in `source` matched that of `k_load` for `birds.ncrn.DetectionEvent`!')
+    else:
+        print(f'    FAIL: The recorder first and last name in `source` DID NOT match that of `k_load` for `birds.ncrn.DetectionEvent`!')
+
+    return outcome
+
+def _unit_test_ncrn_DetectionEvent_DataProcessingLevelDate(df_s:pd.DataFrame, df_k:pd.DataFrame) -> bool:
+
+    outcome = all(df_s['DataProcessingLevelDate']==df_k['DataProcessingLevelDate'])
+    if all(df_s['DataProcessingLevelDate']==df_k['DataProcessingLevelDate']):
+        print(f'    SUCCESS: The DataProcessingLevelDate in `source` matched that of `k_load` for `birds.ncrn.DetectionEvent`!')
+    else:
+        print(f'    FAIL: The DataProcessingLevelDate in `source` DID NOT match that of `k_load` for `birds.ncrn.DetectionEvent`!')
+
+    return outcome
+
+def _unit_test_ncrn_DetectionEvent_LocationID(df_s:pd.DataFrame, df_k:pd.DataFrame) -> bool:
+
+    outcome = all(df_s['DataProcessingLevelDate']==df_k['DataProcessingLevelDate'])
+    if all(df_s['DataProcessingLevelDate']==df_k['DataProcessingLevelDate']):
+        print(f'    SUCCESS: The DataProcessingLevelDate in `source` matched that of `k_load` for `birds.ncrn.DetectionEvent`!')
+    else:
+        print(f'    FAIL: The DataProcessingLevelDate in `source` DID NOT match that of `k_load` for `birds.ncrn.DetectionEvent`!')
+
+    return outcome
+
+def _unit_test_ncrn_DetectionEvent_Recorder_ContactID(df_s:pd.DataFrame, df_k:pd.DataFrame) -> bool:
+
+    outcome = all(df_s['recorder_Last_Name']==df_k['recorder_LastName'])
+    if all(df_s['recorder_Last_Name']==df_k['recorder_LastName']):
+        print(f'    SUCCESS: The recorder first and last name in `source` matched that of `k_load` for `birds.ncrn.DetectionEvent`!')
+    else:
+        print(f'    FAIL: The recorder first and last name in `source` DID NOT match that of `k_load` for `birds.ncrn.DetectionEvent`!')
+
+    return outcome
+
+def _unit_test_BirdDetection_Code(df_s:pd.DataFrame, df_k:pd.DataFrame) -> bool:
+
+    outcome = all(df_s['Code']==df_k['Code'])
+
+    # groupby `DetectionEventID` and count individuals (i.e., len(subset))
+    if all(df_s['Code']==df_k['Code']):
+        print(f'    SUCCESS: The array of species codes in `source` matched that of `k_load` for `birds.ncrn.BirdDetection`!')
+    else:
+        print(f'    FAIL: The array of species codes in `source` DID NOT match that of `k_load` for `birds.ncrn.BirdDetection`!')
+    return outcome
+
+def _unit_test_BirdDetection_groupby(df_s:pd.DataFrame, df_k:pd.DataFrame) -> bool:
+
+    outcome = all(df_s.groupby(['DetectionEventID']).size().reset_index(name='count').sort_values(['count'], ascending=False)['count']==df_k.groupby(['DetectionEventID']).size().reset_index(name='count').sort_values(['count'], ascending=False)['count'])
+
+    if all(df_s.groupby(['DetectionEventID']).size().reset_index(name='count').sort_values(['count'], ascending=False)['count']==df_k.groupby(['DetectionEventID']).size().reset_index(name='count').sort_values(['count'], ascending=False)['count']):
+        print(f'    SUCCESS: All species observations in `source` matched `k_load` for `birds.ncrn.BirdDetection`!')
+    else:
+        print(f'    FAIL: All species observations in `source` DID NOT match `k_load` for `birds.ncrn.BirdDetection`!')
+
+    return outcome
+
+def _make_flat_BirdDetection_k_load(xwalk_dict:dict) -> tuple:
+
+    # 2. compare the species names
+    species_k = xwalk_dict['ncrn']['BirdSpecies']['k_load'].copy()
+    species_k = species_k[['ID','Code','CommonName','ScientificName']]
+    speciespark_k = xwalk_dict['ncrn']['BirdSpeciesPark']['k_load'].copy()
+    speciespark_k = speciespark_k[['ID','BirdSpeciesID','ParkID']]
+    park_k = xwalk_dict['ncrn']['Park']['k_load'].copy()
+    park_k = park_k[['ID','ParkCode']]
+    detection_k = xwalk_dict['ncrn']['BirdDetection']['k_load'].copy()
+    detection_k = detection_k[['ID','DetectionEventID','BirdSpeciesParkID']]
+    detection_s = xwalk_dict['ncrn']['BirdDetection']['source'].copy()
+    detection_s = detection_k[['ID','DetectionEventID','BirdSpeciesParkID']]
+    tmp = speciespark_k.merge(species_k, left_on='BirdSpeciesID', right_on='ID', how='left')
+    tmp = tmp.merge(park_k, left_on='ParkID', right_on='ID', how='left')
+    df_s = detection_s.merge(tmp, left_on='BirdSpeciesParkID', right_on='ID_x')
+
+    species_k = xwalk_dict['ncrn']['BirdSpecies']['k_load'].copy()
+    species_k = species_k[['ID','Code','CommonName','ScientificName']]
+    speciespark_k = xwalk_dict['ncrn']['BirdSpeciesPark']['k_load'].copy()
+    speciespark_k = speciespark_k[['ID','BirdSpeciesID','ParkID']]
+    park_k = xwalk_dict['ncrn']['Park']['k_load'].copy()
+    park_k = park_k[['ID','ParkCode']]
+    detection_k = xwalk_dict['ncrn']['BirdDetection']['k_load'].copy()
+    detection_k = detection_k[['ID','DetectionEventID','BirdSpeciesParkID']]
+    tmp = speciespark_k.merge(species_k, left_on='BirdSpeciesID', right_on='ID', how='left')
+    tmp = tmp.merge(park_k, left_on='ParkID', right_on='ID', how='left')
+    df_k = detection_k.merge(tmp, left_on='BirdSpeciesParkID', right_on='ID_x')
+
+    return df_s, df_k
+
+def _unit_test_BirdDetection_CommonName(df_s:pd.DataFrame, df_k:pd.DataFrame) -> bool:
+
+    outcome = all(df_s['CommonName']==df_k['CommonName'])
+
+    if all(df_s['CommonName']==df_k['CommonName']):
+        print(f'    SUCCESS: The array of common names recorded in `source` matched `k_load` for `birds.ncrn.BirdDetection`!')
+    else:
+        print(f'    FAIL: The array of common names recorded in `source` DID NOT match that of `k_load` for `birds.ncrn.BirdDetection`!')
+
+    return outcome
+
+def _unit_test_BirdDetection_ScientificName(df_s:pd.DataFrame, df_k:pd.DataFrame) -> bool:
+
+    outcome = all(df_s['ScientificName']==df_k['ScientificName'])
+
+    if all(df_s['ScientificName']==df_k['ScientificName']):
+        print(f'    SUCCESS: The array of scientific names recorded in `source` matched `k_load` for `birds.ncrn.BirdDetection`!')
+    else:
+        print(f'    FAIL: The array of common names recorded in `source` DID NOT match `k_load` for `birds.ncrn.BirdDetection`!')
+
+    return outcome
+
+# def _unit_test_BirdDetection_CommonName(df_s:pd.DataFrame, df_k:pd.DataFrame) -> bool:
+
+#     outcome = all(df_s['CommonName']==df_k['CommonName'])
+#     if all(df_s['CommonName']==df_k['CommonName']):
+#         print(f'SUCCESS: The array of common names recorded in `source` matched `k_load` for `birds.ncrn.BirdDetection`!')
+#     else:
+#         print(f'FAIL: The array of common names recorded in `source` DID NOT match that of `k_load` for `birds.ncrn.BirdDetection`!')
+
+#     return outcome
+
+def make_views(xwalk_dict:dict) -> dict:
+    data_template = pd.read_excel(assets.DATA_TEMPLATE['fname'], sheet_name=assets.DATA_TEMPLATE['sheetname'])
+    location_template = pd.read_csv(assets.LOCATION_TEMPLATE)
+    views = {
+        'data': pd.DataFrame(columns=data_template.columns)
+        ,'locations': pd.DataFrame(columns=location_template.columns)
+    }
+
+    return views
