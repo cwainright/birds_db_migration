@@ -637,9 +637,9 @@ def _unit_test_ncrn_DetectionEvent(xwalk_dict:dict) -> list:
 
     df_s, df_k = _make_flat_DetectionEvent_k_load(xwalk_dict)
     # LocationID
-    # outcomes.append(_unit_test_ncrn_DetectionEvent_LocationID(df_s, df_k))
+    outcomes.append(_unit_test_ncrn_DetectionEvent_LocationID(df_s, df_k))
     # ProtocolID
-    # outcomes.append(_unit_test_ncrn_DetectionEvent_ProtocolID(df_s, df_k))
+    outcomes.append(_unit_test_ncrn_DetectionEvent_ProtocolID(df_s, df_k))
     # EnteredBy
     # outcomes.append(_unit_test_ncrn_DetectionEvent_EnteredBy(df_s, df_k))
     outcomes.append(_unit_test_ncrn_DetectionEvent_Observer_ContactID(df_s, df_k))
@@ -653,10 +653,10 @@ def _unit_test_ncrn_DetectionEvent(xwalk_dict:dict) -> list:
     # ProtocolPrecipitationTypeID
     # outcomes.append(_unit_test_ncrn_DetectionEvent_ProtocolPrecipitationTypeID(df_s, df_k))
     # AirTemperature
+    outcomes.append(_unit_test_ncrn_DetectionEvent_AirTemperature(df_s, df_k))
     # EnteredDateTime
-    # RelativeHumidity
     # StartDateTime
-    # outcomes.append(_unit_test_ncrn_DetectionEvent_StartDateTime(df_s, df_k))
+    outcomes.append(_unit_test_ncrn_DetectionEvent_StartDateTime(df_s, df_k))
     # EnteredDateTime
     # outcomes.append(_unit_test_ncrn_DetectionEvent_EnteredDateTime(df_s, df_k))
     # DataProcessingLevelID
@@ -739,13 +739,21 @@ def _unit_test_ncrn_DetectionEvent_ProtocolNoiseLevelID(df_s:pd.DataFrame, df_k:
 
     return outcome
 
-def _unit_test_ncrn_DetectionEvent_AirTemperatureRecorded(df_s:pd.DataFrame, df_k:pd.DataFrame) -> bool:
+def _unit_test_ncrn_DetectionEvent_AirTemperature(df_s:pd.DataFrame, df_k:pd.DataFrame) -> bool:
 
-    outcome = all(df_s['recorder_Last_Name']==df_k['recorder_LastName'])
-    if all(df_s['recorder_Last_Name']==df_k['recorder_LastName']):
-        print(f'    SUCCESS: The recorder first and last name in `source` matched that of `k_load` for `birds.ncrn.DetectionEvent`!')
+    mask_s = (df_s['temperature'].isna())
+    mask_k = (df_k['AirTemperature'].isna())
+    na_s = df_s[mask_s].copy().reset_index(drop=True)
+    na_k = df_k[mask_k].copy().reset_index(drop=True)
+    non_na_s = df_s[~mask_s].copy().reset_index(drop=True)
+    non_na_k = df_k[~mask_k].copy().reset_index(drop=True)
+    
+    outcome = all(non_na_s['temperature']==non_na_k['AirTemperature']) and len(na_s) == len(na_k)
+
+    if outcome==True:
+        print(f'    SUCCESS: The AirTemperature in `source` matched that of `k_load` for `birds.ncrn.DetectionEvent`!')
     else:
-        print(f'    FAIL: The recorder first and last name in `source` DID NOT match that of `k_load` for `birds.ncrn.DetectionEvent`!')
+        print(f'    FAIL: The AirTemperature in `source` DID NOT match that of `k_load` for `birds.ncrn.DetectionEvent`!')
 
     return outcome
 
@@ -756,6 +764,16 @@ def _unit_test_ncrn_DetectionEvent_EnteredBy(df_s:pd.DataFrame, df_k:pd.DataFram
         print(f'    SUCCESS: The EnteredBy first and last name in `source` matched that of `k_load` for `birds.ncrn.DetectionEvent`!')
     else:
         print(f'    FAIL: The EnteredBy first and last name in `source` DID NOT match that of `k_load` for `birds.ncrn.DetectionEvent`!')
+
+    return outcome
+
+def _unit_test_ncrn_DetectionEvent_ProtocolID(df_s:pd.DataFrame, df_k:pd.DataFrame) -> bool:
+
+    outcome = all(df_s['protocol_id']==df_k['ProtocolID'])
+    if all(df_s['protocol_id']==df_k['ProtocolID']):
+        print(f'    SUCCESS: The ProtocolID in `source` matched that of `k_load` for `birds.ncrn.DetectionEvent`!')
+    else:
+        print(f'    FAIL: The ProtocolID in `source` DID NOT match that of `k_load` for `birds.ncrn.DetectionEvent`!')
 
     return outcome
 
@@ -807,11 +825,11 @@ def _unit_test_ncrn_DetectionEvent_DataProcessingLevelID(df_s:pd.DataFrame, df_k
 
 def _unit_test_ncrn_DetectionEvent_StartDateTime(df_s:pd.DataFrame, df_k:pd.DataFrame) -> bool:
 
-    outcome = all(df_s['recorder_Last_Name']==df_k['recorder_LastName'])
-    if all(df_s['recorder_Last_Name']==df_k['recorder_LastName']):
-        print(f'    SUCCESS: The recorder first and last name in `source` matched that of `k_load` for `birds.ncrn.DetectionEvent`!')
+    outcome = all(df_s['activity_start_datetime']==df_k['StartDateTime'])
+    if all(df_s['activity_start_datetime']==df_k['StartDateTime']):
+        print(f'    SUCCESS: The StartDateTime in `source` matched that of `k_load` for `birds.ncrn.DetectionEvent`!')
     else:
-        print(f'    FAIL: The recorder first and last name in `source` DID NOT match that of `k_load` for `birds.ncrn.DetectionEvent`!')
+        print(f'    FAIL: The StartDateTime in `source` DID NOT match that of `k_load` for `birds.ncrn.DetectionEvent`!')
 
     return outcome
 
@@ -826,6 +844,7 @@ def _unit_test_ncrn_DetectionEvent_DataProcessingLevelDate(df_s:pd.DataFrame, df
     return outcome
 
 def _unit_test_ncrn_DetectionEvent_LocationID(df_s:pd.DataFrame, df_k:pd.DataFrame) -> bool:
+    # TODO: compare the ID and the attributes (name, lat/lon) need to join those in `_make_flat_DetectionEvent_k_load()`
 
     outcome = all(df_s['DataProcessingLevelDate']==df_k['DataProcessingLevelDate'])
     if all(df_s['DataProcessingLevelDate']==df_k['DataProcessingLevelDate']):
