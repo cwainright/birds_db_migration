@@ -426,11 +426,11 @@ def _ncrn_Location(xwalk_dict:dict) -> dict:
     xwalk_dict['ncrn']['Location']['xwalk']['note'] = np.where(mask, "BIT NOT NULL map from dict['ncrn']['Location']['xwalk']['source']['Active']", xwalk_dict['ncrn']['Location']['xwalk']['note'])
     # Code  VARCHAR (255)  NULL,
     mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'Code')
-    xwalk_dict['ncrn']['Location']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn']['Location']['tbl_load']['Code']=np.where((xwalk_dict['ncrn']['Location']['source']['Plot_Name'].str.contains('CAMP', regex=False)),xwalk_dict['ncrn']['Location']['source']['Plot_Name'],xwalk_dict['ncrn']['Location']['source']['GRTS_Order'].astype(int).astype(str))", xwalk_dict['ncrn']['Location']['xwalk']['source'])
+    xwalk_dict['ncrn']['Location']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn']['Location']['tbl_load']['Code']=np.where((xwalk_dict['ncrn']['Location']['source']['Plot_Name'].str.contains('CAMP', regex=False)),xwalk_dict['ncrn']['Location']['source']['Plot_Name'],xwalk_dict['ncrn']['Location']['source']['GRTS_Order'].astype(str))", xwalk_dict['ncrn']['Location']['xwalk']['source'])
     xwalk_dict['ncrn']['Location']['xwalk']['note'] = np.where(mask, "VARCHAR (255) NULL, if CAMP site: show plot name, else: show grts number", xwalk_dict['ncrn']['Location']['xwalk']['note'])
     # OldCode  VARCHAR (255)  NULL,
     mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'OldCode')
-    xwalk_dict['ncrn']['Location']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn']['Location']['tbl_load']['OldCode']=xwalk_dict['ncrn']['Location']['source']['GRTS_Order'].astype(int).astype(str)", xwalk_dict['ncrn']['Location']['xwalk']['source'])
+    xwalk_dict['ncrn']['Location']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn']['Location']['tbl_load']['OldCode']=xwalk_dict['ncrn']['Location']['source']['GRTS_Order'].astype(str)", xwalk_dict['ncrn']['Location']['xwalk']['source'])
     xwalk_dict['ncrn']['Location']['xwalk']['note'] = np.where(mask, "VARCHAR (100) NULL, grts code cast to str", xwalk_dict['ncrn']['Location']['xwalk']['note'])
     # GeodeticDatumID  INT
     mask = (xwalk_dict['ncrn']['Location']['xwalk']['destination'] == 'GeodeticDatumID')
@@ -3141,6 +3141,11 @@ def _exception_ncrn_Location(xwalk_dict:dict) -> dict:
         xwalk_dict['ncrn']['Location']['source'].loc[mask, 'Lat_WGS84'] = v['Lat_WGS84']
         xwalk_dict['ncrn']['Location']['source'].loc[mask, 'Long_WGS84'] = v['Long_WGS84']
 
+    c_grts = assets.C_G
+    for k,v in c_grts.items():
+        mask = (xwalk_dict['ncrn']['Location']['source']['Location_ID']==k)
+        xwalk_dict['ncrn']['Location']['source'].loc[mask, 'GRTS_Order'] = v['Draw']
+
     # 4. add notes
     # concatenate all of the remaining field names and values into a string and assign to 'Notes'
     used_cols = [
@@ -3172,6 +3177,8 @@ def _exception_ncrn_Location(xwalk_dict:dict) -> dict:
     mymap = pd.DataFrame(mymap)
     xwalk_dict['ncrn']['Location']['source'] = xwalk_dict['ncrn']['Location']['source'].merge(mymap, on='Location_ID', how='left')
     xwalk_dict['ncrn']['Location']['source']['GRTS_Order'] = xwalk_dict['ncrn']['Location']['source']['GRTS_Order'].astype(int).astype(str)
+    mask = (xwalk_dict['ncrn']['Location']['source']['Location_ID'].isin(c_grts.keys()))
+    xwalk_dict['ncrn']['Location']['source']['GRTS_Order'] = np.where(mask, 'c_'+xwalk_dict['ncrn']['Location']['source']['GRTS_Order'], xwalk_dict['ncrn']['Location']['source']['GRTS_Order'])
 
     # `ncrn.Location.EnteredDate` cannot be NULL
     # in 539 of 663 cases, NCRN did not record an `Establish_Date`
