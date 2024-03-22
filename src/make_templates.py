@@ -320,11 +320,11 @@ def _generate_tsql(xwalk_dict:dict) -> dict:
     for schema in xwalk_dict.keys():
         for tbl in xwalk_dict[schema].keys():
             df = xwalk_dict[schema][tbl]['payload'].copy()
-            df = df.fillna('')
-            target = f'[NCRN_Landbirds].[{schema}].[{tbl}]'
+            df = df.fillna('NULL')
+            target = f'[NCRN_Landbirds_local].[{schema}].[{tbl}]'
             sql_texts = []
             for index, row in df.iterrows():       
-                sql_texts.append('INSERT INTO '+target+' ('+ str(', '.join(df.columns))+ ') VALUES '+ str(tuple(row.values)))
+                sql_texts.append('INSERT INTO '+target+' ('+ str(', '.join(df.columns))+ ') VALUES '+ str(tuple(row.values)).replace("'NULL'",'NULL'))
             xwalk_dict[schema][tbl]['tsql'] = '\n'.join(sql_texts)
 
     return xwalk_dict
