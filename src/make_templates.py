@@ -22,6 +22,7 @@ import src.check as c
 import numpy as np
 import datetime as dt
 import time
+import re
 
 TBL_XWALK = assets.TBL_XWALK
 TBL_ADDITIONS = assets.TBL_ADDITIONS
@@ -301,6 +302,18 @@ def _generate_payload(xwalk_dict:dict) -> dict:
     for schema in xwalk_dict.keys():
         for tbl in xwalk_dict[schema].keys():
             payload = xwalk_dict[schema][tbl]['k_load'].copy()
+            xwalk = xwalk_dict[schema][tbl]['xwalk'].copy()
+            for col in payload.columns:
+                if xwalk[xwalk['destination']==col].fieldtype.values[0]=='DATE':
+                    try:
+                        payload[col] = payload[col].dt.date.astype(str).str.replace('-','')
+                    except:
+                        pass
+                elif xwalk[xwalk['destination']==col].fieldtype.values[0]=='DATETIME':
+                    try:
+                        payload[col] = payload[col].astype(str).str.replace('-','')
+                    except:
+                        pass
             payload_cols = list(payload.columns)
             payload_cols = [x for x in payload_cols if x!='ID' and x!='rowid' and x != 'Rowversion']
             payload = payload[payload_cols]
@@ -323,8 +336,9 @@ def _generate_tsql(xwalk_dict:dict) -> dict:
             df = df.fillna('NULL')
             target = f'[NCRN_Landbirds_local].[{schema}].[{tbl}]'
             sql_texts = []
+            cleancols = [re.sub(r"\b%s\b" % 'Group' , '[Group]', x) for x in list(df.columns)]
             for index, row in df.iterrows():       
-                sql_texts.append('INSERT INTO '+target+' ('+ str(', '.join(df.columns))+ ') VALUES '+ str(tuple(row.values)).replace("'NULL'",'NULL'))
+                sql_texts.append('INSERT INTO '+target+' ('+ str(', '.join(cleancols))+ ') VALUES '+ str(tuple(row.values)).replace("'NULL'",'NULL').replace('"Harper\'s Ferry"', "'Harper''s Ferry'"))
             xwalk_dict[schema][tbl]['tsql'] = '\n'.join(sql_texts)
 
     return xwalk_dict
