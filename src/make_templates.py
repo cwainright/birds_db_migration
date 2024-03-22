@@ -314,6 +314,12 @@ def _generate_payload(xwalk_dict:dict) -> dict:
                         payload[col] = payload[col].astype(str).str.replace('-','')
                     except:
                         pass
+                elif xwalk[xwalk['destination']==col].fieldtype.values[0]=='VARCHAR' and xwalk[xwalk['destination']==col].maxlen.values[0] > 0:
+                    maxlength = int(xwalk[xwalk['destination']==col].maxlen.values[0])
+                    try:
+                        payload[col] = payload[col].str[:maxlength]
+                    except:
+                        pass
             payload_cols = list(payload.columns)
             payload_cols = [x for x in payload_cols if x!='ID' and x!='rowid' and x != 'Rowversion']
             payload = payload[payload_cols]
@@ -338,7 +344,7 @@ def _generate_tsql(xwalk_dict:dict) -> dict:
             sql_texts = []
             cleancols = [re.sub(r"\b%s\b" % 'Group' , '[Group]', x) for x in list(df.columns)]
             for index, row in df.iterrows():       
-                sql_texts.append('INSERT INTO '+target+' ('+ str(', '.join(cleancols))+ ') VALUES '+ str(tuple(row.values)).replace("'NULL'",'NULL').replace('"Harper\'s Ferry"', "'Harper''s Ferry'"))
+                sql_texts.append('INSERT INTO '+target+' ('+ str(', '.join(cleancols))+ ') VALUES '+ str(tuple(row.values)).replace("'NULL'",'NULL').replace('"Harper\'s Ferry"', "'Harper''s Ferry'").replace('\\r\\n\\r\\n', ''))
             xwalk_dict[schema][tbl]['tsql'] = '\n'.join(sql_texts)
 
     return xwalk_dict
