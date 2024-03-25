@@ -3377,11 +3377,9 @@ def _exception_ncrn_BirdDetection(xwalk_dict:dict, deletes:list) -> dict:
 
     # EXCEPTION 8: ncrn.BirdDetection.UserCode is a non-NCRN field that is non-nullable
     detectionevent = xwalk_dict['ncrn']['DetectionEvent']['source'].copy()
-    print('UserCode' in detectionevent.columns)
     detectionevent = detectionevent[['event_id', 'UserCode']]
     birddetection = xwalk_dict['ncrn']['BirdDetection']['source'].copy()
     birddetection = birddetection.merge(detectionevent, left_on='Event_ID', right_on='event_id', how='left')
-    print('UserCode' in birddetection.columns)
     xwalk_dict['ncrn']['BirdDetection']['source'] = birddetection
 
     xwalk_dict['ncrn']['BirdDetection']['source'].reset_index(drop=True, inplace=True)
