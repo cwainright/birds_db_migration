@@ -571,17 +571,18 @@ def _validate_nulls(xwalk_dict:dict) -> None:
     }
     for schema in xwalk_dict.keys():
         for tbl in xwalk_dict[schema].keys():
-            mask = (xwalk_dict[schema][tbl]['xwalk']['can_be_null']==False) & (xwalk_dict[schema][tbl]['xwalk']['calculation']!='blank_field')
+            mask = (xwalk_dict[schema][tbl]['xwalk']['can_be_null']==False)
             non_nullables = xwalk_dict[schema][tbl]['xwalk'][mask].destination.unique()
             for col in non_nullables:
-                for load in loads_to_check:
-                    if len(xwalk_dict[schema][tbl][load]) >0:
-                        tmp = xwalk_dict[schema][tbl][load][xwalk_dict[schema][tbl][load][col].isna()]
-                        if len(tmp) >0:
-                            missing['counter'] +=1
-                            missing['mylist'].append(f"birds['{schema}']['{tbl}']['{load}']['{col}']: {len(tmp)} NULLs")
-                    else:
-                        pass
+                if col != 'Rowversion':
+                    for load in loads_to_check:
+                        if len(xwalk_dict[schema][tbl][load]) >0:
+                            tmp = xwalk_dict[schema][tbl][load][xwalk_dict[schema][tbl][load][col].isna()]
+                            if len(tmp) >0:
+                                missing['counter'] +=1
+                                missing['mylist'].append(f"birds['{schema}']['{tbl}']['{load}']['{col}']: {len(tmp)} NULLs")
+                        else:
+                            pass
     # summarize output by table
     if missing['counter'] >0:
         print(f"WARNING: null values present in non-nullable fields! (n): {missing['counter']}")
