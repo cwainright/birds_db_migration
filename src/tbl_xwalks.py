@@ -1976,7 +1976,31 @@ def _exception_ncrn_AuditLogDetail(xwalk_dict:dict) -> dict:
     additions = ['protocol_id', 'protocol_name', 'Date']
     df = df[[x for x in df.columns if x in additions or x in history.columns]]
 
-    xwalk_dict['ncrn']['AuditLogDetail']['source'] = df
+    xwalk_dict['ncrn']['AuditLogDetail']['source'] = df.copy()
+
+    emails = assets.EMAIL_LOOKUP
+    for k,v in emails.items():
+        mask = (xwalk_dict['ncrn']['AuditLogDetail']['source']['Contact_ID'] == k)
+        xwalk_dict['ncrn']['AuditLogDetail']['source']['Contact_ID'] = np.where(mask, v, xwalk_dict['ncrn']['AuditLogDetail']['source']['Contact_ID'])
+
+    return xwalk_dict
+
+def _exception_ncrn_AuditLog(xwalk_dict:dict) -> dict:
+    """The source table tbl_History does not include protocol so add it"""
+
+    history = xwalk_dict['ncrn']['AuditLog']['source'].copy()
+    events = xwalk_dict['ncrn']['DetectionEvent']['source'].copy()
+
+    df = history.merge(events, left_on='Record_ID',  right_on='event_id', how='left')
+    additions = ['protocol_id', 'protocol_name', 'Date']
+    df = df[[x for x in df.columns if x in additions or x in history.columns]]
+
+    xwalk_dict['ncrn']['AuditLog']['source'] = df.copy()
+
+    emails = assets.EMAIL_LOOKUP
+    for k,v in emails.items():
+        mask = (xwalk_dict['ncrn']['AuditLog']['source']['Contact_ID'] == k)
+        xwalk_dict['ncrn']['AuditLog']['source']['Contact_ID'] = np.where(mask, v, xwalk_dict['ncrn']['AuditLog']['source']['Contact_ID'])
 
     return xwalk_dict
 
