@@ -3431,6 +3431,10 @@ def _add_sql_constraints(xwalk_dict:dict) -> dict:
 
     for schema in constraints.keys():
         for tbl in constraints[schema].keys():
+            if schema == 'ncrn' and tbl == 'AuditLog':
+                mask = (constraints[schema][tbl]['constraint_df']['destination'] == 'DetectionEventID')
+                constraints[schema][tbl]['constraint_df']['fk'] = np.where(mask, True, constraints[schema][tbl]['constraint_df']['fk'])
+                constraints[schema][tbl]['constraint_df']['references'] = np.where(mask, 'ncrn.DetectionEvent.ID', constraints[schema][tbl]['constraint_df']['references'])
             try:
                 xwalk_dict[schema][tbl]['xwalk'] = xwalk_dict[schema][tbl]['xwalk'].merge(constraints[schema][tbl]['constraint_df'], on='destination', how='left')
             except:
