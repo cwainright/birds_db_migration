@@ -63,6 +63,7 @@ def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
         ,'ProtocolPrecipitationTypeID'
         ,'Observer_ExperienceLevelID'
         ,'StartDateTime'
+        ,'UserCode'
     ]
     # assign grouping variable `calculation` for the 1:1 fields
     mask = (xwalk_dict['ncrn']['DetectionEvent']['xwalk']['destination'].isin(one_to_one_fields))
@@ -119,6 +120,9 @@ def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
     # `Observer_ExperienceLevelID`: [lu.ExperienceLevel]([ID])
     mask = (xwalk_dict['ncrn']['DetectionEvent']['xwalk']['destination'] == 'Observer_ExperienceLevelID')
     xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'] =  np.where(mask, 'Position_Title', xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'])
+    # UserCode
+    mask = (xwalk_dict['ncrn']['DetectionEvent']['xwalk']['destination'] == 'UserCode')
+    xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'] =  np.where(mask, 'UserCode', xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'])
     # `StartDateTime`
     mask = (xwalk_dict['ncrn']['DetectionEvent']['xwalk']['destination'] == 'StartDateTime')
     xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'] =  np.where(mask, 'activity_start_datetime', xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'])
@@ -162,7 +166,7 @@ def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
     blank_fields = [
         'DataProcessingLevelNote'
         ,'Rowversion'
-        ,'UserCode'
+        # ,'UserCode'
     ]
     # assign grouping variable `calculation` for the blank fields
     mask = (xwalk_dict['ncrn']['DetectionEvent']['xwalk']['destination'].isin(blank_fields))
@@ -192,6 +196,7 @@ def _ncrn_BirdDetection(xwalk_dict:dict) -> dict:
         ,'BirdSpeciesParkID'
         ,'ProtocolDetectionTypeID'
         ,'ExcludeReason'
+        ,'UserCode'
     ]
     # assign grouping variable `calculation` for the 1:1 fields
     mask = (xwalk_dict['ncrn']['BirdDetection']['xwalk']['destination'].isin(one_to_one_fields))
@@ -220,6 +225,9 @@ def _ncrn_BirdDetection(xwalk_dict:dict) -> dict:
     # ExcludeReason
     mask = (xwalk_dict['ncrn']['BirdDetection']['xwalk']['destination'] == 'ExcludeReason')
     xwalk_dict['ncrn']['BirdDetection']['xwalk']['source'] =  np.where(mask, 'FlagDescription', xwalk_dict['ncrn']['BirdDetection']['xwalk']['source'])
+    # UserCode
+    mask = (xwalk_dict['ncrn']['BirdDetection']['xwalk']['destination'] == 'UserCode')
+    xwalk_dict['ncrn']['BirdDetection']['xwalk']['source'] =  np.where(mask, 'UserCode', xwalk_dict['ncrn']['BirdDetection']['xwalk']['source'])
 
     # Calculated fields
     calculated_fields = [
@@ -253,7 +261,7 @@ def _ncrn_BirdDetection(xwalk_dict:dict) -> dict:
     blank_fields = [
         'DataProcessingLevelNote'
         ,'Rowversion'
-        ,'UserCode'
+        # ,'UserCode'
     ]
     # assign grouping variable `calculation` for the blank fields
     mask = (xwalk_dict['ncrn']['BirdDetection']['xwalk']['destination'].isin(blank_fields))
@@ -1897,6 +1905,13 @@ def _exception_ncrn_DetectionEvent(xwalk_dict:dict, deletes:list) -> dict:
         mask = (xwalk_dict['ncrn']['DetectionEvent']['source']['recorder']==k)
         xwalk_dict['ncrn']['DetectionEvent']['source']['recorder'] = np.where(mask, v, xwalk_dict['ncrn']['DetectionEvent']['source']['recorder'])
 
+    # EXCEPTION 12: ncrn.DetectionEvent.UserCode is a non-NCRN field that we need to generate because it's required non-null
+    emails = assets.EMAIL_LOOKUP
+    xwalk_dict['ncrn']['DetectionEvent']['source']['UserCode'] = xwalk_dict['ncrn']['DetectionEvent']['source']['entered_by']
+    for k,v in emails.items():
+        mask = (xwalk_dict['ncrn']['DetectionEvent']['source']['UserCode'] == k)
+        xwalk_dict['ncrn']['DetectionEvent']['source']['UserCode'] = np.where(mask, v, xwalk_dict['ncrn']['DetectionEvent']['source']['UserCode'])
+
     xwalk_dict['ncrn']['DetectionEvent']['source'].reset_index(drop=True, inplace=True)
     return xwalk_dict
 
@@ -3359,6 +3374,15 @@ def _exception_ncrn_BirdDetection(xwalk_dict:dict, deletes:list) -> dict:
     df = birddetection.merge(detectionevent[['event_id','Unit_Code']], left_on='Event_ID', right_on='event_id', how='left')
     df['AOU_Code'] = df['AOU_Code'] + '_' + df['Unit_Code']
     xwalk_dict['ncrn']['BirdDetection']['source'] = df[before_colnames]
+
+    # EXCEPTION 8: ncrn.BirdDetection.UserCode is a non-NCRN field that is non-nullable
+    detectionevent = xwalk_dict['ncrn']['DetectionEvent']['source'].copy()
+    print('UserCode' in detectionevent.columns)
+    detectionevent = detectionevent[['event_id', 'UserCode']]
+    birddetection = xwalk_dict['ncrn']['BirdDetection']['source'].copy()
+    birddetection = birddetection.merge(detectionevent, left_on='Event_ID', right_on='event_id', how='left')
+    print('UserCode' in birddetection.columns)
+    xwalk_dict['ncrn']['BirdDetection']['source'] = birddetection
 
     xwalk_dict['ncrn']['BirdDetection']['source'].reset_index(drop=True, inplace=True)
     return xwalk_dict
