@@ -71,6 +71,7 @@ def make_birds(dest:str='') -> dict:
                 ,'k_load': pd.DataFrame() # `source` data crosswalked to the destination schema with guid pf/fk relationships replaced by int pk/fk relationships
                 ,'payload_cols': [] # the columns to extract from `tbl_load` and load into `payload`
                 ,'payload': pd.DataFrame() # `tbl_load` transformed for loading to destination database
+                ,'audit': pd.DataFrame() # `tbl_load` transformed for loading to destination database
                 ,'tsql': '' # the t-sql to load the `payload` to the destination table
             }
             xwalk_dict[schema][tbl]['original'] = source_dict[xwalk_dict[schema][tbl]['source_name']] # route the source data to its placeholder
@@ -93,6 +94,7 @@ def make_birds(dest:str='') -> dict:
                 ,'k_load': pd.DataFrame() # `source` data crosswalked to the destination schema with guid pf/fk relationships replaced by int pk/fk relationships
                 ,'payload_cols': [] # the columns to extract from `tbl_load` and load into `payload`
                 ,'payload': pd.DataFrame() # `tbl_load` transformed for loading to destination database
+                ,'audit': pd.DataFrame() # `tbl_load` transformed for loading to destination database
                 ,'tsql': '' # the t-sql to load the `payload` to the destination table
             }
     
@@ -322,8 +324,8 @@ def _generate_payload(xwalk_dict:dict) -> dict:
                         pass
             payload_cols = list(payload.columns)
             payload_cols = [x for x in payload_cols if x!='ID' and x!='rowid' and x != 'Rowversion']
-            payload = payload[payload_cols]
-            xwalk_dict[schema][tbl]['payload'] = payload.copy()
+            xwalk_dict[schema][tbl]['payload'] = payload[payload_cols]
+            xwalk_dict[schema][tbl]['audit'] = payload
 
     return xwalk_dict
 
@@ -336,6 +338,12 @@ def _generate_tsql(xwalk_dict:dict) -> dict:
     """
     # e.g.,
     # INSERT INTO [NCRN_Landbirds].[lu].[ExperienceLevel] ([ID],[Code],[Label],[Description],[SortOrder]) VALUES (2,'EXP','Expert','An expert',2)
+    nonsense = {
+        '\'s': "''s"
+        ,'\\r\\n\\r\\n':''
+        ,"'NULL'":'NULL'
+        ,"'nan'":'NULL'
+    }
     for schema in xwalk_dict.keys():
         for tbl in xwalk_dict[schema].keys():
             df = xwalk_dict[schema][tbl]['payload'].copy()
@@ -343,8 +351,15 @@ def _generate_tsql(xwalk_dict:dict) -> dict:
             target = f'[NCRN_Landbirds_local].[{schema}].[{tbl}]'
             sql_texts = []
             cleancols = [re.sub(r"\b%s\b" % 'Group' , '[Group]', x) for x in list(df.columns)]
-            for index, row in df.iterrows():       
-                sql_texts.append('INSERT INTO '+target+' ('+ str(', '.join(cleancols))+ ') VALUES '+ str(tuple(row.values)).replace("'NULL'",'NULL').replace('"Harper\'s Ferry"', "'Harper''s Ferry'").replace('\\r\\n\\r\\n', ''))
+            cleancols = [re.sub(r"\b%s\b" % 'Order' , '[Order]', x) for x in cleancols]
+            for index, row in df.iterrows():
+                line = 'INSERT INTO '+target+' ('+ str(', '.join(cleancols))+ ') VALUES '+ str(tuple(row.values))
+                for k,v in nonsense.items():
+                    if k in line:
+                        line = line.replace(k,v)
+                line = line.replace('"','\'')
+                # sql_texts.append('INSERT INTO '+target+' ('+ str(', '.join(cleancols))+ ') VALUES '+ str(tuple(row.values)).replace("'NULL'",'NULL').replace("'nan'",'NULL').replace('"Harper\'s Ferry"', "'Harper''s Ferry'").replace('\\r\\n\\r\\n', ''))
+                sql_texts.append(line)
             xwalk_dict[schema][tbl]['tsql'] = '\n'.join(sql_texts)
 
     return xwalk_dict
