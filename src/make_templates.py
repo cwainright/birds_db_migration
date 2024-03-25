@@ -344,13 +344,26 @@ def _generate_tsql(xwalk_dict:dict) -> dict:
         ,'\\r\\n\\r\\n':''
         ,"'NULL'":'NULL'
         ,"'nan'":'NULL'
-        ," 'male' ":" ''male'' "
-        ," 'unknown' ":" ''unknown'' "
+        ,"'switched ":'switched '
+        ,"'''":"''"
+        ,"''sgoodwin@udel.edu'":"'sgoodwin@udel.edu'"
     }
     for schema in xwalk_dict.keys():
         for tbl in xwalk_dict[schema].keys():
             df = xwalk_dict[schema][tbl]['payload'].copy()
             df = df.fillna('NULL')
+            if tbl == 'AuditLog':
+                mask = df['Description'].str.contains("'")
+                df['Description'] = np.where(mask, df['Description'].str.replace("'", "''", regex=True), df['Description'])
+                mask = df['Description'].str.contains('"')
+                df['Description'] = np.where(mask, df['Description'].str.replace('"', "''", regex=True), df['Description'])
+            elif tbl == 'AuditLogDetail':
+                cols_to_check = ['OldValue', 'NewValue', 'Description']
+                for col in cols_to_check:
+                    mask = df[col].str.contains("'")
+                    df[col] = np.where(mask, df[col].str.replace("'", "''", regex=True), df[col])
+                    mask = df[col].str.contains('"')
+                    df[col] = np.where(mask, df[col].str.replace('"', "''", regex=True), df[col])
             target = f'[NCRN_Landbirds_local].[{schema}].[{tbl}]'
             sql_texts = []
             cleancols = [re.sub(r"\b%s\b" % 'Group' , '[Group]', x) for x in list(df.columns)]
@@ -361,7 +374,6 @@ def _generate_tsql(xwalk_dict:dict) -> dict:
                     if k in line:
                         line = line.replace(k,v)
                 line = line.replace('"','\'')
-                # sql_texts.append('INSERT INTO '+target+' ('+ str(', '.join(cleancols))+ ') VALUES '+ str(tuple(row.values)).replace("'NULL'",'NULL').replace("'nan'",'NULL').replace('"Harper\'s Ferry"', "'Harper''s Ferry'").replace('\\r\\n\\r\\n', ''))
                 sql_texts.append(line)
             xwalk_dict[schema][tbl]['tsql'] = '\n'.join(sql_texts)
 
