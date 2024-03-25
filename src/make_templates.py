@@ -344,6 +344,8 @@ def _generate_tsql(xwalk_dict:dict) -> dict:
         ,'\\r\\n\\r\\n':''
         ,"'NULL'":'NULL'
         ,"'nan'":'NULL'
+        ," 'male' ":" ''male'' "
+        ," 'unknown' ":" ''unknown'' "
     }
     for schema in xwalk_dict.keys():
         for tbl in xwalk_dict[schema].keys():
