@@ -383,6 +383,7 @@ def _generate_tsql(xwalk_dict:dict) -> dict:
     nonsense = {
         "'NULL'":'NULL'
         ,"'nan'":'NULL'
+        ,", nan":', NULL'
         ,"<NA>":'NULL'
         ,'"':"'"
     }
