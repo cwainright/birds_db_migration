@@ -317,7 +317,7 @@ def _generate_payload(xwalk_dict:dict) -> dict:
                 if xwalk[xwalk['destination']==col].fieldtype.values[0]=='DATE':
                     try:
                         mask = (payload[col].isna())
-                        payload[col] = np.where(mask, 'NULL', payload[col])
+                        payload[col] = np.where(mask, 'NULL', payload[col].astype(str).str.replace('-',''))
                         # payload[col] = payload[col].dt.date.astype(str).str.replace('-','')
                     except:
                         pass
