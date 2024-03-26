@@ -2281,8 +2281,8 @@ def _exception_dbo_User(xwalk_dict:dict) -> dict:
     """dbo.User is a table that does not exist in source"""
     # this is an empty table for the initial database load because we have no scanned files
 
-    df = pd.read_csv(r'assets\db\dbo_user.csv')
-    xwalk_dict['dbo']['User']['source'] = df.copy()
+    # df = pd.read_csv(r'assets\db\dbo_user.csv')
+    xwalk_dict['dbo']['User']['source'] = assets.DBO_USER.copy()
 
     return xwalk_dict
 

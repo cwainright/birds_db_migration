@@ -321,7 +321,7 @@ def _generate_payload(xwalk_dict:dict) -> dict:
                         # payload[col] = payload[col].dt.date.astype(str).str.replace('-','')
                     except:
                         pass
-                elif xwalk[xwalk['destination']==col].fieldtype.values[0]=='DATETIME':
+                elif xwalk[xwalk['destination']==col].fieldtype.values[0]=='DATETIME' or xwalk[xwalk['destination']==col].fieldtype.values[0]=='DATETIME2':
                     try:
                         mask = (payload[col].isna())
                         payload[col] = np.where(mask, 'NULL', payload[col].astype(str).str.replace('-',''))
