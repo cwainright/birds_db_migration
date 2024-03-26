@@ -81,7 +81,7 @@ def _validate_foreign_keys(xwalk_dict:dict) -> None:
                     else:
                         for load in loads_to_check:
                             try:
-                                xwalk_dict[schema][tbl][load][fk].astype(int)
+                                xwalk_dict[schema][tbl][load][fk].astype('Int64')
                             except:
                                 missing['counter'] +=1
                                 missing['mylist'].append(f"birds['{schema}']['{tbl}']['{load}']['{fk}'] could not be coerced to int")
