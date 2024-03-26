@@ -129,13 +129,13 @@ def make_birds(dest:str='') -> dict:
     xwalk_dict = _generate_k_load(xwalk_dict)
 
     # generate payload
-    # xwalk_dict = _generate_payload(xwalk_dict)
+    xwalk_dict = _generate_payload(xwalk_dict)
 
     # generate t-sql
     print('')
     print('Generating TSQL for payloads...')
     print('')
-    # xwalk_dict = _generate_tsql(xwalk_dict)
+    xwalk_dict = _generate_tsql(xwalk_dict)
 
     # save output
     if dest !='':
