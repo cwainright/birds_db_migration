@@ -3546,6 +3546,8 @@ def _field_sql_constraints(constraints:dict) -> dict:
             for field_line in field_lines:
                 fieldname = field_line.split(' ',1)[0].strip().replace('[','').replace(']','').strip()
                 fieldtype = field_line.split(' ',1)[1].strip().split(' ',1)[0].strip()
+                if fieldtype == 'BIT\t\t\tNOT':
+                    fieldtype = 'BIT'
                 if 'NOT NULL' in field_line:
                     nullbool=False
                 else:
