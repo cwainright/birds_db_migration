@@ -129,13 +129,13 @@ def make_birds(dest:str='') -> dict:
     xwalk_dict = _generate_k_load(xwalk_dict)
 
     # generate payload
-    xwalk_dict = _generate_payload(xwalk_dict)
+    # xwalk_dict = _generate_payload(xwalk_dict)
 
     # generate t-sql
     print('')
     print('Generating TSQL for payloads...')
     print('')
-    xwalk_dict = _generate_tsql(xwalk_dict)
+    # xwalk_dict = _generate_tsql(xwalk_dict)
 
     # save output
     if dest !='':
@@ -318,14 +318,14 @@ def _generate_payload(xwalk_dict:dict) -> dict:
                     try:
                         mask = (payload[col].isna())
                         payload[col] = np.where(mask, 'NULL', payload[col])
-                        payload[col] = payload[col].dt.date.astype(str).str.replace('-','')
+                        # payload[col] = payload[col].dt.date.astype(str).str.replace('-','')
                     except:
                         pass
                 elif xwalk[xwalk['destination']==col].fieldtype.values[0]=='DATETIME':
                     try:
                         mask = (payload[col].isna())
-                        payload[col] = np.where(mask, 'NULL', payload[col])
-                        payload[col] = payload[col].astype(str).str.replace('-','')
+                        payload[col] = np.where(mask, 'NULL', payload[col].astype(str).str.replace('-',''))
+                        # payload[col] = payload[col].astype(str).str.replace('-','')
                     except:
                         pass
                 elif xwalk[xwalk['destination']==col].fieldtype.values[0]=='VARCHAR':
@@ -357,6 +357,13 @@ def _generate_payload(xwalk_dict:dict) -> dict:
                             payload[col] = payload[col].round(num_left)
                         except:
                             print(f"FAIL: cast to decimal in birds['{schema}']['{tbl}']['payload']['{col}']")
+                elif xwalk[xwalk['destination']==col].fieldtype.values[0]=='FLOAT':
+                    dont_round = ['X_Coord_DD_NAD83', 'Y_Coord_DD_NAD83', 'ValidMinimumValue', 'ValidMaximumValue']
+                    if col not in dont_round:
+                        try:
+                            payload[col] = payload[col].round(1)
+                        except:
+                            print(f"FAIL: cast to FLOAT in birds['{schema}']['{tbl}']['payload']['{col}']")
             payload_cols = list(payload.columns)
             payload_cols = [x for x in payload_cols if x!='ID' and x!='rowid' and x != 'Rowversion']
             xwalk_dict[schema][tbl]['payload'] = payload[payload_cols]
