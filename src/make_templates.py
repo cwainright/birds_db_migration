@@ -301,6 +301,13 @@ def _generate_payload(xwalk_dict:dict) -> dict:
 
     The idea is that, if you write `payload`s to file, you have CSVs to seed the db from scratch
     """
+    nonsense = {
+        '\\r\\n':''
+        ,"'NULL'":'NULL'
+        ,"'nan'":'NULL'
+        ,"'":"''"
+        ,'"':"''"
+    }
     # e.g., `tbl_load` is allowed to hold NCRN's GUIDs but `payload` should either replace the GUIDs with INTs or leave out that column altogether
     for schema in xwalk_dict.keys():
         for tbl in xwalk_dict[schema].keys():
@@ -309,20 +316,47 @@ def _generate_payload(xwalk_dict:dict) -> dict:
             for col in payload.columns:
                 if xwalk[xwalk['destination']==col].fieldtype.values[0]=='DATE':
                     try:
+                        mask = (payload[col].isna())
+                        payload[col] = np.where(mask, 'NULL', payload[col])
                         payload[col] = payload[col].dt.date.astype(str).str.replace('-','')
                     except:
                         pass
                 elif xwalk[xwalk['destination']==col].fieldtype.values[0]=='DATETIME':
                     try:
+                        mask = (payload[col].isna())
+                        payload[col] = np.where(mask, 'NULL', payload[col])
                         payload[col] = payload[col].astype(str).str.replace('-','')
                     except:
                         pass
-                elif xwalk[xwalk['destination']==col].fieldtype.values[0]=='VARCHAR' and xwalk[xwalk['destination']==col].maxlen.values[0] > 0:
-                    maxlength = int(xwalk[xwalk['destination']==col].maxlen.values[0])
+                elif xwalk[xwalk['destination']==col].fieldtype.values[0]=='VARCHAR':
+                    if xwalk[xwalk['destination']==col].maxlen.values[0] > 0:
+                        maxlength = int(xwalk[xwalk['destination']==col].maxlen.values[0])
+                        try:
+                            payload[col] = payload[col].str[:maxlength]
+                        except:
+                            pass
                     try:
-                        payload[col] = payload[col].str[:maxlength]
+                        mask = (payload[col].isna())
+                        payload[col] = np.where(mask, 'NULL', payload[col])
+                        if any(payload[col].str.contains('|'.join(nonsense.keys()), regex=True)):
+                            for k,v in nonsense.items():
+                                payload[col] = payload[col].str.replace(k,v)
                     except:
-                        pass
+                        print(f"FAIL: partial string replace in birds['{schema}']['{tbl}']['payload']['{col}']")
+                elif xwalk[xwalk['destination']==col].fieldtype.values[0]=='INT' or xwalk[xwalk['destination']==col].fieldtype.values[0]=='BIT':
+                    try:
+                        payload[col] = payload[col].astype('Int64')
+                    except:
+                        print(f"FAIL: cast to int in birds['{schema}']['{tbl}']['payload']['{col}']")
+                elif xwalk[xwalk['destination']==col].fieldtype.values[0]=='DECIMAL':
+                    nums = xwalk[xwalk['destination']==col].maxlen.values[0].replace('(','').replace(')','').split(',')
+                    num_left = int(nums[0])
+                    num_right = int(nums[1])
+                    if any(payload[col]>int('9'*num_right)):
+                        try:
+                            payload[col] = payload[col].round(num_left)
+                        except:
+                            print(f"FAIL: cast to decimal in birds['{schema}']['{tbl}']['payload']['{col}']")
             payload_cols = list(payload.columns)
             payload_cols = [x for x in payload_cols if x!='ID' and x!='rowid' and x != 'Rowversion']
             xwalk_dict[schema][tbl]['payload'] = payload[payload_cols]
@@ -340,31 +374,14 @@ def _generate_tsql(xwalk_dict:dict) -> dict:
     # e.g.,
     # INSERT INTO [NCRN_Landbirds].[lu].[ExperienceLevel] ([ID],[Code],[Label],[Description],[SortOrder]) VALUES (2,'EXP','Expert','An expert',2)
     nonsense = {
-        '\'s': "''s"
-        ,'\\r\\n\\r\\n':''
-        ,'\\r\\n':''
-        ,"'NULL'":'NULL'
+        "'NULL'":'NULL'
         ,"'nan'":'NULL'
-        ,"'switched ":'switched '
-        ,"'''":"''"
-        ,"''sgoodwin@udel.edu'":"'sgoodwin@udel.edu'"
+        ,"<NA>":'NULL'
+        ,'"':"'"
     }
     for schema in xwalk_dict.keys():
         for tbl in xwalk_dict[schema].keys():
             df = xwalk_dict[schema][tbl]['payload'].copy()
-            df = df.fillna('NULL')
-            if tbl == 'AuditLog':
-                mask = df['Description'].str.contains("'")
-                df['Description'] = np.where(mask, df['Description'].str.replace("'", "''", regex=True), df['Description'])
-                mask = df['Description'].str.contains('"')
-                df['Description'] = np.where(mask, df['Description'].str.replace('"', "''", regex=True), df['Description'])
-            elif tbl == 'AuditLogDetail':
-                cols_to_check = ['OldValue', 'NewValue', 'Description']
-                for col in cols_to_check:
-                    mask = df[col].str.contains("'")
-                    df[col] = np.where(mask, df[col].str.replace("'", "''", regex=True), df[col])
-                    mask = df[col].str.contains('"')
-                    df[col] = np.where(mask, df[col].str.replace('"', "''", regex=True), df[col])
             target = f'[NCRN_Landbirds_local].[{schema}].[{tbl}]'
             sql_texts = []
             cleancols = [re.sub(r"\b%s\b" % 'Group' , '[Group]', x) for x in list(df.columns)]
@@ -372,9 +389,7 @@ def _generate_tsql(xwalk_dict:dict) -> dict:
             for index, row in df.iterrows():
                 line = 'INSERT INTO '+target+' ('+ str(', '.join(cleancols))+ ') VALUES '+ str(tuple(row.values))
                 for k,v in nonsense.items():
-                    if k in line:
-                        line = line.replace(k,v)
-                line = line.replace('"','\'')
+                    line = line.replace(k,v)
                 sql_texts.append(line)
             xwalk_dict[schema][tbl]['tsql'] = '\n'.join(sql_texts)
 
