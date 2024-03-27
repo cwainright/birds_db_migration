@@ -8,6 +8,8 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import time
 import datetime as dt
+import sqlalchemy as sa
+
 
 EXCLUSIONS = ['unique_vals', 'original'] # 'unique_vals` is empty when the table does not enforce unique values in any field; this can happen in reality so we ignore here
 KNOWN_EMPTY = {
@@ -970,14 +972,15 @@ def _compare_pivot_tables(xwalk_dict:dict, n:int, verbose:bool=False) -> list:
     findme = xwalk_dict['ncrn']['DetectionEvent']['source'].sample(n).event_id.unique()
     comparisons = {}
     comparisons = _pivot_source(xwalk_dict, comparisons, findme)
-    comparisons = _pivot_k_load(xwalk_dict, comparisons, findme)
+    comparisons = _pivot_k_load(xwalk_dict, comparisons, findme, 'k_load')
     
     for k,v in comparisons.items():
+        unequals = ['Event_ID', 'from']
         try: # when >0 birds were observed, there will be an Event_ID level
-            source = comparisons[k]['source'].droplevel(['Event_ID'],axis=1)
-            k_load = comparisons[k]['k_load'].droplevel(['Event_ID'],axis=1)
+            source = comparisons[k]['source'].droplevel(unequals,axis=1)
+            k_load = comparisons[k]['k_load'].droplevel(unequals,axis=1)
         except: # when 0 birds were observed, there is no Event_ID level; e.g., '{06A2C897-DE9E-41A2-AF27-7E03D4623872}' == 5104    '2019-05-22.1254.MONO-0100'
-            cols = [x for x in comparisons[k]['source'].columns if x != 'event_id']
+            cols = [x for x in comparisons[k]['source'].columns if x != 'event_id' and x!= 'from']
             source = comparisons[k]['source'][cols]
             k_load = comparisons[k]['k_load'][cols]
         
@@ -1030,9 +1033,10 @@ def _pivot_source(xwalk_dict:dict, comparisons:dict, findme:list) -> dict:
     alldf['AOU_Code'] = alldf['AOU_Code'].str.split('_').str[0]
     alldf = alldf.sort_values('AOU_Code')
     alldf = alldf.merge(df[['event_id', 'activity_start_datetime', 'GRTS_Order','group', 'observer', 'recorder', 'entered_by']], left_on='Event_ID', right_on='event_id', how='left')
+    alldf['from'] = 'source'
     for group in df.group.unique():
         if group in alldf.group.unique():
-            comparisons[group]['source'] = pd.pivot_table(alldf[alldf['group']==group],values='count',index='AOU_Code', columns=['group', 'Event_ID', 'activity_start_datetime', 'observer', 'recorder', 'entered_by'])
+            comparisons[group]['source'] = pd.pivot_table(alldf[alldf['group']==group],values='count',index='AOU_Code', columns=['group', 'Event_ID', 'activity_start_datetime', 'observer', 'recorder', 'entered_by', 'from'])
         else:
             subset = df[df['group']==group].copy().reset_index(drop=True)
             subset['outcome'] = 'no birds observed'
@@ -1040,20 +1044,20 @@ def _pivot_source(xwalk_dict:dict, comparisons:dict, findme:list) -> dict:
 
     return comparisons
 
-def _pivot_k_load(xwalk_dict:dict, comparisons:dict, findme:list) -> dict:
+def _pivot_k_load(xwalk_dict:dict, comparisons:dict, findme:list, load:str) -> dict:
     
     findme2 = xwalk_dict['ncrn']['DetectionEvent']['pk_fk_lookup'][xwalk_dict['ncrn']['DetectionEvent']['pk_fk_lookup']['ID'].isin(findme)].rowid.unique()
-    locations=xwalk_dict['ncrn']['Location']['k_load'].copy().drop(['EnteredBy'],axis=1).rename(columns={'ID':'location_ID'})
-    df = xwalk_dict['ncrn']['DetectionEvent']['k_load'][xwalk_dict['ncrn']['DetectionEvent']['k_load']['ID'].isin(findme2)].merge(locations, left_on='LocationID', right_on='location_ID', how='left')
-    protocols = xwalk_dict['ncrn']['Protocol']['k_load'].copy()[['ID','Title']].rename(columns={'ID':'protocol_ID'})
+    locations=xwalk_dict['ncrn']['Location'][load].copy().drop(['EnteredBy'],axis=1).rename(columns={'ID':'location_ID'})
+    df = xwalk_dict['ncrn']['DetectionEvent'][load][xwalk_dict['ncrn']['DetectionEvent'][load]['ID'].isin(findme2)].merge(locations, left_on='LocationID', right_on='location_ID', how='left')
+    protocols = xwalk_dict['ncrn']['Protocol'][load].copy()[['ID','Title']].rename(columns={'ID':'protocol_ID'})
     df = df.merge(protocols, left_on='ProtocolID', right_on='protocol_ID', how='left')
     before_cols = list(df.columns)
-    contacts=xwalk_dict['ncrn']['Contact']['k_load'][['ID','LastName','FirstName']].copy().rename(columns={'ID':'observer_ID'})
+    contacts=xwalk_dict['ncrn']['Contact'][load][['ID','LastName','FirstName']].copy().rename(columns={'ID':'observer_ID'})
     df = df.merge(contacts, left_on='Observer_ContactID', right_on='observer_ID', how='left')
     df['observer'] = df['FirstName'] + ' ' + df['LastName']
     before_cols.append('observer')
     df = df[before_cols]
-    contacts=xwalk_dict['ncrn']['Contact']['k_load'][['ID','LastName','FirstName']].copy().rename(columns={'ID':'recorder_ID'})
+    contacts=xwalk_dict['ncrn']['Contact'][load][['ID','LastName','FirstName']].copy().rename(columns={'ID':'recorder_ID'})
     df = df.merge(contacts, left_on='Recorder_ContactID', right_on='recorder_ID', how='left')
     df['recorder'] = df['FirstName'] + ' ' + df['LastName']
     before_cols.append('recorder')
@@ -1070,21 +1074,22 @@ def _pivot_k_load(xwalk_dict:dict, comparisons:dict, findme:list) -> dict:
     df = df[['event_id','Date','activity_start_datetime','Protocol_Name','GRTS_Order','Plot_Name','observer', 'recorder', 'entered_by']].sort_values(['Date','GRTS_Order'])
     df['group'] = df['Date'].astype(str) +'.' + df['GRTS_Order'].astype(str) + '.' + df['Plot_Name']
 
-    speciespark = xwalk_dict['ncrn']['BirdSpeciesPark']['k_load'].copy()[['ID','BirdSpeciesID']].rename(columns={'ID':'birdspeciespark_ID'})
-    species = xwalk_dict['ncrn']['BirdSpecies']['k_load'].copy()[['ID','Code']].rename(columns={'ID':'birdspecies_ID', 'Code':'AOU_Code'})
+    speciespark = xwalk_dict['ncrn']['BirdSpeciesPark'][load].copy()[['ID','BirdSpeciesID']].rename(columns={'ID':'birdspeciespark_ID'})
+    species = xwalk_dict['ncrn']['BirdSpecies'][load].copy()[['ID','Code']].rename(columns={'ID':'birdspecies_ID', 'Code':'AOU_Code'})
     speciespark = speciespark.merge(species, left_on='BirdSpeciesID',right_on='birdspecies_ID', how='left')[['birdspeciespark_ID','AOU_Code']]
-    detections = xwalk_dict['ncrn']['BirdDetection']['k_load'].copy().merge(speciespark, left_on='BirdSpeciesParkID', right_on='birdspeciespark_ID', how='left')
+    detections = xwalk_dict['ncrn']['BirdDetection'][load].copy().merge(speciespark, left_on='BirdSpeciesParkID', right_on='birdspeciespark_ID', how='left')
     alldf = detections[detections['DetectionEventID'].isin(df.event_id.unique())].groupby(['DetectionEventID','AOU_Code']).size().reset_index(name='count').sort_values(['count'], ascending=True)
     alldf = alldf.sort_values('AOU_Code')
     alldf = alldf.merge(df[['event_id', 'activity_start_datetime', 'GRTS_Order','group', 'observer', 'recorder', 'entered_by']], left_on='DetectionEventID', right_on='event_id', how='left')
     alldf.rename(columns={'DetectionEventID':'Event_ID'},inplace=True)
+    alldf['from'] = load
     for group in df.group.unique():
         if group in alldf.group.unique():
-            comparisons[group]['k_load'] = pd.pivot_table(alldf[alldf['group']==group],values='count',index='AOU_Code', columns=['group', 'Event_ID', 'activity_start_datetime', 'observer', 'recorder', 'entered_by'])
+            comparisons[group][load] = pd.pivot_table(alldf[alldf['group']==group],values='count',index='AOU_Code', columns=['group', 'Event_ID', 'activity_start_datetime', 'observer', 'recorder', 'entered_by', 'from'])
         else:
             subset = df[df['group']==group].copy().reset_index(drop=True)
             subset['outcome'] = 'no birds observed'
-            comparisons[group]['k_load'] = subset
+            comparisons[group][load] = subset
 
     return comparisons
 
@@ -1097,3 +1102,97 @@ def make_views(xwalk_dict:dict) -> dict:
     }
 
     return views
+
+
+
+def validate_db(xwalk_dict:dict, n:int, verbose:bool=False) -> dict:
+    print('')
+    print(f"Querying db...")
+    if len(xwalk_dict['ncrn']['DetectionEvent']['db'])==0:
+        try:
+            xwalk_dict = _query_db(xwalk_dict)
+            counter = 0
+            for schema in xwalk_dict.keys():
+                for _ in xwalk_dict[schema].keys():
+                    counter+=1
+            print(f"Returned results for {counter} tables!")
+        except:
+            print(f"FAILED TO QUERY DB")
+    
+    print('')
+    print('Validating db results...')
+    print('')
+    _validate_db(xwalk_dict, n, verbose)
+
+    print('')
+    return xwalk_dict
+
+def _validate_db(xwalk_dict:dict, n:int, verbose:bool) -> None:
+
+    outcomes = []
+
+    findme = xwalk_dict['ncrn']['DetectionEvent']['source'].sample(n).event_id.unique()
+    comparisons = {}
+    comparisons = _pivot_source(xwalk_dict, comparisons, findme)
+    comparisons = _pivot_k_load(xwalk_dict, comparisons, findme, 'k_load')    
+    comparisons = _pivot_k_load(xwalk_dict, comparisons, findme, 'db')
+
+    for k,v in comparisons.items():
+        dfs=[]
+        unequals = ['Event_ID', 'from']
+        try: # when >0 birds were observed, there will be an Event_ID level
+            source = comparisons[k]['source'].droplevel(unequals,axis=1)
+            k_load = comparisons[k]['k_load'].droplevel(unequals,axis=1)
+            db_load = comparisons[k]['db'].droplevel(unequals,axis=1)
+        except: # when 0 birds were observed, there is no Event_ID level; e.g., '{06A2C897-DE9E-41A2-AF27-7E03D4623872}' == 5104    '2019-05-22.1254.MONO-0100'
+            cols = [x for x in comparisons[k]['source'].columns if x != 'event_id' and x != 'from']
+            source = comparisons[k]['source'][cols]
+            k_load = comparisons[k]['k_load'][cols]
+            db_load = comparisons[k]['db'][cols]
+        dfs.extend([source, k_load, db_load])
+        outcomes.append(all(x.equals(dfs[0]) for x in dfs))
+    
+    if all(outcomes):
+        print(f'SUCCESS: Compared findings in {n} site visits `source` matched `k_load` and `db` for and found all records to be identical!')
+    else:
+        fails = [i for i, x in enumerate(outcomes) if x != True]
+        print(f'FAIL: The findings in `source` DID NOT match that of `k_load` and/or `db` in {len(fails)} cases!')
+        mykeys = [y for y in comparisons.keys()]
+        result_list = [mykeys[i] for i in fails]
+        for k,v in result_list:
+            print(k)
+            df1 = subset[k]['source'].droplevel(['group'],axis=1)
+            df2 = subset[k]['k_load'].droplevel(['group'],axis=1)
+            df3 = subset[k]['db'].droplevel(['group'],axis=1)
+            print(pd.concat([df1, df2, df3], axis=1))
+
+    if verbose==True:
+        MAX = 2
+        subset = {k: comparisons[k] for k in list(comparisons)[:MAX]}
+        print('')
+        print(f'`verbose` is True. Displaying {MAX} site visits...')
+        print('')
+        for k,v in subset.items():
+            print(k)
+            df1 = subset[k]['source'].droplevel(['group'],axis=1)
+            df2 = subset[k]['k_load'].droplevel(['group'],axis=1)
+            df3 = subset[k]['db'].droplevel(['group'],axis=1)
+            print(pd.concat([df1, df2, df3], axis=1))
+            print('')
+
+    return None
+
+def _query_db(xwalk_dict:dict) -> dict:
+
+    engine = sa.create_engine(assets.SACXN_STR)
+    for schema in xwalk_dict.keys():
+        for tbl in xwalk_dict[schema].keys():
+            xwalk_dict[schema][tbl]['db'] = pd.DataFrame()
+            query = f"""SELECT * FROM [NCRN_Landbirds_local].[{schema}].[{tbl}];"""
+            # query = """SELECT * FROM [NCRN_Landbirds_local].[ncrn].[BirdSpecies];"""
+            try:
+                xwalk_dict[schema][tbl]['db'] = pd.read_sql_query(query, engine)
+            except:
+                print(f"FAIL: birds['{schema}']['{tbl}']['db']")
+
+    return xwalk_dict
