@@ -1,4 +1,5 @@
 import pandas as pd
+from pandas.testing import assert_frame_equal
 import numpy as np
 import assets.assets as assets
 import re
@@ -967,15 +968,24 @@ def _compare_pivot_tables(xwalk_dict:dict, n:int, verbose:bool=False) -> list:
     outcomes = []
 
     findme = xwalk_dict['ncrn']['DetectionEvent']['source'].sample(n).event_id.unique()
-    
     comparisons = {}
     comparisons = _pivot_source(xwalk_dict, comparisons, findme)
     comparisons = _pivot_k_load(xwalk_dict, comparisons, findme)
     
     for k,v in comparisons.items():
-        source = comparisons[k]['source'].droplevel(['Event_ID'],axis=1)
-        k_load = comparisons[k]['k_load'].droplevel(['Event_ID'],axis=1)
-        outcomes.append(all(source==k_load))
+        try: # when >0 birds were observed, there will be an Event_ID level
+            source = comparisons[k]['source'].droplevel(['Event_ID'],axis=1)
+            k_load = comparisons[k]['k_load'].droplevel(['Event_ID'],axis=1)
+        except: # when 0 birds were observed, there is no Event_ID level; e.g., '{06A2C897-DE9E-41A2-AF27-7E03D4623872}' == 5104    '2019-05-22.1254.MONO-0100'
+            cols = [x for x in comparisons[k]['source'].columns if x != 'event_id']
+            source = comparisons[k]['source'][cols]
+            k_load = comparisons[k]['k_load'][cols]
+        
+        result = assert_frame_equal(source,k_load)
+        if result is None:
+            outcomes.append(True)
+        else:
+            outcomes.append(False)
     
     if all(outcomes):
         print(f'SUCCESS: Compared findings in {n} site visits `source` matched `k_load` for and found all records to be identical!')
@@ -1020,9 +1030,13 @@ def _pivot_source(xwalk_dict:dict, comparisons:dict, findme:list) -> dict:
     alldf['AOU_Code'] = alldf['AOU_Code'].str.split('_').str[0]
     alldf = alldf.sort_values('AOU_Code')
     alldf = alldf.merge(df[['event_id', 'activity_start_datetime', 'GRTS_Order','group', 'observer', 'recorder', 'entered_by']], left_on='Event_ID', right_on='event_id', how='left')
-    for group in alldf.group.unique():
-        pd.pivot_table(alldf[alldf['group']==group],values='count',index='AOU_Code', columns=['group', 'Event_ID', 'activity_start_datetime', 'observer', 'recorder', 'entered_by'])
-        comparisons[group]['source'] = pd.pivot_table(alldf[alldf['group']==group],values='count',index='AOU_Code', columns=['group', 'Event_ID', 'activity_start_datetime', 'observer', 'recorder', 'entered_by'])
+    for group in df.group.unique():
+        if group in alldf.group.unique():
+            comparisons[group]['source'] = pd.pivot_table(alldf[alldf['group']==group],values='count',index='AOU_Code', columns=['group', 'Event_ID', 'activity_start_datetime', 'observer', 'recorder', 'entered_by'])
+        else:
+            subset = df[df['group']==group].copy().reset_index(drop=True)
+            subset['outcome'] = 'no birds observed'
+            comparisons[group]['source'] = subset
 
     return comparisons
 
@@ -1064,9 +1078,13 @@ def _pivot_k_load(xwalk_dict:dict, comparisons:dict, findme:list) -> dict:
     alldf = alldf.sort_values('AOU_Code')
     alldf = alldf.merge(df[['event_id', 'activity_start_datetime', 'GRTS_Order','group', 'observer', 'recorder', 'entered_by']], left_on='DetectionEventID', right_on='event_id', how='left')
     alldf.rename(columns={'DetectionEventID':'Event_ID'},inplace=True)
-    for group in alldf.group.unique():
-        # pd.pivot_table(alldf[alldf['group']==group],values='count',index='AOU_Code', columns=['group', 'Event_ID', 'activity_start_datetime', 'observer', 'recorder', 'entered_by'])
-        comparisons[group]['k_load'] = pd.pivot_table(alldf[alldf['group']==group],values='count',index='AOU_Code', columns=['group', 'Event_ID', 'activity_start_datetime', 'observer', 'recorder', 'entered_by'])
+    for group in df.group.unique():
+        if group in alldf.group.unique():
+            comparisons[group]['k_load'] = pd.pivot_table(alldf[alldf['group']==group],values='count',index='AOU_Code', columns=['group', 'Event_ID', 'activity_start_datetime', 'observer', 'recorder', 'entered_by'])
+        else:
+            subset = df[df['group']==group].copy().reset_index(drop=True)
+            subset['outcome'] = 'no birds observed'
+            comparisons[group]['k_load'] = subset
 
     return comparisons
 

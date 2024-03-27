@@ -3380,6 +3380,7 @@ def _exception_ncrn_BirdDetection(xwalk_dict:dict, deletes:list) -> dict:
     detectionevent = detectionevent[['event_id', 'UserCode']]
     birddetection = xwalk_dict['ncrn']['BirdDetection']['source'].copy()
     birddetection = birddetection.merge(detectionevent, left_on='Event_ID', right_on='event_id', how='left')
+    del birddetection['event_id']
     xwalk_dict['ncrn']['BirdDetection']['source'] = birddetection
 
     xwalk_dict['ncrn']['BirdDetection']['source'].reset_index(drop=True, inplace=True)
