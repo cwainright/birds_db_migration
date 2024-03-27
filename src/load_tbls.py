@@ -236,7 +236,8 @@ def load_birds(xwalk_dict:dict) -> list:
     mytables['remaining'] = [x for x in mytables['all_tables'] if x not in mytables['successes'] and x not in mytables['fails']]
 
     cnxn.close()
-    print(f"SUCCESS: loaded {len(mytables['successes'])} tables")
+    if len(mytables['successes']) >0:
+        print(f"SUCCESS: loaded {len(mytables['successes'])} of {len(mytables['all_tables'])} tables")
     if len(mytables['fails'])>0:
         print(f"FAIL: {len(mytables['fails'])} tables")
         for t in mytables['fails']:
