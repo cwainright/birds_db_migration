@@ -254,4 +254,4 @@ def load_birds(xwalk_dict:dict) -> list:
     print('')
     print(f'`load_birds()` succeeded in: {elapsed_time}')
 
-    return mytables
+    return None
