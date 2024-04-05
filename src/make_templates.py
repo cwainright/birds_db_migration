@@ -390,7 +390,7 @@ def _generate_tsql(xwalk_dict:dict) -> dict:
     for schema in xwalk_dict.keys():
         for tbl in xwalk_dict[schema].keys():
             df = xwalk_dict[schema][tbl]['payload'].copy()
-            target = f'[NCRN_Landbirds_local].[{schema}].[{tbl}]'
+            target = f'[NCRN_Landbirds].[{schema}].[{tbl}]'
             sql_texts = []
             cleancols = [re.sub(r"\b%s\b" % 'Group' , '[Group]', x) for x in list(df.columns)]
             cleancols = [re.sub(r"\b%s\b" % 'Order' , '[Order]', x) for x in cleancols]
