@@ -167,3 +167,4 @@ udel_questions.txt
 src/qry/devops
 data/*.csv
 data/*.xlsx
+changes.txt
