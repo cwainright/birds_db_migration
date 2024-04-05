@@ -1103,12 +1103,11 @@ def make_views(xwalk_dict:dict) -> dict:
 
     return views
 
-
-
 def validate_db(xwalk_dict:dict, n:int, verbose:bool=False) -> dict:
     print('')
+    start_time = time.time()
     print(f"Querying db...")
-    if len(xwalk_dict['ncrn']['DetectionEvent']['db'])==0:
+    if 'db' not in xwalk_dict['ncrn']['DetectionEvent'].keys():
         try:
             xwalk_dict = _query_db(xwalk_dict)
             counter = 0
@@ -1124,7 +1123,12 @@ def validate_db(xwalk_dict:dict, n:int, verbose:bool=False) -> dict:
     print('')
     _validate_db(xwalk_dict, n, verbose)
 
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    elapsed_time = str(dt.timedelta(seconds=elapsed_time))
+    elapsed_time = elapsed_time.split('.')[0]
     print('')
+    print(f'`validate_db()` succeeded in: {elapsed_time}')
     return xwalk_dict
 
 def _validate_db(xwalk_dict:dict, n:int, verbose:bool) -> None:
@@ -1188,7 +1192,7 @@ def _query_db(xwalk_dict:dict) -> dict:
     for schema in xwalk_dict.keys():
         for tbl in xwalk_dict[schema].keys():
             xwalk_dict[schema][tbl]['db'] = pd.DataFrame()
-            query = f"""SELECT * FROM [NCRN_Landbirds_local].[{schema}].[{tbl}];"""
+            query = f"""SELECT * FROM [NCRN_Landbirds].[{schema}].[{tbl}];"""
             # query = """SELECT * FROM [NCRN_Landbirds_local].[ncrn].[BirdSpecies];"""
             try:
                 xwalk_dict[schema][tbl]['db'] = pd.read_sql_query(query, engine)
