@@ -833,6 +833,7 @@ def _lu_DistanceClass(xwalk_dict:dict) -> dict:
         'ID'
         ,'Code'
         ,'Label'
+        ,'SortOrder'
     ]
     # assign grouping variable `calculation` for the 1:1 fields
     mask = (xwalk_dict['lu']['DistanceClass']['xwalk']['destination'].isin(one_to_one_fields))
@@ -842,10 +843,13 @@ def _lu_DistanceClass(xwalk_dict:dict) -> dict:
     xwalk_dict['lu']['DistanceClass']['xwalk']['source'] =  np.where(mask, 'Distance_id', xwalk_dict['lu']['DistanceClass']['xwalk']['source'])
     # Code
     mask = (xwalk_dict['lu']['DistanceClass']['xwalk']['destination'] == 'Code')
-    xwalk_dict['lu']['DistanceClass']['xwalk']['source'] =  np.where(mask, 'Distance_id', xwalk_dict['lu']['DistanceClass']['xwalk']['source'])
+    xwalk_dict['lu']['DistanceClass']['xwalk']['source'] =  np.where(mask, 'Code', xwalk_dict['lu']['DistanceClass']['xwalk']['source'])
     # Label
     mask = (xwalk_dict['lu']['DistanceClass']['xwalk']['destination'] == 'Label')
     xwalk_dict['lu']['DistanceClass']['xwalk']['source'] =  np.where(mask, 'Distance_Text', xwalk_dict['lu']['DistanceClass']['xwalk']['source'])
+    # SortOrder
+    mask = (xwalk_dict['lu']['DistanceClass']['xwalk']['destination'] == 'SortOrder')
+    xwalk_dict['lu']['DistanceClass']['xwalk']['source'] =  np.where(mask, 'SequenceNumber', xwalk_dict['lu']['DistanceClass']['xwalk']['source'])
 
     # Calculated fields
     calculated_fields = [
@@ -862,14 +866,25 @@ def _lu_DistanceClass(xwalk_dict:dict) -> dict:
 
     # Blanks
     blank_fields = [
-        'SortOrder'
-        ,'Rowversion'
+        # 'SortOrder'
+        'Rowversion'
     ]
     # assign grouping variable `calculation` for the blank fields
     mask = (xwalk_dict['lu']['DistanceClass']['xwalk']['destination'].isin(blank_fields))
     xwalk_dict['lu']['DistanceClass']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['lu']['DistanceClass']['xwalk']['calculation'])
     xwalk_dict['lu']['DistanceClass']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['lu']['DistanceClass']['xwalk']['source'])
     xwalk_dict['lu']['DistanceClass']['xwalk']['note'] =  np.where(mask, 'this field was not collected by NCRN and has no NCRN equivalent', xwalk_dict['lu']['DistanceClass']['xwalk']['note'])
+
+    return xwalk_dict
+
+def _exception_lu_DistanceClass(xwalk_dict:dict) -> dict:
+    # EXCEPTION 1: `Code` is not a source-column but we need it in the app so we add it here
+    xwalk_dict['lu']['DistanceClass']['source']['Code'] = ''
+    xwalk_dict['lu']['DistanceClass']['source']['Code'] = np.where(xwalk_dict['lu']['DistanceClass']['source']['Distance_Text']=='<= 50 Meters', 'x', xwalk_dict['lu']['DistanceClass']['source']['Code'])
+    xwalk_dict['lu']['DistanceClass']['source']['Code'] = np.where(xwalk_dict['lu']['DistanceClass']['source']['Distance_Text']=='50 - 100 Meters', '50', xwalk_dict['lu']['DistanceClass']['source']['Code'])
+    xwalk_dict['lu']['DistanceClass']['source']['Code'] = np.where(xwalk_dict['lu']['DistanceClass']['source']['Distance_Text']=='> 100 Meters', 'z', xwalk_dict['lu']['DistanceClass']['source']['Code'])
+    xwalk_dict['lu']['DistanceClass']['source']['Code'] = np.where(xwalk_dict['lu']['DistanceClass']['source']['Distance_Text']=='<= 25 Meters', '<=', xwalk_dict['lu']['DistanceClass']['source']['Code'])
+    xwalk_dict['lu']['DistanceClass']['source']['Code'] = np.where(xwalk_dict['lu']['DistanceClass']['source']['Distance_Text']=='25 - 50 Meters', '25', xwalk_dict['lu']['DistanceClass']['source']['Code'])
 
     return xwalk_dict
 

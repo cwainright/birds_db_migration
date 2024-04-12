@@ -226,6 +226,7 @@ def _execute_xwalk_exceptions(xwalk_dict:dict) -> dict:
     xwalk_dict = tx._exception_ncrn_ProtocolDistanceClass(xwalk_dict)
     xwalk_dict = tx._exception_dbo_User(xwalk_dict)
     xwalk_dict = tx._exception_dbo_UserRole(xwalk_dict)
+    xwalk_dict = tx._exception_lu_DistanceClass(xwalk_dict)
 
     return xwalk_dict
 
