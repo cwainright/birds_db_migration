@@ -332,7 +332,7 @@ def _ncrn_Protocol(xwalk_dict:dict) -> dict:
     xwalk_dict['ncrn']['Protocol']['xwalk']['note'] = np.where(mask, "BIT type (bool as 0 or 1); NCRN did not require observer experience", xwalk_dict['ncrn']['Protocol']['xwalk']['note'])
     # Version
     mask = (xwalk_dict['ncrn']['Protocol']['xwalk']['destination'] == 'Version')
-    xwalk_dict['ncrn']['Protocol']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn']['Protocol']['tbl_load']['Version']=np.where((xwalk_dict['ncrn']['Protocol']['source']['Protocol_Name']=='Grassland Bird Monitoring'),'G.1.0','1.0')", xwalk_dict['ncrn']['Protocol']['xwalk']['source'])
+    xwalk_dict['ncrn']['Protocol']['xwalk']['source'] = np.where(mask, "xwalk_dict['ncrn']['Protocol']['tbl_load']['Version']=np.where((xwalk_dict['ncrn']['Protocol']['source']['Protocol_Name']=='Grassland Bird Monitoring'),'G.1.0','F.1.0')", xwalk_dict['ncrn']['Protocol']['xwalk']['source'])
     xwalk_dict['ncrn']['Protocol']['xwalk']['note'] = np.where(mask, "VARCHAR (10); required unique; NCRN stored this as a float that was independent of the protocol name; new schema requires the version to be protocol-dependent", xwalk_dict['ncrn']['Protocol']['xwalk']['note'])
 
     # Blanks
@@ -994,7 +994,7 @@ def _exception_lu_Sex(xwalk_dict:dict) -> dict:
     # NCRN has never recorded this choice
     # Further, 'Fledglings' are not a choice on the paper datasheet that field crews take into the field
     # I have no idea why this is here but we don't use it, never have, and it's inconsistent with NETNMIDN, so I'm deprecating it
-    # xwalk_dict['lu']['Sex']['source'] = xwalk_dict['lu']['Sex']['source'][xwalk_dict['lu']['Sex']['source']['Sex_Code']!='J']
+    xwalk_dict['lu']['Sex']['source'] = xwalk_dict['lu']['Sex']['source'][xwalk_dict['lu']['Sex']['source']['Sex_Code']!='J']
     xwalk_dict['lu']['Sex']['source'] = xwalk_dict['lu']['Sex']['source'].sort_values('Sex_Code_Value', ascending=True)
     xwalk_dict['lu']['Sex']['source'].reset_index(drop=True, inplace=True)
 
@@ -1136,31 +1136,8 @@ def _exception_lu_PrecipitationType(xwalk_dict:dict) -> dict:
     """Add codes that NETNMIDN use but NCRN didn't historically use"""
 
     df = pd.read_csv(assets.PRECIPTYPE)
-    df = df[df['Code'].isin(['NC','PM'])]
-    df['ID'] = df.index + 3
-    gooddf = xwalk_dict['lu']['PrecipitationType']['source'].copy()
-    gooddf.rename(columns={
-        'Sky_Code':'Code'
-        ,'Code_Description':'Description'
-
-    }, inplace=True)
-    gooddf['Label'] = gooddf['Description']
-    gooddf['SortOrder'] = gooddf.index+1
-    gooddf = pd.concat([gooddf, df])
-    gooddf = gooddf[df.columns]
-    gooddf['Rowversion'] = np.NaN
-    gooddf.reset_index(drop=True, inplace=True)
-    xwalk_dict['lu']['PrecipitationType']['source'] = gooddf.copy()
-    xwalk_dict['lu']['PrecipitationType']['source_name'] = xwalk_dict['lu']['PrecipitationType']['source_name'] + " and " + assets.PRECIPTYPE
-
-    return xwalk_dict
-
-def _exception_ncrn_Protocol(xwalk_dict:dict) -> dict:
-    """There is actually only one protocol, but two habitat types. This exception overrides this historical problem."""
-
-    df = pd.read_csv(assets.PROTOCOL)
-    xwalk_dict['ncrn']['Protocol']['source'] = df.copy()
-    xwalk_dict['ncrn']['Protocol']['source_name'] = assets.PROTOCOL
+    xwalk_dict['lu']['PrecipitationType']['source'] = df.copy()
+    xwalk_dict['lu']['PrecipitationType']['source_name'] = assets.PRECIPTYPE
 
     return xwalk_dict
 
@@ -2495,7 +2472,6 @@ def _exception_ncrn_ProtocolPrecipitationType(xwalk_dict:dict) -> dict:
 
     protocols = xwalk_dict['ncrn']['Protocol']['source']
     PrecipitationTypes = xwalk_dict['lu']['PrecipitationType']['source']
-    PrecipitationTypes['ID'] = PrecipitationTypes.index + 1
 
     df = pd.DataFrame()
     for protocol in protocols.Protocol_ID.unique():
@@ -3859,3 +3835,28 @@ def _concat_deletes(xwalk_dict:dict, ghosts:list=assets.DELETES) -> list:
         deletes.append(x)
 
     return deletes
+
+def _exception_lu_PrecipitationType(xwalk_dict:dict) -> dict:
+    """Add codes that NETNMIDN use but NCRN didn't historically use"""
+
+    df = pd.read_csv(assets.PRECIPTYPE)
+    df = df[df['Code'].isin(['NC','PM'])]
+    df['ID'] = df.index + 3
+    gooddf = xwalk_dict['lu']['PrecipitationType']['source'].copy()
+    gooddf.rename(columns={
+        'Sky_Code':'Code'
+        ,'Code_Description':'Description'
+
+    }, inplace=True)
+    gooddf = gooddf[gooddf['Code'].isin(['NC','PM'])==False]
+    gooddf['Label'] = gooddf['Description']
+    gooddf['SortOrder'] = gooddf.index+1
+    gooddf = pd.concat([gooddf, df])
+    gooddf = gooddf[df.columns]
+    gooddf['Rowversion'] = np.NaN
+    gooddf.reset_index(drop=True, inplace=True)
+    gooddf['ID'] = gooddf.index+1
+    xwalk_dict['lu']['PrecipitationType']['source'] = gooddf.copy()
+    xwalk_dict['lu']['PrecipitationType']['source_name'] = xwalk_dict['lu']['PrecipitationType']['source_name'] + " and " + assets.PRECIPTYPE
+
+    return xwalk_dict

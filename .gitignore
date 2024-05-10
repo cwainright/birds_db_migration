@@ -168,3 +168,5 @@ src/qry/devops
 data/*.csv
 data/*.xlsx
 changes.txt
+bird_sex_codes*
+data/scanned_datasheets
