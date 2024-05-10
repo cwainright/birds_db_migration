@@ -218,6 +218,7 @@ def _execute_xwalk_exceptions(xwalk_dict:dict) -> dict:
     xwalk_dict = tx._exception_lu_ProtectedStatus(xwalk_dict)
     xwalk_dict = tx._exception_dbo_Role(xwalk_dict)
     xwalk_dict = tx._exception_dbo_ParkUser(xwalk_dict)
+    xwalk_dict = tx._exception_ncrn_Protocol(xwalk_dict)
     xwalk_dict = tx._exception_ncrn_ProtocolWindCode(xwalk_dict)
     xwalk_dict = tx._exception_ncrn_ProtocolPrecipitationType(xwalk_dict)
     xwalk_dict = tx._exception_ncrn_ProtocolNoiseLevel(xwalk_dict)
