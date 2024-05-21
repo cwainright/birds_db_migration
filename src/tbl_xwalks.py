@@ -3296,14 +3296,22 @@ def _exception_ncrn_BirdDetection(xwalk_dict:dict, deletes:list) -> dict:
     del xwalk_dict['ncrn']['BirdDetection']['source']['event_id']
     del xwalk_dict['ncrn']['BirdDetection']['source']['dummyid']
 
-    # EXCEPTION 4: recode SexID== 0 to 1
-    # In 79571 cases between 2017 and 2023, NCRN recorded a SexID of 0
-    # 0 is not in the lookup table for sex so the db should never have allowed it to be entered
-    # from reviewing paper datasheets, 'Undetermined' (SexID==1) is the most common sex choice
-    # from spot-checking datasheets, 'Undetermined' birds were recorded as SexID==0
-    # it looks like the database somehow assigned a 0 when it should have assigned a 1...
-    mask = (xwalk_dict['ncrn']['BirdDetection']['source']['Sex_ID']==0)
-    xwalk_dict['ncrn']['BirdDetection']['source']['Sex_ID'] = np.where(mask, 1, xwalk_dict['ncrn']['BirdDetection']['source']['Sex_ID'])
+    # EXCEPTION 4: recode `SexID`s
+    # refer to data/bird_sex_fix.py for details
+    # From 2007 through 2016, NCRN consistently used integers to indicate bird sex: {1:"U",2:"M",3:"F"}.
+    # In 2017 and 2018, NCRN used a confusing combination of two sets integers to indicate bird sex:
+    #     {1:"U",2:"M",3:"F"}
+    #     {0:"U",1:"M",2:"F"}
+    # From 2019 to present, NCRN consistently used integers to indicate bird sex: {0:"U",1:"M",2:"F"}.
+    to_correct = pd.read_csv(r'assets\db\update_sexes.csv') # a dataframe of `event_id`s, identified by `data/bird_sex_fix.py` as events that need to be changed from (0,1,2) to (1,2,3)
+    lookup = { # items are in this order to avoid overwriting the preceding change
+        2:3 # (e.g., if you changed all `0`s to `1`s, and then changed all `1`s to `2`s, you'd also accidently be changing all `0`s to `2`s)
+        ,1:2
+        ,0:1
+    }
+    # for k,v in lookup.items(): # only un-comment when all `Event_ID`s have a resolution in data/bird_sex_fix.py
+    #     mask = (xwalk_dict['ncrn']['BirdDetection']['source']['event_id'].isin(to_correct.Event_ID.unique())) & (xwalk_dict['ncrn']['BirdDetection']['source']['Sex_ID']==k)
+    #     xwalk_dict['ncrn']['BirdDetection']['source']['Sex_ID'] = np.where(mask, v, xwalk_dict['ncrn']['BirdDetection']['source']['Sex_ID'])
 
     # EXCEPTION 5: birds['ncrn']['BirdDetection']['tbl_load']['ProtocolDetectionTypeID'] cannot be NULL
     # scope: 383 site visits, 6365 individual birds
