@@ -878,28 +878,19 @@ def _lu_DistanceClass(xwalk_dict:dict) -> dict:
     return xwalk_dict
 
 def _exception_lu_DistanceClass(xwalk_dict:dict) -> dict:
+    # EXCEPTION 1: '> 100 Meters' exists in the source lookup table but it is not and never was a valid choice. Remove it from the lookup table.
+    # note:  Valid choices in birds.ncrn.BirdDetection.source.Distance_id need to be re-coded {4:3, 5:4}
+    xwalk_dict['lu']['DistanceClass']['source'] = xwalk_dict['lu']['DistanceClass']['source'][xwalk_dict['lu']['DistanceClass']['source']['Distance_Text']!='> 100 Meters']
+    xwalk_dict['lu']['DistanceClass']['source'] = xwalk_dict['lu']['DistanceClass']['source'].reset_index(drop=True, inplace=False)
+    xwalk_dict['lu']['DistanceClass']['source']['Distance_id'] = xwalk_dict['lu']['DistanceClass']['source'].index + 1
+
     # EXCEPTION 1: `Code` is not a source-column but we need it in the app so we add it here
     xwalk_dict['lu']['DistanceClass']['source']['Code'] = ''
     xwalk_dict['lu']['DistanceClass']['source']['Code'] = np.where(xwalk_dict['lu']['DistanceClass']['source']['Distance_Text']=='<= 50 Meters', 'x', xwalk_dict['lu']['DistanceClass']['source']['Code'])
     xwalk_dict['lu']['DistanceClass']['source']['Code'] = np.where(xwalk_dict['lu']['DistanceClass']['source']['Distance_Text']=='50 - 100 Meters', '50', xwalk_dict['lu']['DistanceClass']['source']['Code'])
-    xwalk_dict['lu']['DistanceClass']['source']['Code'] = np.where(xwalk_dict['lu']['DistanceClass']['source']['Distance_Text']=='> 100 Meters', 'z', xwalk_dict['lu']['DistanceClass']['source']['Code'])
+    # xwalk_dict['lu']['DistanceClass']['source']['Code'] = np.where(xwalk_dict['lu']['DistanceClass']['source']['Distance_Text']=='> 100 Meters', 'z', xwalk_dict['lu']['DistanceClass']['source']['Code'])
     xwalk_dict['lu']['DistanceClass']['source']['Code'] = np.where(xwalk_dict['lu']['DistanceClass']['source']['Distance_Text']=='<= 25 Meters', '<=', xwalk_dict['lu']['DistanceClass']['source']['Code'])
     xwalk_dict['lu']['DistanceClass']['source']['Code'] = np.where(xwalk_dict['lu']['DistanceClass']['source']['Distance_Text']=='25 - 50 Meters', '25', xwalk_dict['lu']['DistanceClass']['source']['Code'])
-
-    # EXCEPTION 2: `ActiveDate` is wrong
-    # xwalk_dict['lu']['DistanceClass']['source']['ActiveDate'] = np.where(xwalk_dict['lu']['DistanceClass']['source']['Distance_Text']=='<= 50 Meters', 'x', xwalk_dict['lu']['DistanceClass']['source']['ActiveDate'])
-    # xwalk_dict['lu']['DistanceClass']['source']['ActiveDate'] = np.where(xwalk_dict['lu']['DistanceClass']['source']['Distance_Text']=='50 - 100 Meters', '50', xwalk_dict['lu']['DistanceClass']['source']['ActiveDate'])
-    # xwalk_dict['lu']['DistanceClass']['source']['ActiveDate'] = np.where(xwalk_dict['lu']['DistanceClass']['source']['Distance_Text']=='> 100 Meters', 'z', xwalk_dict['lu']['DistanceClass']['source']['ActiveDate'])
-    # xwalk_dict['lu']['DistanceClass']['source']['ActiveDate'] = np.where(xwalk_dict['lu']['DistanceClass']['source']['Distance_Text']=='<= 25 Meters', '<=', xwalk_dict['lu']['DistanceClass']['source']['ActiveDate'])
-    # xwalk_dict['lu']['DistanceClass']['source']['ActiveDate'] = np.where(xwalk_dict['lu']['DistanceClass']['source']['Distance_Text']=='25 - 50 Meters', '25', xwalk_dict['lu']['DistanceClass']['source']['ActiveDate'])
-
-    # EXCEPTION 3: `RetireDate` is wrong
-    # xwalk_dict['lu']['DistanceClass']['source']['RetireDate'] = np.where(xwalk_dict['lu']['DistanceClass']['source']['Distance_Text']=='<= 50 Meters', 'x', xwalk_dict['lu']['DistanceClass']['source']['RetireDate'])
-    # xwalk_dict['lu']['DistanceClass']['source']['RetireDate'] = np.where(xwalk_dict['lu']['DistanceClass']['source']['Distance_Text']=='50 - 100 Meters', '50', xwalk_dict['lu']['DistanceClass']['source']['RetireDate'])
-    # xwalk_dict['lu']['DistanceClass']['source']['RetireDate'] = np.where(xwalk_dict['lu']['DistanceClass']['source']['Distance_Text']=='> 100 Meters', 'z', xwalk_dict['lu']['DistanceClass']['source']['RetireDate'])
-    # xwalk_dict['lu']['DistanceClass']['source']['RetireDate'] = np.where(xwalk_dict['lu']['DistanceClass']['source']['Distance_Text']=='<= 25 Meters', '<=', xwalk_dict['lu']['DistanceClass']['source']['RetireDate'])
-    # xwalk_dict['lu']['DistanceClass']['source']['RetireDate'] = np.where(xwalk_dict['lu']['DistanceClass']['source']['Distance_Text']=='25 - 50 Meters', '25', xwalk_dict['lu']['DistanceClass']['source']['RetireDate'])
-
 
     return xwalk_dict
 
@@ -3282,35 +3273,44 @@ def _exception_ncrn_BirdDetection(xwalk_dict:dict, deletes:list) -> dict:
     xwalk_dict['ncrn']['BirdDetection']['source'] = xwalk_dict['ncrn']['BirdDetection']['source'][xwalk_dict['ncrn']['BirdDetection']['source']['Event_ID'].isin(deletes)==False]
 
     # EXCEPTION 3: update `ncrn.BirdDetection.source.Distance_id` to a by-protocol value
+    ####### deprecated 20240522 because NCRN no longer maintains two protocols
     # i.e., NCRN used the same 1-5 integer to indicate distance regardless of protocol
     # the new data model allows you to use different distance increments by-protocol
     # to accomodate that, you need to use different IDs for each distance increment-protocol combination
     # step 1, make a lookup table with two columns: `ncrn.DetectionEvent.source.event_id` and `ncrn.DetectionEvent.source.protocol`
-    lookup = xwalk_dict['ncrn']['DetectionEvent']['source'][['event_id','protocol_id']]
-    # step 2, left-join the lookup to `ncrn.BirdDetection.source` to add the protocol column to `BirdDetection`
-    xwalk_dict['ncrn']['BirdDetection']['source'] = xwalk_dict['ncrn']['BirdDetection']['source'].merge(lookup, left_on='Event_ID', right_on='event_id', how='left')
-    # step 3, replace NaNs in `ncrn.BirdDetection.source.Distance_id` it's erroneous to exclude this at data-entry...
-    mask = (xwalk_dict['ncrn']['BirdDetection']['source']['Distance_id'].isna())
-    xwalk_dict['ncrn']['BirdDetection']['source']['Distance_id'] = np.where(mask, 2, xwalk_dict['ncrn']['BirdDetection']['source']['Distance_id']) # `ncrn.BirdDetection.source.Distance_id` cannot be blank
-    # step 4: make a dummy variable in `ncrn.BirdDetection.source`
-    xwalk_dict['ncrn']['BirdDetection']['source']['dummy'] = xwalk_dict['ncrn']['BirdDetection']['source']['Distance_id'].astype(int).astype(str) + '_' + xwalk_dict['ncrn']['BirdDetection']['source']['protocol_id'].astype(str)
-    # step 5, make a lookup of three columns `ncrn.ProtocolDistanceClass.ID`, `ncrn.ProtocolDistanceClass.ProtocolID`, and `ncrn.ProtocolDistanceClass.Distance_id`
-    lookup = pd.read_pickle(r'assets/ProtocolDistanceClass.pkl') # since this is a bridge table, its creation happens after the lookup; my order-of-operations didn't accomodate that so I have to reroute the dataframe
-    # step 6, make a dummy variable in the lookup:
-    lookup['dummy'] = lookup['Distance_id'].astype(str)  + '_' +  lookup['ProtocolID'].astype(str)
-    # step 7: keep only 2 cols: lookup = lookup[['dummy','ID']]
-    lookup = lookup[['dummy','ID']]
-    lookup.rename(columns={'ID':'dummyid'}, inplace=True)
-    # step 8: left-join lookup to `ncrn.BirdDetection.source`
-    xwalk_dict['ncrn']['BirdDetection']['source'] = xwalk_dict['ncrn']['BirdDetection']['source'].merge(lookup, on='dummy', how='left')
-    # step 9: replace the existing `ncrn.BirdDetection.source.Distance_id` values with the corresponding value from the lookup
-    xwalk_dict['ncrn']['BirdDetection']['source']['Distance_id'] = xwalk_dict['ncrn']['BirdDetection']['source']['dummyid']
-    # step 9: get rid of lookup values
-    del xwalk_dict['ncrn']['BirdDetection']['source']['dummy']
-    del xwalk_dict['ncrn']['BirdDetection']['source']['protocol_id']
-    del xwalk_dict['ncrn']['BirdDetection']['source']['event_id']
-    del xwalk_dict['ncrn']['BirdDetection']['source']['dummyid']
+    # lookup = xwalk_dict['ncrn']['DetectionEvent']['source'][['event_id','protocol_id']]
+    # # step 2, left-join the lookup to `ncrn.BirdDetection.source` to add the protocol column to `BirdDetection`
+    # xwalk_dict['ncrn']['BirdDetection']['source'] = xwalk_dict['ncrn']['BirdDetection']['source'].merge(lookup, left_on='Event_ID', right_on='event_id', how='left')
+    # # step 3, replace NaNs in `ncrn.BirdDetection.source.Distance_id` it's erroneous to exclude this at data-entry...
+    # mask = (xwalk_dict['ncrn']['BirdDetection']['source']['Distance_id'].isna())
+    # xwalk_dict['ncrn']['BirdDetection']['source']['Distance_id'] = np.where(mask, 2, xwalk_dict['ncrn']['BirdDetection']['source']['Distance_id']) # `ncrn.BirdDetection.source.Distance_id` cannot be blank
+    # # step 4: make a dummy variable in `ncrn.BirdDetection.source`
+    # xwalk_dict['ncrn']['BirdDetection']['source']['dummy'] = xwalk_dict['ncrn']['BirdDetection']['source']['Distance_id'].astype(int).astype(str) + '_' + xwalk_dict['ncrn']['BirdDetection']['source']['protocol_id'].astype(str)
+    # # step 5, make a lookup of three columns `ncrn.ProtocolDistanceClass.ID`, `ncrn.ProtocolDistanceClass.ProtocolID`, and `ncrn.ProtocolDistanceClass.Distance_id`
+    # lookup = pd.read_pickle(r'assets/ProtocolDistanceClass.pkl') # since this is a bridge table, its creation happens after the lookup; my order-of-operations didn't accomodate that so I have to reroute the dataframe
+    # # step 6, make a dummy variable in the lookup:
+    # lookup['dummy'] = lookup['Distance_id'].astype(str)  + '_' +  lookup['ProtocolID'].astype(str)
+    # # step 7: keep only 2 cols: lookup = lookup[['dummy','ID']]
+    # lookup = lookup[['dummy','ID']]
+    # lookup.rename(columns={'ID':'dummyid'}, inplace=True)
+    # # step 8: left-join lookup to `ncrn.BirdDetection.source`
+    # xwalk_dict['ncrn']['BirdDetection']['source'] = xwalk_dict['ncrn']['BirdDetection']['source'].merge(lookup, on='dummy', how='left')
+    # # step 9: replace the existing `ncrn.BirdDetection.source.Distance_id` values with the corresponding value from the lookup
+    # xwalk_dict['ncrn']['BirdDetection']['source']['Distance_id'] = xwalk_dict['ncrn']['BirdDetection']['source']['dummyid']
+    # # step 9: get rid of lookup values
+    # del xwalk_dict['ncrn']['BirdDetection']['source']['dummy']
+    # del xwalk_dict['ncrn']['BirdDetection']['source']['protocol_id']
+    # del xwalk_dict['ncrn']['BirdDetection']['source']['event_id']
+    # del xwalk_dict['ncrn']['BirdDetection']['source']['dummyid']
 
+    # EXCEPTION 3: `ncrn.BirdDetection.source.Distance_id`
+    # refer to data/bird_distance_fix.py for details
+    # 1. All instances of Distance_id==`3` should be re-coded to `2`
+    # `3` is '> 100 Meters' in the lookup table, which has never been a valid choice on the paper datasheets 2007-2024.
+    # only three site visits recorded Distance_id==`3`; Event_ID == ({31B6B1C5-5B82-44DA-AB12-EF836D27BF7E},{B2FA11DD-0BC1-4E15-9DF6-5927EF92C8BD},{79E05231-D7E4-4F17-A1EC-24CF5CE83F2A})
+    # Since those three site visits occurred in 2022, 2021, and 2023 (respectively), we know the largest valid distance class would be `2` "50-100 Meters"
+    lookup = ()
+    
     # EXCEPTION 4: recode `SexID`s
     # refer to data/bird_sex_fix.py for details
     # From 2007 through 2016, NCRN consistently used integers to indicate bird sex: {1:"U",2:"M",3:"F"}.
