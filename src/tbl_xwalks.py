@@ -884,7 +884,7 @@ def _exception_lu_DistanceClass(xwalk_dict:dict) -> dict:
     xwalk_dict['lu']['DistanceClass']['source'] = xwalk_dict['lu']['DistanceClass']['source'].reset_index(drop=True, inplace=False)
     xwalk_dict['lu']['DistanceClass']['source']['Distance_id'] = xwalk_dict['lu']['DistanceClass']['source'].index + 1
 
-    # EXCEPTION 1: `Code` is not a source-column but we need it in the app so we add it here
+    # EXCEPTION 2: `Code` is not a source-column but we need it in the app so we add it here
     xwalk_dict['lu']['DistanceClass']['source']['Code'] = ''
     xwalk_dict['lu']['DistanceClass']['source']['Code'] = np.where(xwalk_dict['lu']['DistanceClass']['source']['Distance_Text']=='<= 50 Meters', 'x', xwalk_dict['lu']['DistanceClass']['source']['Code'])
     xwalk_dict['lu']['DistanceClass']['source']['Code'] = np.where(xwalk_dict['lu']['DistanceClass']['source']['Distance_Text']=='50 - 100 Meters', '50', xwalk_dict['lu']['DistanceClass']['source']['Code'])
@@ -3309,7 +3309,16 @@ def _exception_ncrn_BirdDetection(xwalk_dict:dict, deletes:list) -> dict:
     # `3` is '> 100 Meters' in the lookup table, which has never been a valid choice on the paper datasheets 2007-2024.
     # only three site visits recorded Distance_id==`3`; Event_ID == ({31B6B1C5-5B82-44DA-AB12-EF836D27BF7E},{B2FA11DD-0BC1-4E15-9DF6-5927EF92C8BD},{79E05231-D7E4-4F17-A1EC-24CF5CE83F2A})
     # Since those three site visits occurred in 2022, 2021, and 2023 (respectively), we know the largest valid distance class would be `2` "50-100 Meters"
-    lookup = ()
+    # re-code 4 to 3 and 5 to 4 to accomodate deleting "> 100 Meters" from the lookup table
+    # see "EXCEPTION 1" in `_exception_lu_DistanceClass()` for details
+    lookup = {
+        3:2
+        ,4:3
+        ,5:4
+    }
+    for k,v in lookup.items():
+        mask = (xwalk_dict['ncrn']['BirdDetection']['source']['Distance_id']==k)
+        xwalk_dict['ncrn']['BirdDetection']['source']['Distance_id'] = np.where(mask, v, xwalk_dict['ncrn']['BirdDetection']['source']['Distance_id'])
     
     # EXCEPTION 4: recode `SexID`s
     # refer to data/bird_sex_fix.py for details
