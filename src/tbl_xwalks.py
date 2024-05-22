@@ -160,8 +160,9 @@ def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
     xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'] =  np.where(mask, "xwalk_dict['ncrn']['DetectionEvent']['tbl_load']['ExcludeEvent'] = np.where((xwalk_dict['ncrn']['DetectionEvent']['source']['label'].isna()), 0, 1)", xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'])
     # `SamplingMethodID`: this is 'Grassland Bird Monitoring' or 'Forest Bird Monitoring', depending on whether ncrn.DetectionEvent.ProtocolID is 1 or 2
     mask = (xwalk_dict['ncrn']['DetectionEvent']['xwalk']['destination'] == 'SamplingMethodID')
-    xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'] =  np.where(mask, "xwalk_dict['ncrn']['DetectionEvent']['tbl_load']['SamplingMethodID'] = np.where((xwalk_dict['ncrn']['DetectionEvent']['source']['protocol_id']==1), 'Forest Bird Monitoring', 'Grassland Bird Monitoring')", xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'])
-    xwalk_dict['ncrn']['DetectionEvent']['xwalk']['note'] =  np.where(mask, "In some cases, SamplingMethodID was left NULL in source so we need to calculate. This is either 'Grassland Bird Monitoring' or 'Forest Bird Monitoring', depending on whether ncrn.DetectionEvent.ProtocolID is 1 or 2", xwalk_dict['ncrn']['DetectionEvent']['xwalk']['note'])
+    # xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'] =  np.where(mask, "xwalk_dict['ncrn']['DetectionEvent']['tbl_load']['SamplingMethodID'] = np.where((xwalk_dict['ncrn']['DetectionEvent']['source']['protocol_id']==1), 'Forest Bird Monitoring', 'Grassland Bird Monitoring')", xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'])
+    xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'] =  np.where(mask, "xwalk_dict['ncrn']['DetectionEvent']['tbl_load']['SamplingMethodID'] = 1", xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'])
+    xwalk_dict['ncrn']['DetectionEvent']['xwalk']['note'] =  np.where(mask, "SamplingMethodID roughly corresponds to protocol, but was sometimes left blank. Since all samples were collected with one protocol, we ignore 'Grassland Bird Monitoring' or 'Forest Bird Monitoring', and hard-code the protocol to equal 1", xwalk_dict['ncrn']['DetectionEvent']['xwalk']['note'])
 
     # Blanks
     blank_fields = [
@@ -1602,16 +1603,16 @@ def _lu_SamplingMethod(xwalk_dict:dict) -> dict:
     xwalk_dict['lu']['SamplingMethod']['xwalk']['calculation'] =  np.where(mask, 'map_source_to_destination_1_to_1', xwalk_dict['lu']['SamplingMethod']['xwalk']['calculation'])
     # ID
     mask = (xwalk_dict['lu']['SamplingMethod']['xwalk']['destination'] == 'ID')
-    xwalk_dict['lu']['SamplingMethod']['xwalk']['source'] =  np.where(mask, 'Protocol_Name', xwalk_dict['lu']['SamplingMethod']['xwalk']['source'])
+    xwalk_dict['lu']['SamplingMethod']['xwalk']['source'] =  np.where(mask, 'ID', xwalk_dict['lu']['SamplingMethod']['xwalk']['source'])
     # Code
     mask = (xwalk_dict['lu']['SamplingMethod']['xwalk']['destination'] == 'Code')
-    xwalk_dict['lu']['SamplingMethod']['xwalk']['source'] =  np.where(mask, 'Protocol_ID', xwalk_dict['lu']['SamplingMethod']['xwalk']['source'])
+    xwalk_dict['lu']['SamplingMethod']['xwalk']['source'] =  np.where(mask, 'Code', xwalk_dict['lu']['SamplingMethod']['xwalk']['source'])
     # Label
     mask = (xwalk_dict['lu']['SamplingMethod']['xwalk']['destination'] == 'Label')
-    xwalk_dict['lu']['SamplingMethod']['xwalk']['source'] =  np.where(mask, 'Protocol_Name', xwalk_dict['lu']['SamplingMethod']['xwalk']['source'])
+    xwalk_dict['lu']['SamplingMethod']['xwalk']['source'] =  np.where(mask, 'Label', xwalk_dict['lu']['SamplingMethod']['xwalk']['source'])
     # Summary
     mask = (xwalk_dict['lu']['SamplingMethod']['xwalk']['destination'] == 'Summary')
-    xwalk_dict['lu']['SamplingMethod']['xwalk']['source'] =  np.where(mask, 'Protocol_Name', xwalk_dict['lu']['SamplingMethod']['xwalk']['source'])
+    xwalk_dict['lu']['SamplingMethod']['xwalk']['source'] =  np.where(mask, 'Summary', xwalk_dict['lu']['SamplingMethod']['xwalk']['source'])
 
     # Calculated fields
     calculated_fields = [
@@ -1629,6 +1630,19 @@ def _lu_SamplingMethod(xwalk_dict:dict) -> dict:
     xwalk_dict['lu']['SamplingMethod']['xwalk']['calculation'] =  np.where(mask, 'blank_field', xwalk_dict['lu']['SamplingMethod']['xwalk']['calculation'])
     xwalk_dict['lu']['SamplingMethod']['xwalk']['source'] =  np.where(mask, 'blank_field', xwalk_dict['lu']['SamplingMethod']['xwalk']['source'])
     xwalk_dict['lu']['SamplingMethod']['xwalk']['note'] =  np.where(mask, 'this field was not collected by NCRN and has no NCRN equivalent', xwalk_dict['lu']['SamplingMethod']['xwalk']['note'])
+
+    return xwalk_dict
+
+def _exception_lu_SamplingMethod(xwalk_dict:dict) -> dict:
+
+    df = pd.DataFrame(
+        {'ID':[1]
+        ,'Code':['B']
+        ,'Label':['NCRN Landbirds']
+        ,'Summary':['NCRN Landbirds']
+        }
+    )
+    xwalk_dict['lu']['SamplingMethod']['source'] = df.copy()
 
     return xwalk_dict
 
@@ -1965,6 +1979,12 @@ def _exception_ncrn_DetectionEvent(xwalk_dict:dict, deletes:list) -> dict:
         mask = (xwalk_dict['ncrn']['DetectionEvent']['source']['UserCode'] == k)
         xwalk_dict['ncrn']['DetectionEvent']['source']['UserCode'] = np.where(mask, v, xwalk_dict['ncrn']['DetectionEvent']['source']['UserCode'])
 
+    # EXCEPTION 13: update birds.ncrn.DetectionEvent.source.Protocol from quasi-protocols (forest, grassland) to single protocol (ncrn landbirds)
+    xwalk_dict['ncrn']['DetectionEvent']['source']['protocol_id'] = 1
+    
+    # EXCEPTION 14: add field birds.ncrn.DetectionEvent.source.SamplingMethodID from quasi-protocols (forest, grassland) to single protocol (ncrn landbirds)
+    xwalk_dict['ncrn']['DetectionEvent']['source']['SamplingMethodID'] = 1
+    
     xwalk_dict['ncrn']['DetectionEvent']['source'].reset_index(drop=True, inplace=True)
     return xwalk_dict
 
@@ -3313,9 +3333,9 @@ def _exception_ncrn_BirdDetection(xwalk_dict:dict, deletes:list) -> dict:
     # lookup = xwalk_dict['ncrn']['DetectionEvent']['source'][['event_id','protocol_id']]
     # # step 2, left-join the lookup to `ncrn.BirdDetection.source` to add the protocol column to `BirdDetection`
     # xwalk_dict['ncrn']['BirdDetection']['source'] = xwalk_dict['ncrn']['BirdDetection']['source'].merge(lookup, left_on='Event_ID', right_on='event_id', how='left')
-    # # step 3, replace NaNs in `ncrn.BirdDetection.source.Distance_id` it's erroneous to exclude this at data-entry...
-    # mask = (xwalk_dict['ncrn']['BirdDetection']['source']['Distance_id'].isna())
-    # xwalk_dict['ncrn']['BirdDetection']['source']['Distance_id'] = np.where(mask, 2, xwalk_dict['ncrn']['BirdDetection']['source']['Distance_id']) # `ncrn.BirdDetection.source.Distance_id` cannot be blank
+    # step 3, replace NaNs in `ncrn.BirdDetection.source.Distance_id` it's erroneous to exclude this at data-entry...
+    mask = (xwalk_dict['ncrn']['BirdDetection']['source']['Distance_id'].isna())
+    xwalk_dict['ncrn']['BirdDetection']['source']['Distance_id'] = np.where(mask, 2, xwalk_dict['ncrn']['BirdDetection']['source']['Distance_id']) # `ncrn.BirdDetection.source.Distance_id` cannot be blank
     # # step 4: make a dummy variable in `ncrn.BirdDetection.source`
     # xwalk_dict['ncrn']['BirdDetection']['source']['dummy'] = xwalk_dict['ncrn']['BirdDetection']['source']['Distance_id'].astype(int).astype(str) + '_' + xwalk_dict['ncrn']['BirdDetection']['source']['protocol_id'].astype(str)
     # # step 5, make a lookup of three columns `ncrn.ProtocolDistanceClass.ID`, `ncrn.ProtocolDistanceClass.ProtocolID`, and `ncrn.ProtocolDistanceClass.Distance_id`
