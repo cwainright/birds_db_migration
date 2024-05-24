@@ -925,6 +925,15 @@ def _exception_lu_DistanceClass(xwalk_dict:dict) -> dict:
     xwalk_dict['lu']['DistanceClass']['source']['Code'] = np.where(xwalk_dict['lu']['DistanceClass']['source']['Distance_Text']=='<= 25 Meters', '<=', xwalk_dict['lu']['DistanceClass']['source']['Code'])
     xwalk_dict['lu']['DistanceClass']['source']['Code'] = np.where(xwalk_dict['lu']['DistanceClass']['source']['Distance_Text']=='25 - 50 Meters', '25', xwalk_dict['lu']['DistanceClass']['source']['Code'])
 
+    # EXCEPTION 3: the lookup table has the descriptions wrong
+    lookup = {
+        '25 - 50 Meters':'26 - 50 Meters'
+        ,'50 - 100 Meters': '51 - 100 Meters'
+    }
+    for k,v in lookup.items():
+        mask = (xwalk_dict['lu']['DistanceClass']['source']['Distance_Text']==k)
+        xwalk_dict['lu']['DistanceClass']['source']['Distance_Text'] = np.where(mask, v, xwalk_dict['lu']['DistanceClass']['source']['Distance_Text'])
+
     return xwalk_dict
 
 def _lu_GeodeticDatum(xwalk_dict:dict) -> dict:
