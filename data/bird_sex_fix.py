@@ -104,7 +104,7 @@ assert len(for_review['uses_0_1_2'].keys())+len(for_review['uses_1_2_3'].keys())
 
 mask = (df['Date']>=dt.datetime(2019,1,1)) # anything 2019 and later is a base-case and should be updated from (0,1,2) to (1,2,3)
 # len(df[mask].Event_ID.unique())
-to_be_updated = [x for x in df[mask].Event_ID.unique()] + [x for x in for_review['uses_0_1_2'].keys()]
+to_be_updated = [x for x in df[mask].Event_ID.unique()]
 # len(to_be_updated)
 mask = (df['Date']<=dt.datetime(2017,1,1))
 assert len(df[mask].Event_ID.unique()) + len(for_review['uses_1_2_3']) + len(for_review['ambiguous']) + len(to_be_updated) == len(df.Event_ID.unique()) # sanity check, make sure that all events are accounted-for
@@ -118,16 +118,33 @@ for k,v in for_review['ambiguous'].items():
     mask = (need_to_fix['event_id']==k)
     need_to_fix['ids'] = np.where(mask, newstr, need_to_fix['ids'])
 # need_to_fix.drop_duplicates('event_id').sort_values('Date')
-need_to_fix.drop_duplicates('event_id').sort_values('Date').to_csv(r'data/find_these.csv', index=False)
+# need_to_fix.drop_duplicates('event_id').sort_values('Date').to_csv(r'data/find_these.csv', index=False)
 
+# go find the paper datasheets in 'data/find_these.csv' and make a decision about how to proceed
 
+fixes = pd.read_csv(r'data/find_these.csv')
+update_from_012_to_123 = to_be_updated + [x for x in for_review['uses_0_1_2'].keys()] + [x for x in fixes[fixes['result']=='used_0_1_2'].event_id.unique()]
+change_2_to_1 = [x for x in fixes[fixes['result']=='change_2_to_1'].event_id.unique()]
+
+for event in fixes.event_id.unique():
+    try:
+        for_review['ambiguous'].pop(event)
+    except:
+        print(event)
 
 assert len(for_review['ambiguous'])==0
 assert len(for_review['uses_4_codes'])==0
-update_sexes = pd.DataFrame(columns=['Event_ID'])
-update_sexes['Event_ID'] = to_be_updated
-assert len(update_sexes) == len(update_sexes['Event_ID'].unique())
+updates = pd.DataFrame({
+    'Event_ID': update_from_012_to_123
+    ,'operation': 'update_from_012_to_123'
+})
+updates2 = pd.DataFrame({
+    'Event_ID': change_2_to_1
+    ,'operation': 'change_2_to_1'
+})
+updates = pd.concat([updates, updates2]).reset_index(drop=True)
+assert len(updates) == len(updates['Event_ID'].unique())
 
 # only save out if there are no ambiguous codes
 # if (len(for_review['ambiguous'])==0) and len(for_review['uses_4_codes'])==0:
-    # update_sexes.to_csv(r'assets\db\update_sexes.csv')
+#     updates.to_csv(r'assets\db\update_sexes.csv')
