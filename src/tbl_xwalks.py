@@ -59,9 +59,9 @@ def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
         # ,'SamplingMethodID'
         ,'Observer_ContactID'
         ,'Recorder_ContactID'
-        ,'ProtocolNoiseLevelID'
-        ,'ProtocolWindCodeID'
-        ,'ProtocolPrecipitationTypeID'
+        # ,'ProtocolNoiseLevelID'
+        # ,'ProtocolWindCodeID'
+        # ,'ProtocolPrecipitationTypeID'
         ,'Observer_ExperienceLevelID'
         ,'StartDateTime'
         ,'UserCode'
@@ -109,15 +109,15 @@ def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
     # `Recorder_ContactID`
     mask = (xwalk_dict['ncrn']['DetectionEvent']['xwalk']['destination'] == 'Recorder_ContactID')
     xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'] =  np.where(mask, 'recorder', xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'])
-    # `ProtocolNoiseLevelID`: [lu.NoiseLevel]([ID]) # does NCRN capture an equivalent to this?
-    mask = (xwalk_dict['ncrn']['DetectionEvent']['xwalk']['destination'] == 'ProtocolNoiseLevelID')
-    xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'] =  np.where(mask, 'disturbance_level', xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'])
-    # `ProtocolWindCodeID`: [lu.WindCode]([ID]) # does NCRN capture an equivalent to this?
-    mask = (xwalk_dict['ncrn']['DetectionEvent']['xwalk']['destination'] == 'ProtocolWindCodeID')
-    xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'] =  np.where(mask, 'wind_speed', xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'])
-    # `ProtocolPrecipitationTypeID`: [lu.PrecipitationType]([ID]) # does NCRN capture an equivalent to this?
-    mask = (xwalk_dict['ncrn']['DetectionEvent']['xwalk']['destination'] == 'ProtocolPrecipitationTypeID')
-    xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'] =  np.where(mask, 'sky_condition', xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'])
+    # # `ProtocolNoiseLevelID`: [lu.NoiseLevel]([ID])
+    # mask = (xwalk_dict['ncrn']['DetectionEvent']['xwalk']['destination'] == 'ProtocolNoiseLevelID')
+    # xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'] =  np.where(mask, 'disturbance_level', xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'])
+    # # `ProtocolWindCodeID`: [lu.WindCode]([ID])
+    # mask = (xwalk_dict['ncrn']['DetectionEvent']['xwalk']['destination'] == 'ProtocolWindCodeID')
+    # xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'] =  np.where(mask, 'wind_speed', xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'])
+    # # `ProtocolPrecipitationTypeID`: [lu.PrecipitationType]([ID])
+    # mask = (xwalk_dict['ncrn']['DetectionEvent']['xwalk']['destination'] == 'ProtocolPrecipitationTypeID')
+    # xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'] =  np.where(mask, 'sky_condition', xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'])
     # `Observer_ExperienceLevelID`: [lu.ExperienceLevel]([ID])
     mask = (xwalk_dict['ncrn']['DetectionEvent']['xwalk']['destination'] == 'Observer_ExperienceLevelID')
     xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'] =  np.where(mask, 'Position_Title', xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'])
@@ -137,6 +137,9 @@ def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
         ,'ExcludeNote'
         ,'ExcludeEvent'
         ,'SamplingMethodID'
+        ,'ProtocolNoiseLevelID'
+        ,'ProtocolWindCodeID'
+        ,'ProtocolPrecipitationTypeID'
     ]
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['ncrn']['DetectionEvent']['xwalk']['destination'].isin(calculated_fields))
@@ -148,7 +151,7 @@ def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
     mask = (xwalk_dict['ncrn']['DetectionEvent']['xwalk']['destination'] == 'IsSampled')
     xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'] =  np.where(mask, "xwalk_dict['ncrn']['DetectionEvent']['tbl_load']['IsSampled'] = np.where((xwalk_dict['ncrn']['DetectionEvent']['source']['flaggroup'].isna()), 1, 0)", xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'])
     xwalk_dict['ncrn']['DetectionEvent']['xwalk']['note'] =  np.where(mask, "BIT type (bool as 0 or 1) correlates to ncrn.tbl_Events.flaggroup, which is a pick-list that defaults to NA. NA indicates a sample was collected.", xwalk_dict['ncrn']['DetectionEvent']['xwalk']['note'])
-    # `TemperatureUnitCode`: [lu.TemperatureUnit]([ID]) # does NCRN capture an equivalent to this?
+    # `TemperatureUnitCode`: [lu.TemperatureUnit]([ID])
     mask = (xwalk_dict['ncrn']['DetectionEvent']['xwalk']['destination'] == 'TemperatureUnitCode')
     xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'] =  np.where(mask, "xwalk_dict['ncrn']['DetectionEvent']['tbl_load']['TemperatureUnitCode'] = 'C'", xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'])
     xwalk_dict['ncrn']['DetectionEvent']['xwalk']['note'] =  np.where(mask, "temperature collected in celsius", xwalk_dict['ncrn']['DetectionEvent']['xwalk']['note'])
@@ -163,6 +166,18 @@ def _ncrn_DetectionEvent(xwalk_dict:dict) -> dict:
     # xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'] =  np.where(mask, "xwalk_dict['ncrn']['DetectionEvent']['tbl_load']['SamplingMethodID'] = np.where((xwalk_dict['ncrn']['DetectionEvent']['source']['protocol_id']==1), 'Forest Bird Monitoring', 'Grassland Bird Monitoring')", xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'])
     xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'] =  np.where(mask, "xwalk_dict['ncrn']['DetectionEvent']['tbl_load']['SamplingMethodID'] = 1", xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'])
     xwalk_dict['ncrn']['DetectionEvent']['xwalk']['note'] =  np.where(mask, "SamplingMethodID roughly corresponds to protocol, but was sometimes left blank. Since all samples were collected with one protocol, we ignore 'Grassland Bird Monitoring' or 'Forest Bird Monitoring', and hard-code the protocol to equal 1", xwalk_dict['ncrn']['DetectionEvent']['xwalk']['note'])
+    # `ProtocolNoiseLevelID`
+    mask = (xwalk_dict['ncrn']['DetectionEvent']['xwalk']['destination'] == 'ProtocolNoiseLevelID')
+    xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'] =  np.where(mask, "xwalk_dict['ncrn']['DetectionEvent']['tbl_load']['ProtocolNoiseLevelID'] = np.where((xwalk_dict['ncrn']['DetectionEvent']['source']['disturbance_level'].isna()==False), xwalk_dict['ncrn']['DetectionEvent']['source']['disturbance_level']+1, xwalk_dict['ncrn']['DetectionEvent']['source']['disturbance_level'])", xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'])
+    xwalk_dict['ncrn']['DetectionEvent']['xwalk']['note'] =  np.where(mask, "This was a 0-index field in Access; calculating to a 1-index", xwalk_dict['ncrn']['DetectionEvent']['xwalk']['note'])
+    # `ProtocolWindCodeID`
+    mask = (xwalk_dict['ncrn']['DetectionEvent']['xwalk']['destination'] == 'ProtocolWindCodeID')
+    xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'] =  np.where(mask, "xwalk_dict['ncrn']['DetectionEvent']['tbl_load']['ProtocolWindCodeID'] = np.where((xwalk_dict['ncrn']['DetectionEvent']['source']['wind_speed'].isna()==False), xwalk_dict['ncrn']['DetectionEvent']['source']['wind_speed']+1, xwalk_dict['ncrn']['DetectionEvent']['source']['wind_speed'])", xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'])
+    xwalk_dict['ncrn']['DetectionEvent']['xwalk']['note'] =  np.where(mask, "This was a 0-index field in Access; calculating to a 1-index", xwalk_dict['ncrn']['DetectionEvent']['xwalk']['note'])
+    # `ProtocolPrecipitationTypeID`
+    mask = (xwalk_dict['ncrn']['DetectionEvent']['xwalk']['destination'] == 'ProtocolPrecipitationTypeID')
+    xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'] =  np.where(mask, "xwalk_dict['ncrn']['DetectionEvent']['tbl_load']['ProtocolPrecipitationTypeID'] = np.where((xwalk_dict['ncrn']['DetectionEvent']['source']['sky_condition'].isna()==False), xwalk_dict['ncrn']['DetectionEvent']['source']['sky_condition']+1, xwalk_dict['ncrn']['DetectionEvent']['source']['sky_condition'])", xwalk_dict['ncrn']['DetectionEvent']['xwalk']['source'])
+    xwalk_dict['ncrn']['DetectionEvent']['xwalk']['note'] =  np.where(mask, "This was a 0-index field in Access; calculating to a 1-index", xwalk_dict['ncrn']['DetectionEvent']['xwalk']['note'])
 
     # Blanks
     blank_fields = [
