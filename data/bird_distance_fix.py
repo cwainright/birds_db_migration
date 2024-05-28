@@ -34,6 +34,7 @@ min(df[mask].Date.unique())
 
 df.Distance_id.unique()
 
+mycols = ['event_id','Date','GRTS_Order','Plot_Name', 'filename']
 # before 2019-01-01, we only ever used (1,2), which should be: {1:"<=50 Meters", 2:"50-100 Meters"}
 mask = (df['Date']<dt.datetime(2019,1,1))
 df[mask].Distance_id.unique()
@@ -47,19 +48,16 @@ df[mask].Distance_id.unique()
 mask = (df['Date']>dt.datetime(2021,1,1)) & (df['Date']<dt.datetime(2022,1,1))
 df[mask].Distance_id.unique()
 mask = (df['Date']>dt.datetime(2021,1,1)) & (df['Date']<dt.datetime(2022,1,1)) & (df['Distance_id']==3)
-df[mask][['event_id','Date','GRTS_Order','Plot_Name', 'filename']].drop_duplicates('event_id')
+df[mask][mycols].drop_duplicates('event_id')
 # from 2022-01-01 to 2023-01-01, we used (1,2,3,5,4) which should be: {2:"51-100 Meters", 4:"<= 25 Meters", 5:"26-50 Meters", with unknown (1,3) because those are deprecated in 2019}
 mask = (df['Date']>dt.datetime(2022,1,1)) & (df['Date']<dt.datetime(2023,1,1))
 df[mask].Distance_id.unique()
 mask = (df['Date']>dt.datetime(2022,1,1)) & (df['Date']<dt.datetime(2023,1,1)) & (df['Distance_id']==1)
-df[mask][['event_id','Date','GRTS_Order','Plot_Name', 'filename']].drop_duplicates('event_id')
+df[mask][mycols].drop_duplicates('event_id')
 mask = (df['Date']>dt.datetime(2022,1,1)) & (df['Date']<dt.datetime(2023,1,1)) & (df['Distance_id']==3)
-df[mask][['event_id','Date','GRTS_Order','Plot_Name', 'filename']].drop_duplicates('event_id')
+df[mask][mycols].drop_duplicates('event_id')
 # from 2023-01-01 to 2024-01-01, we used (2,3,5,4) which should be: {2:"51-100 Meters", 4:"<= 25 Meters", 5:"26-50 Meters", with unknown (3) because it was deprecated in 2019}
 mask = (df['Date']>dt.datetime(2023,1,1))
 df[mask].Distance_id.unique()
 mask = (df['Date']>dt.datetime(2023,1,1)) & (df['Distance_id']==3)
-df[mask][['event_id','Date','GRTS_Order','Plot_Name', 'filename']].drop_duplicates('event_id')
-
-
-
+df[mask][mycols].drop_duplicates('event_id')
