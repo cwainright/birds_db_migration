@@ -2807,8 +2807,11 @@ def _ncrn_ProtocolDetectionType(xwalk_dict:dict) -> dict:
 def _exception_ncrn_ProtocolDistanceClass(xwalk_dict:dict) -> dict:
     """ncrn.ProtocolDistanceClass is a bridge table between ncrn.Protocol and lu.DistanceClass that does not exist in source"""
 
-    protocols = xwalk_dict['ncrn']['Protocol']['source']
-    DistanceClasss = xwalk_dict['lu']['DistanceClass']['source']
+    protocols = xwalk_dict['ncrn']['Protocol']['source'].copy()
+    DistanceClasss = xwalk_dict['lu']['DistanceClass']['source'].copy()
+    DistanceClasss = DistanceClasss[DistanceClasss['Distance_Text']!='> 100 Meters']
+    DistanceClasss = DistanceClasss.reset_index(drop=True, inplace=False)
+    DistanceClasss['Distance_id'] = DistanceClasss.index+1
 
     df = pd.DataFrame()
     for protocol in protocols.Protocol_ID.unique():
