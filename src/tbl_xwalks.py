@@ -1151,7 +1151,7 @@ def _lu_PrecipitationType(xwalk_dict:dict) -> dict:
     # 1:1 fields
     one_to_one_fields = [
         'ID'
-        ,'Code'
+        # ,'Code'
         ,'Label'
         ,'Description'
         ,'SortOrder'
@@ -1163,8 +1163,8 @@ def _lu_PrecipitationType(xwalk_dict:dict) -> dict:
     mask = (xwalk_dict['lu']['PrecipitationType']['xwalk']['destination'] == 'ID')
     xwalk_dict['lu']['PrecipitationType']['xwalk']['source'] =  np.where(mask, 'ID', xwalk_dict['lu']['PrecipitationType']['xwalk']['source'])
     # Code
-    mask = (xwalk_dict['lu']['PrecipitationType']['xwalk']['destination'] == 'Code')
-    xwalk_dict['lu']['PrecipitationType']['xwalk']['source'] =  np.where(mask, 'Code', xwalk_dict['lu']['PrecipitationType']['xwalk']['source'])
+    # mask = (xwalk_dict['lu']['PrecipitationType']['xwalk']['destination'] == 'Code')
+    # xwalk_dict['lu']['PrecipitationType']['xwalk']['source'] =  np.where(mask, 'Code', xwalk_dict['lu']['PrecipitationType']['xwalk']['source'])
     # Label
     mask = (xwalk_dict['lu']['PrecipitationType']['xwalk']['destination'] == 'Label')
     xwalk_dict['lu']['PrecipitationType']['xwalk']['source'] =  np.where(mask, 'Label', xwalk_dict['lu']['PrecipitationType']['xwalk']['source'])
@@ -1177,11 +1177,16 @@ def _lu_PrecipitationType(xwalk_dict:dict) -> dict:
 
     # Calculated fields
     calculated_fields = [
+        'Code'
     ]
     # assign grouping variable `calculation` for the calculated fields
     mask = (xwalk_dict['lu']['PrecipitationType']['xwalk']['destination'].isin(calculated_fields))
     xwalk_dict['lu']['PrecipitationType']['xwalk']['source'] = np.where(mask, 'placeholder', xwalk_dict['lu']['PrecipitationType']['xwalk']['source']) 
     xwalk_dict['lu']['PrecipitationType']['xwalk']['calculation'] =  np.where(mask, 'calculate_dest_field_from_source_field', xwalk_dict['lu']['PrecipitationType']['xwalk']['calculation'])
+    # Code
+    mask = (xwalk_dict['lu']['PrecipitationType']['xwalk']['destination'] == 'Code')
+    xwalk_dict['lu']['PrecipitationType']['xwalk']['source'] = np.where(mask, "xwalk_dict['lu']['PrecipitationType']['tbl_load']['Code']=xwalk_dict['lu']['PrecipitationType']['source']['Code'].astype(str)", xwalk_dict['lu']['PrecipitationType']['xwalk']['source'])
+    xwalk_dict['lu']['PrecipitationType']['xwalk']['note'] = np.where(mask, "VARCHAR (2) NON-NULL; cast int to str", xwalk_dict['lu']['PrecipitationType']['xwalk']['note'])
 
     # Blanks
     blank_fields = [
@@ -1200,6 +1205,7 @@ def _exception_lu_PrecipitationType(xwalk_dict:dict) -> dict:
 
     df = pd.read_csv(assets.PRECIPTYPE)
     xwalk_dict['lu']['PrecipitationType']['source'] = df.copy()
+    xwalk_dict['lu']['PrecipitationType']['source']['Code'] = xwalk_dict['lu']['PrecipitationType']['source']['Code'].astype(str)
     xwalk_dict['lu']['PrecipitationType']['source_name'] = assets.PRECIPTYPE
 
     return xwalk_dict
